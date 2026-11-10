@@ -13,11 +13,6 @@
 [![Data](https://img.shields.io/badge/data-refreshed%20daily-C2452B)](docs/SPEC.md#4-data)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshot-dark.png" />
-  <img src="docs/assets/screenshot-light.png" alt="The mekiki model table, with each model's intelligence, cost and value tiers and its price" />
-</picture>
-
 </div>
 
 mekiki rates a short list of AI models on how smart they are, what they cost, and how much
