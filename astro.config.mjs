@@ -9,6 +9,9 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      exclude: ['@resvg/resvg-js', 'satori'],
+    },
   },
   // Locales are routed by the page files themselves (src/pages/[locale]/ and
   // the redirect pages next to it), driven by src/i18n/locales.ts. Astro's
