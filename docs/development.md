@@ -86,10 +86,13 @@ src/
   lib/scoring.ts                         rating algorithm (pure functions)
   lib/dataset.ts                         merges models and snapshots for pages, API and report
   lib/api.ts                             JSON API shapes
+  lib/logo.ts                            the mark; header, favicon and share images use it
+  lib/og.tsx                             share images, rendered to PNG at build time
+  lib/compare.ts                         compare page selection (?m=<id>,<id>)
   i18n/                                  dictionaries and locale helpers
   views/                                 page bodies, shared by all languages
-  pages/                                 routes and JSON endpoints
-  components/                            table island, tier meter, shadcn/ui components
+  pages/                                 routes, JSON endpoints, share images, sitemap.xml
+  components/                            table and compare islands, share button, tier meter, shadcn/ui
 data/snapshots/                          one JSON file per data source
 scripts/sync.ts, scripts/report.ts       pnpm sync, pnpm report
 scripts/sources/                         one adapter per data source

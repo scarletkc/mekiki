@@ -1,0 +1,15 @@
+---
+import type { Locale } from '../../i18n';
+import { localeStaticPaths } from '../../lib/routes';
+import CompareView from '../../views/CompareView.astro';
+
+export const getStaticPaths = localeStaticPaths;
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+---
+
+<CompareView locale={locale} />

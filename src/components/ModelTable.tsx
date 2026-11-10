@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   columnFilteringFeature,
   createColumnHelper,
@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/table';
 import type { Dictionary } from '@/i18n';
 import { fmt } from '@/i18n/fmt';
+import { compareQuery } from '@/lib/compare';
 import { formatPrice, formatScore } from '@/lib/format';
 import {
   COST_TIERS,
@@ -39,6 +40,7 @@ import {
   type IntelligenceTier,
   type ValueTier,
 } from '@/lib/scoring.config';
+import { COMPARE_MAX } from '@/lib/share';
 import { cn } from '@/lib/utils';
 import { TierMeter } from './TierMeter';
 
@@ -63,13 +65,17 @@ export interface ModelRow {
 }
 
 /** The UI strings the table uses, picked from the page's dictionary. */
-export type ModelTableStrings = Pick<Dictionary, 'table' | 'tier' | 'empty' | 'badge'>;
+export type ModelTableStrings = Pick<Dictionary, 'table' | 'tier' | 'empty' | 'badge'> & {
+  compare: Pick<Dictionary['compare'], 'select' | 'selected' | 'action' | 'clear' | 'limit'>;
+};
 
 interface ModelTableProps {
   models: ModelRow[];
   strings: ModelTableStrings;
   /** BCP 47 tag, for locale-aware text sorting. */
   lang: string;
+  /** The compare page in the page's locale; the selection is appended as a query. */
+  compareHref: string;
 }
 
 const features = tableFeatures({
@@ -149,6 +155,41 @@ function writeUrl(filters: Filters, sorting: SortingState) {
   window.history.replaceState(window.history.state, '', url);
 }
 
+/**
+ * The compare selection, passed to the checkboxes by context. Reading it in
+ * the column definitions instead would rebuild every cell on each tick,
+ * which replaces the checkbox and loses keyboard focus.
+ */
+const PickContext = createContext<{ picked: string[]; toggle: (id: string) => void }>({
+  picked: [],
+  toggle: () => {},
+});
+
+function PickBox({
+  id,
+  name,
+  strings,
+}: {
+  id: string;
+  name: string;
+  strings: ModelTableStrings['compare'];
+}) {
+  const { picked, toggle } = useContext(PickContext);
+  const isPicked = picked.includes(id);
+  const full = !isPicked && picked.length >= COMPARE_MAX;
+  return (
+    <input
+      type="checkbox"
+      checked={isPicked}
+      disabled={full}
+      onChange={() => toggle(id)}
+      aria-label={fmt(strings.select, { name })}
+      title={full ? fmt(strings.limit, { n: COMPARE_MAX }) : fmt(strings.select, { name })}
+      className="accent-primary size-3.5 shrink-0 cursor-pointer disabled:cursor-not-allowed"
+    />
+  );
+}
+
 function SortArrow({ direction }: { direction: 'asc' | 'desc' | false }) {
   return (
     <svg
@@ -214,8 +255,8 @@ function FilterSelect({
   );
 }
 
-export function ModelTable({ models, strings, lang }: ModelTableProps) {
-  const { table: t, tier, empty, badge } = strings;
+export function ModelTable({ models, strings, lang, compareHref }: ModelTableProps) {
+  const { table: t, tier, empty, badge, compare } = strings;
 
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORT);
@@ -243,6 +284,21 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
 
   const setFilter = <K extends keyof Filters>(key: K, value: Filters[K]) =>
     setFilters((current) => ({ ...current, [key]: value }));
+
+  // Models ticked for the compare page, in the order they were ticked.
+  const [picked, setPicked] = useState<string[]>([]);
+  const toggle = useCallback(
+    (id: string) =>
+      setPicked((current) =>
+        current.includes(id)
+          ? current.filter((item) => item !== id)
+          : current.length < COMPARE_MAX
+            ? [...current, id]
+            : current,
+      ),
+    [],
+  );
+  const pickValue = useMemo(() => ({ picked, toggle }), [picked, toggle]);
 
   // Legacy and open-weights have no column of their own, so they narrow the
   // data before it reaches the table.
@@ -297,6 +353,7 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
           const model = row.original;
           return (
             <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 sm:flex-nowrap">
+              <PickBox id={model.id} name={model.name} strings={compare} />
               <a
                 href={model.href}
                 className="font-medium underline decoration-transparent underline-offset-4 hover:decoration-current"
@@ -395,7 +452,7 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
         },
       }),
     ]);
-  }, [t, tier, empty, badge, lang]);
+  }, [t, tier, empty, badge, compare, lang]);
 
   const table = useTable({
     features,
@@ -421,7 +478,8 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
     keys.map((key) => ({ value: key, label: labels[key] }));
 
   return (
-    <div>
+    // Room at the bottom so the compare bar never covers the last controls.
+    <div className={cn(picked.length > 0 && 'pb-16')}>
       <search aria-label={t.filters} className="mb-3 flex flex-wrap items-center gap-2">
         <Input
           type="search"
@@ -484,77 +542,99 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
       </search>
 
       <div className="-mx-4 border-y sm:mx-0 sm:rounded-md sm:border-x">
-        <Table className="text-sm">
-          <caption className="sr-only">{t.caption}</caption>
-          <TableHeader>
-            {table.getHeaderGroups().map((group) => (
-              <TableRow key={group.id} className="hover:bg-transparent">
-                {group.headers.map((header, index) => {
-                  const sorted = header.column.getIsSorted();
-                  const label = header.column.columnDef.header as string;
-                  return (
-                    <TableHead
-                      key={header.id}
-                      scope="col"
-                      aria-sort={
-                        sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'
-                      }
-                      className={cn(
-                        'bg-muted/60 h-9 px-0',
-                        index === 0 && 'bg-muted sticky left-0 z-10',
-                      )}
-                    >
-                      <button
-                        type="button"
-                        onClick={header.column.getToggleSortingHandler()}
-                        title={fmt(t.sortBy, { column: label })}
+        <PickContext.Provider value={pickValue}>
+          <Table className="text-sm">
+            <caption className="sr-only">{t.caption}</caption>
+            <TableHeader>
+              {table.getHeaderGroups().map((group) => (
+                <TableRow key={group.id} className="hover:bg-transparent">
+                  {group.headers.map((header, index) => {
+                    const sorted = header.column.getIsSorted();
+                    const label = header.column.columnDef.header as string;
+                    return (
+                      <TableHead
+                        key={header.id}
+                        scope="col"
+                        aria-sort={
+                          sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'
+                        }
                         className={cn(
-                          'hover:text-foreground flex h-9 w-full items-center gap-1.5 px-3 text-xs font-medium whitespace-nowrap',
-                          sorted ? 'text-foreground' : 'text-muted-foreground',
-                          index === 0 && 'pl-4 sm:pl-3',
+                          'bg-muted/60 h-9 px-0',
+                          index === 0 && 'bg-muted sticky left-0 z-10',
                         )}
                       >
-                        {label}
-                        <SortArrow direction={sorted} />
-                        {sorted && (
-                          <span className="sr-only">
-                            {sorted === 'asc' ? t.sortedAsc : t.sortedDesc}
-                          </span>
-                        )}
-                      </button>
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id} className="group">
-                {row.getAllCells().map((cell, index) => (
+                        <button
+                          type="button"
+                          onClick={header.column.getToggleSortingHandler()}
+                          title={fmt(t.sortBy, { column: label })}
+                          className={cn(
+                            'hover:text-foreground flex h-9 w-full items-center gap-1.5 px-3 text-xs font-medium whitespace-nowrap',
+                            sorted ? 'text-foreground' : 'text-muted-foreground',
+                            index === 0 && 'pl-4 sm:pl-3',
+                          )}
+                        >
+                          {label}
+                          <SortArrow direction={sorted} />
+                          {sorted && (
+                            <span className="sr-only">
+                              {sorted === 'asc' ? t.sortedAsc : t.sortedDesc}
+                            </span>
+                          )}
+                        </button>
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={row.id} className="group">
+                  {row.getAllCells().map((cell, index) => (
+                    <TableCell
+                      key={cell.id}
+                      className={cn(
+                        'px-3 py-2 align-middle',
+                        index === 0 &&
+                          'bg-background group-hover:bg-muted sticky left-0 z-10 max-w-[10.5rem] min-w-[8.5rem] pl-4 whitespace-normal sm:max-w-none sm:pl-3 sm:whitespace-nowrap',
+                      )}
+                    >
+                      <table.FlexRender cell={cell} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+              {rows.length === 0 && (
+                <TableRow className="hover:bg-transparent">
                   <TableCell
-                    key={cell.id}
-                    className={cn(
-                      'px-3 py-2 align-middle',
-                      index === 0 &&
-                        'bg-background group-hover:bg-muted sticky left-0 z-10 max-w-[10.5rem] min-w-[8.5rem] pl-4 whitespace-normal sm:max-w-none sm:pl-3 sm:whitespace-nowrap',
-                    )}
+                    colSpan={COLUMN_IDS.length}
+                    className="text-muted-foreground px-4 py-8"
                   >
-                    <table.FlexRender cell={cell} />
+                    {t.noResults}
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
-            {rows.length === 0 && (
-              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={COLUMN_IDS.length} className="text-muted-foreground px-4 py-8">
-                  {t.noResults}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </PickContext.Provider>
       </div>
+
+      {picked.length > 0 && (
+        <section
+          aria-label={compare.action}
+          className="bg-popover text-popover-foreground fixed inset-x-4 bottom-4 z-30 mx-auto flex max-w-md items-center gap-3 rounded-lg border py-2 pr-2 pl-4 text-sm shadow-lg"
+        >
+          <span className="num" aria-live="polite">
+            {fmt(compare.selected, { n: picked.length })}
+          </span>
+          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setPicked([])}>
+            {compare.clear}
+          </Button>
+          <Button asChild size="sm">
+            <a href={`${compareHref}${compareQuery(picked)}`}>{compare.action}</a>
+          </Button>
+        </section>
+      )}
 
       <div className="text-muted-foreground mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
         <p>{t.priceNote}</p>

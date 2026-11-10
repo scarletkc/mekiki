@@ -33,11 +33,29 @@ const rows: ModelRow[] = dataset.models.map((model) => ({
   openWeights: model.facts.open_weights,
 }));
 
-const strings = { table: t.table, tier: t.tier, empty: t.empty, badge: t.badge };
+const strings = {
+  table: t.table,
+  tier: t.tier,
+  empty: t.empty,
+  badge: t.badge,
+  compare: {
+    select: t.compare.select,
+    selected: t.compare.selected,
+    action: t.compare.action,
+    clear: t.compare.clear,
+    limit: t.compare.limit,
+  },
+};
 ---
 
 <Base locale={locale} path="/">
   <h1 class="text-xl font-semibold tracking-tight">{t.home.title}</h1>
   <p class="text-muted-foreground mt-1 mb-5 max-w-[68ch] text-sm">{t.home.intro}</p>
-  <ModelTable client:load models={rows} strings={strings} lang={LOCALE_INFO[locale].tag} />
+  <ModelTable
+    client:load
+    models={rows}
+    strings={strings}
+    lang={LOCALE_INFO[locale].tag}
+    compareHref={localePath(locale, '/compare')}
+  />
 </Base>

@@ -76,3 +76,39 @@ test('an unknown URL gets the 404 page', async ({ page }) => {
   expect(response?.status()).toBe(404);
   await expect(page.locator('a[href]').first()).toBeVisible();
 });
+
+test('the sitemap lists pages that load, each with a share image that loads', async ({
+  request,
+}) => {
+  const sitemap = await request.get('/sitemap.xml');
+  expect(sitemap.ok()).toBe(true);
+  const paths = [...(await sitemap.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+    (match) => new URL(match[1]!).pathname,
+  );
+  expect(paths.length).toBeGreaterThan(0);
+
+  const images = new Set<string>();
+  for (const path of paths) {
+    const page = await request.get(path);
+    expect(page.ok(), path).toBe(true);
+    const image = (await page.text()).match(/property="og:image" content="([^"]+)"/)?.[1];
+    expect(image, path).toBeTruthy();
+    images.add(new URL(image!).pathname);
+  }
+  for (const path of images) {
+    const image = await request.get(path);
+    expect(image.ok(), path).toBe(true);
+    expect(image.headers()['content-type'], path).toContain('image/png');
+  }
+});
+
+test('models ticked on the home page open side by side on the compare page', async ({ page }) => {
+  const problems = trackProblems(page);
+  await page.goto('/');
+  const boxes = page.locator('table tbody input[type="checkbox"]');
+  await boxes.nth(0).check();
+  await boxes.nth(1).check();
+  await page.locator('a[href*="?m="]').click();
+  await expect(page.locator('thead th[scope="col"]')).toHaveCount(2);
+  expect(problems).toEqual([]);
+});

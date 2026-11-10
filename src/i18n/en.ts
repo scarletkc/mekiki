@@ -212,6 +212,31 @@ export const en = {
     attributionBody:
       'Leaderboard data comes from Artificial Analysis, Arena, LiveBench and Terminal-Bench; prices come from models.dev. Credit them too if you republish these numbers.',
   },
+  compare: {
+    title: 'Compare models',
+    intro:
+      'Up to {n} models side by side. The address keeps the selection, so the page can be shared.',
+    add: 'Add a model',
+    remove: 'Remove {name}',
+    empty: 'Pick a model to start comparing.',
+    full: 'Showing the maximum of {n} models.',
+    best: 'best',
+    bestNote: 'The best figure in each row is in bold.',
+    ratings: 'Ratings',
+    leaderboards: 'Leaderboards',
+    prices: 'Price, USD per 1M tokens',
+    facts: 'Facts',
+    select: 'Compare {name}',
+    selected: '{n} selected',
+    action: 'Compare',
+    clear: 'Clear',
+    limit: 'Up to {n} models',
+  },
+  share: {
+    action: 'Share',
+    copied: 'Link copied',
+    failed: "Couldn't copy the link",
+  },
   footer: {
     sources: 'Data from ',
     synced: 'Last synced ',

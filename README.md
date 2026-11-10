@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/favicon.svg" alt="mekiki logo" width="96" />
+<img src="docs/assets/logo.svg" alt="mekiki logo" width="96" />
 
 # mekiki
 
@@ -41,6 +41,9 @@ official prices, and refresh every day.
   by name. The URL keeps the view, so you can share it.
 - **Model pages**: how the intelligence score is built, leaderboard by leaderboard; price,
   context window, release date and modalities; links to the source data.
+- **Compare**: up to four models side by side, with the best figure in each row in bold.
+- **Share**: a link that opens in the reader's own language, with a preview image for
+  every model.
 - **Method page**: every formula, weight and threshold, generated from the same config the
   scores are computed with.
 - **JSON API**: the full dataset, a model list and one file per model.

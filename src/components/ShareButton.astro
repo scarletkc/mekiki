@@ -1,0 +1,107 @@
+---
+/**
+ * Shares the current page by its language-neutral address (`/m/...`
+ * instead of `/en/m/...`), so whoever opens the link gets their own
+ * language. The query string is kept, which carries the compare selection.
+ *
+ * Touch devices get the system share sheet; elsewhere the link is copied.
+ */
+import { buttonVariants } from '@/components/ui/button';
+import { useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<button
+  type="button"
+  data-share
+  data-locale={locale}
+  data-label={t.share.action}
+  data-copied={t.share.copied}
+  data-failed={t.share.failed}
+  class={buttonVariants({ variant: 'outline', size: 'sm' })}
+>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path>
+  </svg>
+  <span data-share-label>{t.share.action}</span>
+</button>
+<span data-share-status class="sr-only" aria-live="polite"></span>
+
+<script>
+  function neutralUrl(locale: string): string {
+    const { origin, pathname, search } = window.location;
+    const prefix = `/${locale}`;
+    const path = pathname.startsWith(`${prefix}/`) ? pathname.slice(prefix.length) : pathname;
+    return `${origin}${path}${search}`;
+  }
+
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-share]')) {
+    const label = button.querySelector<HTMLElement>('[data-share-label]');
+    const status = button.nextElementSibling as HTMLElement | null;
+    let timer: number | undefined;
+
+    const say = (text: string) => {
+      if (label) label.textContent = text;
+      if (status) status.textContent = text;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (label) label.textContent = button.dataset.label ?? '';
+        if (status) status.textContent = '';
+      }, 2000);
+    };
+
+    button.addEventListener('click', async () => {
+      const url = neutralUrl(button.dataset.locale ?? '');
+      const touch = window.matchMedia('(pointer: coarse)').matches;
+      if (touch && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title: document.title, url });
+          return;
+        } catch (error) {
+          // Closing the share sheet is not a failure.
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+        }
+      }
+      const copied = await copy(url);
+      say((copied ? button.dataset.copied : button.dataset.failed) ?? '');
+    });
+  }
+
+  async function copy(text: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // The Clipboard API can be blocked (embedded views, permissions
+      // policy); the older selection-based copy often still works there.
+      const field = document.createElement('textarea');
+      field.value = text;
+      field.setAttribute('readonly', '');
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.append(field);
+      field.select();
+      try {
+        return document.execCommand('copy');
+      } catch {
+        return false;
+      } finally {
+        field.remove();
+      }
+    }
+  }
+</script>

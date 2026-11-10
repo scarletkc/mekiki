@@ -1,5 +1,6 @@
 ---
+import { DEFAULT_LOCALE, useTranslations } from '../i18n';
 import Redirect from '../layouts/Redirect.astro';
 ---
 
-<Redirect path="/api" />
+<Redirect path="/api" title={useTranslations(DEFAULT_LOCALE).api.title} />

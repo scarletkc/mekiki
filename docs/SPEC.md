@@ -55,9 +55,10 @@ Non-goals:
 
 | Layer | Choice | Notes |
 | --- | --- | --- |
-| Framework | Astro, static output | Pages ship no JavaScript except the table island |
-| UI | React, shadcn/ui, Tailwind CSS | shadcn/ui is React, so the island is React |
+| Framework | Astro, static output | Pages ship no JavaScript except the table and compare islands and the share button |
+| UI | React, shadcn/ui, Tailwind CSS | shadcn/ui is React, so the islands are React |
 | Table | TanStack Table | Sorting, filtering, search |
+| Share images | satori and resvg | Rendered to PNG at build time, offline |
 | Content | Astro content collections with Zod | One Markdown file per model |
 | Language | TypeScript, strict | TypeScript 6: `@astrojs/check` does not support 7 yet |
 | Tests | Vitest; Playwright for the smoke test | |
@@ -79,6 +80,8 @@ data/snapshots/*.json ────┘
   and the Node scripts share one schema and one Zod version.
 - Only one Latin font is bundled (Instrument Sans via `@fontsource-variable`); Chinese
   text uses system fonts. The build makes no remote requests.
+- The share images use the static `@fontsource/instrument-sans` package at build time,
+  because satori reads neither WOFF2 nor variable fonts.
 
 ## 4. Data
 
@@ -428,6 +431,7 @@ Static files generated at build time (Astro static endpoints):
 | --- | --- |
 | `/<locale>/` | The model table |
 | `/<locale>/m/<provider>/<model>` | One model |
+| `/<locale>/compare` | Up to four models side by side |
 | `/<locale>/method` | Rating method, data sources and attribution, when each source last changed |
 | `/<locale>/api` | API fields and a live example |
 
@@ -438,7 +442,7 @@ Static files generated at build time (Astro static endpoints):
   Astro's own i18n routing is not used.
 - UI strings live in `src/i18n/`, one dictionary per language. `en.ts` defines the shape
   and the others are type-checked against it, so a missing string fails `pnpm check`.
-- Unprefixed URLs (`/`, `/method`, `/api`, `/m/<provider>/<model>`) only redirect to the
+- Unprefixed URLs (`/`, `/compare`, `/method`, `/api`, `/m/<provider>/<model>`) only redirect to the
   same page in one language, keeping the query string and hash. The target is, in order:
   the language last picked in the switcher (`localStorage` key `locale`), the first
   browser language that matches, then English. Chinese goes to `/zh-tw/` for
@@ -461,12 +465,34 @@ column shows a tier badge and the score.
   same in every language: `q`, `vendor`, `int`, `cost`, `val`, `open`, `sort`, `dir`,
   `legacy`.
 - Legacy models are collapsed by default.
+- Each row has a checkbox. Ticking up to four models shows a bar with a Compare button.
 
 ### Model page
 
 The three ratings; how the intelligence score is built (raw score, leader, normalised
 score and weight per leaderboard); price, context window, release date, open weights and
-modalities; how value was priced; links to the source data and the model's JSON.
+modalities; how value was priced; links to the source data and the model's JSON. The
+header has a Compare button, which opens the compare page with this model, and a Share
+button.
+
+### Compare page
+
+The selected models side by side, one column each. Rows are the three ratings, the raw
+score on each leaderboard, the prices and the facts; the best figure in each row is in
+bold. The selection lives in `?m=<id>,<id>` (known IDs only, at most four), so the page
+can be shared. Without `m`, it shows the three most intelligent current models.
+
+### Sharing
+
+- The Share button shares the unprefixed URL (`/m/<provider>/<model>`, `/compare?m=…`),
+  so whoever opens it lands in their own language. Touch devices get the system share
+  sheet; elsewhere the link is copied.
+- Every model has a 1200 × 630 share image at `/og/<provider>/<model>.png`; every other
+  page uses `/og.png`. The images are in English for every language.
+- The redirect pages carry the same share tags as the real pages, because link
+  previews do not run scripts.
+- `/sitemap.xml` lists every locale-prefixed page with its `hreflang` alternates, and
+  `robots.txt` points to it. Redirect pages and the 404 are left out.
 
 ### Everywhere
 
@@ -477,6 +503,9 @@ modalities; how value was priced; links to the source data and the model's JSON.
 - The footer carries the source attribution (Artificial Analysis, Arena, LiveBench,
   Terminal-Bench, models.dev),
   the last sync time and a link to the repository.
+- The mark is a vermilion seal with an eye on it, whose square pupil is cut out so the
+  seal shows through. It is defined once in `src/lib/logo.ts`; the header, the favicon,
+  the touch icon and the share images draw it from there.
 
 ## 8. Sync and deployment
 
@@ -539,5 +568,10 @@ Two other leaderboards were looked at and left out: CursorBench, because Cursor'
 of service forbid scraping the site, and DeepSWE, which listed 3 of the 10 tracked models
 and was last generated on 2026-09-22.
 
-Not built yet: share images per model, score history, an RSS feed or changelog, and more
-UI languages.
+**Share images in English only.** Model names are Latin script, and a CJK font would
+add megabytes to every build for a few short labels.
+
+**A hand-written sitemap.** `@astrojs/sitemap` writes `sitemap-index.xml` and would list
+the redirect pages, which are not indexed.
+
+Not built yet: score history, an RSS feed or changelog, and more UI languages.

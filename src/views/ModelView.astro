@@ -1,8 +1,11 @@
 ---
+import ShareButton from '../components/ShareButton.astro';
 import { TierMeter } from '../components/TierMeter';
+import { buttonVariants } from '../components/ui/button';
 import { fmt, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import type { ModelRecord } from '../lib/dataset';
+import { compareQuery } from '../lib/compare';
 import {
   formatCount,
   formatPercent,
@@ -12,6 +15,7 @@ import {
 } from '../lib/format';
 import { METRIC_KEYS, scoringConfig } from '../lib/scoring.config';
 import { cacheHitPercent } from '../lib/scoring';
+import { modelImagePath, modelShareText } from '../lib/share';
 import { getDataset } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
 
@@ -71,25 +75,53 @@ const priceNotes = [
     : null,
 ].filter((note) => note !== null);
 
-const description = `${model.name} (${model.vendor}): ${t.meta.tagline}`;
+const { description, imageAlt } = modelShareText(model, t);
+const compareHref = `${localePath(locale, '/compare')}${compareQuery([model.id])}`;
 ---
 
-<Base locale={locale} path={`/m/${model.id}`} title={model.name} description={description}>
+<Base
+  locale={locale}
+  path={`/m/${model.id}`}
+  title={model.name}
+  description={description}
+  image={modelImagePath(model.id)}
+  imageAlt={imageAlt}
+>
   <p class="text-muted-foreground mb-3 text-sm">
     <a href={localePath(locale, '/')} class="hover:text-foreground underline">{t.detail.back}</a>
   </p>
 
-  <header class="mb-6">
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-      <h1 class="text-2xl font-semibold tracking-tight">{model.name}</h1>
-      {model.status === 'legacy' && <span class="text-muted-foreground rounded border px-1.5 text-xs leading-5">{t.badge.legacy}</span>}
-      {model.facts.open_weights === true && <span class="text-muted-foreground rounded border px-1.5 text-xs leading-5">{t.badge.openWeights}</span>}
+  <header class="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+    <div>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h1 class="text-2xl font-semibold tracking-tight">{model.name}</h1>
+        {model.status === 'legacy' && <span class="text-muted-foreground rounded border px-1.5 text-xs leading-5">{t.badge.legacy}</span>}
+        {model.facts.open_weights === true && <span class="text-muted-foreground rounded border px-1.5 text-xs leading-5">{t.badge.openWeights}</span>}
+      </div>
+      <p class="text-muted-foreground mt-0.5 text-sm">
+        {model.vendor}
+        <span class="mx-1" aria-hidden="true">/</span>
+        <code class="font-mono text-[0.8125rem]">{model.id}</code>
+      </p>
     </div>
-    <p class="text-muted-foreground mt-0.5 text-sm">
-      {model.vendor}
-      <span class="mx-1" aria-hidden="true">/</span>
-      <code class="font-mono text-[0.8125rem]">{model.id}</code>
-    </p>
+    <div class="flex items-center gap-2">
+      <a href={compareHref} class={buttonVariants({ variant: 'outline', size: 'sm' })}>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="3" y="4" width="7" height="16" rx="1.5"></rect>
+          <rect x="14" y="4" width="7" height="16" rx="1.5"></rect>
+        </svg>
+        {t.compare.action}
+      </a>
+      <ShareButton locale={locale} />
+    </div>
   </header>
 
   <dl class="mb-8 grid gap-px overflow-hidden rounded-md border bg-[var(--border)] sm:grid-cols-3">
