@@ -1,14 +1,21 @@
 ---
 /**
- * A page that only forwards to the same page in the default locale.
+ * A page that only forwards to the same page in one of the locales.
  * Unprefixed URLs (`/`, `/method`, `/m/<provider>/<model>`) are kept as
  * stable, language-neutral links; this is what they serve.
  *
- * GitHub Pages cannot send HTTP redirects, so the page redirects in the
- * browser: by script (which keeps the query string and hash) and, without
- * JavaScript, by meta refresh.
+ * The locale is picked in the browser, in this order:
+ * 1. the language the visitor last chose in the switcher (stored by
+ *    src/layouts/Base.astro under the `locale` key);
+ * 2. the first browser language we have: Chinese goes to `zh-tw` for
+ *    Traditional script or Taiwan, Hong Kong and Macau, else to `zh-cn`;
+ * 3. the default locale.
+ *
+ * GitHub Pages cannot send HTTP redirects, so the page redirects by script,
+ * which keeps the query string and hash. Without JavaScript, a meta refresh
+ * goes to the default locale.
  */
-import { DEFAULT_LOCALE, LOCALE_INFO, localePath } from '../i18n';
+import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, localePath, pagePath } from '../i18n';
 import { SITE_URL } from '../lib/dataset';
 
 interface Props {
@@ -16,7 +23,9 @@ interface Props {
   path: string;
 }
 
-const target = localePath(DEFAULT_LOCALE, Astro.props.path);
+const path = pagePath(Astro.props.path);
+const fallbackTarget = localePath(DEFAULT_LOCALE, path);
+const locales = [...LOCALES];
 ---
 
 <!doctype html>
@@ -25,13 +34,45 @@ const target = localePath(DEFAULT_LOCALE, Astro.props.path);
     <meta charset="utf-8" />
     <title>mekiki</title>
     <meta name="robots" content="noindex" />
-    <link rel="canonical" href={new URL(target, SITE_URL).href} />
-    <script is:inline define:vars={{ target }}>
-      window.location.replace(target + window.location.search + window.location.hash);
+    <link rel="canonical" href={new URL(fallbackTarget, SITE_URL).href} />
+    <script is:inline define:vars={{ path, locales, fallback: DEFAULT_LOCALE }}>
+      function known(locale) {
+        return locales.indexOf(locale) !== -1 ? locale : null;
+      }
+
+      // Map a BCP 47 tag such as `zh-Hant-HK` or `en-US` to one of our locales.
+      function fromTag(tag) {
+        var parts = String(tag || '').toLowerCase().split(/[-_]/);
+        if (parts[0] !== 'zh') return known(parts[0]);
+        if (parts.indexOf('hant') > 0) return known('zh-tw');
+        if (parts.indexOf('hans') > 0) return known('zh-cn');
+        var traditional = parts.some(function (part) {
+          return part === 'tw' || part === 'hk' || part === 'mo';
+        });
+        return known(traditional ? 'zh-tw' : 'zh-cn');
+      }
+
+      function pick() {
+        try {
+          var stored = known(localStorage.getItem('locale'));
+          if (stored) return stored;
+        } catch (error) {}
+        var tags =
+          navigator.languages && navigator.languages.length
+            ? navigator.languages
+            : [navigator.language];
+        for (var i = 0; i < tags.length; i++) {
+          var locale = fromTag(tags[i]);
+          if (locale) return locale;
+        }
+        return fallback;
+      }
+
+      window.location.replace('/' + pick() + path + window.location.search + window.location.hash);
     </script>
-    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <noscript><meta http-equiv="refresh" content={`0; url=${fallbackTarget}`} /></noscript>
   </head>
   <body>
-    <p><a href={target}>mekiki</a></p>
+    <p><a href={fallbackTarget}>mekiki</a></p>
   </body>
 </html>

@@ -2,8 +2,8 @@
  * Supported UI locales.
  *
  * Every locale lives under its own URL prefix: `/en/`, `/zh-cn/`,
- * `/zh-tw/`. Unprefixed page URLs (`/`, `/method`, `/m/...`) only redirect
- * to the default locale; see src/layouts/Redirect.astro.
+ * `/zh-tw/`. Unprefixed page URLs (`/`, `/method`, `/m/...`) only redirect,
+ * to the visitor's chosen or browser language; see src/layouts/Redirect.astro.
  *
  * To add a language: add it here, then add a dictionary in this folder and
  * register it in ./index.ts.
@@ -11,7 +11,7 @@
 export const LOCALES = ['en', 'zh-cn', 'zh-tw'] as const;
 export type Locale = (typeof LOCALES)[number];
 
-/** Where unprefixed URLs redirect to. */
+/** Where unprefixed URLs redirect to when no other language matches, and without JavaScript. */
 export const DEFAULT_LOCALE: Locale = 'en';
 
 export const LOCALE_INFO: Record<

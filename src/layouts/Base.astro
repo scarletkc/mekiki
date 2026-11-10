@@ -151,7 +151,7 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
                     title={LOCALE_INFO[item].name}
                     aria-label={LOCALE_INFO[item].name}
                     aria-current={item === locale ? 'true' : undefined}
-                    data-locale-link
+                    data-locale-link={item}
                     class="text-muted-foreground hover:text-foreground aria-[current=true]:bg-accent aria-[current=true]:text-foreground rounded px-1.5 py-1 leading-none"
                   >
                     {LOCALE_INFO[item].short}
@@ -236,10 +236,14 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
           } catch (error) {}
           if (!stored) root.classList.toggle('dark', event.matches);
         });
-        // Keep the current filters and sort when switching language.
+        // Keep the current filters and sort when switching language, and
+        // remember the choice for the unprefixed URLs (src/layouts/Redirect.astro).
         document.querySelectorAll('[data-locale-link]').forEach(function (link) {
           link.addEventListener('click', function () {
             link.setAttribute('href', link.pathname + window.location.search + window.location.hash);
+            try {
+              localStorage.setItem('locale', link.getAttribute('data-locale-link'));
+            } catch (error) {}
           });
         });
       })();

@@ -172,9 +172,12 @@ and the others are type-checked against it, so a missing string fails `pnpm chec
 
 - Every language has its own prefix: `/en/`, `/zh-cn/` and `/zh-tw/`.
 - Unprefixed page URLs (`/`, `/method`, `/api`, `/m/<provider>/<model>`) redirect to the
-  English page and keep the query string. GitHub Pages cannot send HTTP redirects, so they
-  redirect in the browser. The API's `url` field uses the unprefixed form as a
-  language-neutral link.
+  same page in the language the visitor last picked in the switcher. Without such a choice,
+  they follow the browser's language: Chinese goes to `/zh-tw/` for Traditional script or
+  Taiwan, Hong Kong and Macau and to `/zh-cn/` otherwise, and everything else goes to
+  `/en/`. The query string and hash are kept. GitHub Pages cannot send HTTP redirects, so
+  they redirect in the browser; without JavaScript they go to English. The API's `url`
+  field uses the unprefixed form as a language-neutral link.
 - Hand-written text (verdict, strengths, weaknesses, review) is shown as written in every
   language. It is not translated or converted.
 - The JSON API is not localised; it carries tier labels for every language instead.
