@@ -53,7 +53,10 @@ function parseArgs(argv: string[]) {
       throw new Error(`Unknown argument "${arg}".`);
     }
   }
-  return { sources: only.size > 0 ? SOURCE_IDS.filter((id) => only.has(id)) : [...SOURCE_IDS], dryRun };
+  return {
+    sources: only.size > 0 ? SOURCE_IDS.filter((id) => only.has(id)) : [...SOURCE_IDS],
+    dryRun,
+  };
 }
 
 /** Stable JSON: model keys sorted so diffs only show real changes. */
@@ -181,7 +184,9 @@ function printConsole(reports: SourceReport[], dryRun: boolean) {
   for (const report of reports) {
     const lines = unmatchedLines(report);
     if (lines.length === 0) continue;
-    console.log(`\nUnmatched in ${SOURCE_INFO[report.source].name} (set the field in the model file):`);
+    console.log(
+      `\nUnmatched in ${SOURCE_INFO[report.source].name} (set the field in the model file):`,
+    );
     for (const line of lines) console.log(`  ${line}`);
   }
 

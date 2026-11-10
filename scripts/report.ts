@@ -22,7 +22,8 @@ interface Column {
 }
 
 const dash = '–';
-const number = (value: number | null, digits = 1) => (value === null ? dash : value.toFixed(digits));
+const number = (value: number | null, digits = 1) =>
+  value === null ? dash : value.toFixed(digits);
 const price = (value: number | null) =>
   value === null ? dash : `$${Number(value.toFixed(4)).toString()}`;
 
@@ -32,7 +33,9 @@ function table(rows: string[][], aligns: Align[]): string {
     .map((row, index) => {
       const line = row
         .map((cell, column) =>
-          aligns[column] === 'right' ? cell.padStart(widths[column]!) : cell.padEnd(widths[column]!),
+          aligns[column] === 'right'
+            ? cell.padStart(widths[column]!)
+            : cell.padEnd(widths[column]!),
         )
         .join('  ')
         .trimEnd();

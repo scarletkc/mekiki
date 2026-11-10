@@ -224,7 +224,8 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
   const [urlRead, setUrlRead] = useState(false);
 
   const vendors = useMemo(
-    () => [...new Set(models.map((model) => model.vendor))].sort((a, b) => a.localeCompare(b, lang)),
+    () =>
+      [...new Set(models.map((model) => model.vendor))].sort((a, b) => a.localeCompare(b, lang)),
     [models, lang],
   );
   const legacyCount = useMemo(() => models.filter((model) => model.legacy).length, [models]);
@@ -271,8 +272,11 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
     // Empty cells are returned as undefined and `sortUndefined: 'last'`
     // keeps them at the bottom in both directions.
     const text = {
-      sortFn: (a: { getValue: (id: string) => unknown }, b: { getValue: (id: string) => unknown }, id: string) =>
-        collator.compare(String(a.getValue(id)), String(b.getValue(id))),
+      sortFn: (
+        a: { getValue: (id: string) => unknown },
+        b: { getValue: (id: string) => unknown },
+        id: string,
+      ) => collator.compare(String(a.getValue(id)), String(b.getValue(id))),
       sortUndefined: 'last' as const,
     };
     const figure = {
@@ -418,11 +422,7 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
 
   return (
     <div>
-      <div
-        role="search"
-        aria-label={t.filters}
-        className="mb-3 flex flex-wrap items-center gap-2"
-      >
+      <div role="search" aria-label={t.filters} className="mb-3 flex flex-wrap items-center gap-2">
         <Input
           type="search"
           value={filters.q}

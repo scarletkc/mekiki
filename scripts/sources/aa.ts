@@ -42,9 +42,7 @@ const optionalNumber = z.number().nullish();
 const modelSchema = z.object({
   slug: z.string().min(1),
   name: z.string().nullish(),
-  evaluations: z
-    .object({ artificial_analysis_intelligence_index: optionalNumber })
-    .nullish(),
+  evaluations: z.object({ artificial_analysis_intelligence_index: optionalNumber }).nullish(),
   artificial_analysis_intelligence_index_cost: z.object({ total_cost: optionalNumber }).nullish(),
 });
 
@@ -84,8 +82,12 @@ export const aaAdapter: SourceAdapter<'aa'> = {
         invalid += 1;
         continue;
       }
-      const { slug, name, evaluations, artificial_analysis_intelligence_index_cost: cost } =
-        parsed.data;
+      const {
+        slug,
+        name,
+        evaluations,
+        artificial_analysis_intelligence_index_cost: cost,
+      } = parsed.data;
       if (bySlug.has(slug)) {
         warnings.push(`Slug "${slug}" is listed more than once; kept the first entry.`);
         continue;

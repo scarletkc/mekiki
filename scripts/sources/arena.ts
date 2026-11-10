@@ -66,8 +66,7 @@ function readBoard(board: ArenaBoard, rows: unknown, warnings: string[]): Map<st
       invalid += 1;
       continue;
     }
-    const { model_name: name, rating, category, leaderboard_publish_date: published } =
-      parsed.data;
+    const { model_name: name, rating, category, leaderboard_publish_date: published } = parsed.data;
     if (category !== CATEGORY) continue;
     const existing = ratings.get(name);
     if (existing) {

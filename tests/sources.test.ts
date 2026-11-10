@@ -11,7 +11,11 @@ const withTimestamp = <T extends object>(snapshot: T) => ({
   fetched_at: '2026-11-11T00:00:00.000Z',
 });
 
-const tracked = (id: string, name: string, sources: TrackedModel['sources'] = {}): TrackedModel => ({
+const tracked = (
+  id: string,
+  name: string,
+  sources: TrackedModel['sources'] = {},
+): TrackedModel => ({
   id,
   name,
   sources,
@@ -172,7 +176,10 @@ describe('Arena adapter', () => {
     expect(() => arenaAdapter.transform({ arena_text: raw.arena_text }, [])).toThrow();
     expect(() => arenaAdapter.transform({ ...raw, arena_webdev: [] }, [])).toThrow();
     expect(() =>
-      arenaAdapter.transform({ ...raw, arena_webdev: [{ nope: 1 }, { nope: 2 }, raw.arena_webdev[0]] }, []),
+      arenaAdapter.transform(
+        { ...raw, arena_webdev: [{ nope: 1 }, { nope: 2 }, raw.arena_webdev[0]] },
+        [],
+      ),
     ).toThrow();
   });
 });
@@ -255,11 +262,17 @@ describe('Artificial Analysis adapter', () => {
 
 describe('suggest', () => {
   it('returns nothing when nothing is close', () => {
-    expect(suggest({ id: 'a/b', name: 'Totally Different' }, [{ id: 'GPT-6.1 Sol (Max)' }])).toEqual([]);
+    expect(
+      suggest({ id: 'a/b', name: 'Totally Different' }, [{ id: 'GPT-6.1 Sol (Max)' }]),
+    ).toEqual([]);
   });
 
   it('ranks the closest name first', () => {
-    const pool = ['GPT-6 Sol (Max)', 'GPT-6.1 Sol (Max)', 'GPT-5.6 Terra (xHigh)'].map((id) => ({ id }));
-    expect(suggest({ id: 'openai/gpt-6.1-sol', name: 'GPT-6.1 Sol' }, pool)[0]).toBe('GPT-6.1 Sol (Max)');
+    const pool = ['GPT-6 Sol (Max)', 'GPT-6.1 Sol (Max)', 'GPT-5.6 Terra (xHigh)'].map((id) => ({
+      id,
+    }));
+    expect(suggest({ id: 'openai/gpt-6.1-sol', name: 'GPT-6.1 Sol' }, pool)[0]).toBe(
+      'GPT-6.1 Sol (Max)',
+    );
   });
 });

@@ -89,7 +89,9 @@ export const modelsdevAdapter: SourceAdapter<'modelsdev'> = {
       }
       const item = modelSchema.safeParse(rawModel);
       if (!item.success) {
-        warnings.push(`${sourceId}: unexpected fields (${item.error.issues[0]?.message}); skipped.`);
+        warnings.push(
+          `${sourceId}: unexpected fields (${item.error.issues[0]?.message}); skipped.`,
+        );
         continue;
       }
       const { data } = item;

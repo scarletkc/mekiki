@@ -101,7 +101,8 @@ export const zhCN: Dictionary = {
     cacheRead: '缓存读取',
     blended: '混合价',
     blendedUnit: '混合价，美元 / 百万 token',
-    priceNote: '价格单位是美元 / 百万 token。混合价假设 {hit}% 的输入命中缓存，再按输入 {input}、输出 {output} 的比例加权。',
+    priceNote:
+      '价格单位是美元 / 百万 token。混合价假设 {hit}% 的输入命中缓存，再按输入 {input}、输出 {output} 的比例加权。',
     priceOverride: '价格为手动填写，未采用 models.dev 的数据。',
     costIndex: '成本指数',
     context: '上下文长度',
@@ -127,11 +128,13 @@ export const zhCN: Dictionary = {
   },
   method: {
     title: '评分方法',
-    intro: '每个模型有三个评级：智能、成本、性价比。下面的权重和阈值都直接读自评分配置，改了配置这里会跟着变。',
+    intro:
+      '每个模型有三个评级：智能、成本、性价比。下面的权重和阈值都直接读自评分配置，改了配置这里会跟着变。',
     intelligenceTitle: '智能',
     intelligenceBody:
       '每个榜单指标先归一化到 0–100，100 表示该指标当前的榜首。指数类指标从 0 起算；Elo 类指标只取榜首往下固定的一段，范围见下表。',
-    benchmarkBody: '榜单分是已有指标的加权平均。模型缺哪个指标，那个指标就不计入，其余权重重新归一。',
+    benchmarkBody:
+      '榜单分是已有指标的加权平均。模型缺哪个指标，那个指标就不计入，其余权重重新归一。',
     weightsCaption: '榜单指标与权重',
     source: '来源',
     floor: '零点',
@@ -149,7 +152,8 @@ export const zhCN: Dictionary = {
     formulaBenchmark: '榜单分',
     formulaSubjective: '主观分',
     formulaNone: '不评级，排序时排在最后',
-    subjectiveBody: '主观分由 mekiki 手动给出，100 表示“mekiki 认为的当前最强”，和榜单归一化后的 100 是同一把尺。',
+    subjectiveBody:
+      '主观分由 mekiki 手动给出，100 表示“mekiki 认为的当前最强”，和榜单归一化后的 100 是同一把尺。',
     costTitle: '成本',
     costBody:
       '价格取 models.dev 上的官方价，单位是美元 / 百万 token。假设 {hit}% 的输入 token 命中缓存：实际输入价 = {hitRate} × 缓存读取价 + {missRate} × 输入价。没有缓存读取价的模型按输入价全额计算，缓存写入的额外费用不计。混合价 =（{input} × 实际输入价 + {output} × 输出价）÷ {total}。档位按混合价的绝对值划分。',
@@ -175,8 +179,10 @@ export const zhCN: Dictionary = {
     useArena: '文本榜和 WebDev 榜的分数',
     licenseAa: '按其条款署名',
     caveatsTitle: '注意',
-    caveatAaCoding: '编程能力用 Arena 的 WebDev 榜衡量。Artificial Analysis 也有编程指数，但免费 API 不提供，所以没有采用。',
-    caveatVariants: '同一个模型在榜单上常按推理档位分成多个条目，这里取的是 mekiki 实际使用的那一档。',
+    caveatAaCoding:
+      '编程能力用 Arena 的 WebDev 榜衡量。Artificial Analysis 也有编程指数，但免费 API 不提供，所以没有采用。',
+    caveatVariants:
+      '同一个模型在榜单上常按推理档位分成多个条目，这里取的是 mekiki 实际使用的那一档。',
     caveatPersonal: '主观分是个人判断，不是评测结论。',
   },
   api: {
@@ -194,12 +200,15 @@ export const zhCN: Dictionary = {
     fieldsTitle: '字段说明',
     fieldScores: '分数保留一位小数。缺失值是 null，字段不会被省略。',
     fieldTier: 'tier 是稳定的英文 key；label 是英文标签，labels 里有各语言的标签。',
-    fieldBasis: 'intelligence.basis 说明智能分的来源：both、benchmark_only、subjective_only 或 none。',
-    fieldPrice: '价格单位是美元 / 百万 token；cost.blended 是混合价，已计入假设的缓存命中（见“评分方法”），cost.index 是 0–100 的成本指数。',
+    fieldBasis:
+      'intelligence.basis 说明智能分的来源：both、benchmark_only、subjective_only 或 none。',
+    fieldPrice:
+      '价格单位是美元 / 百万 token；cost.blended 是混合价，已计入假设的缓存命中（见“评分方法”），cost.index 是 0–100 的成本指数。',
     versionTitle: '版本',
     versionBody: '字段只加不改。有破坏性变更时，version 加一。当前是 version {version}。',
     attributionTitle: '署名',
-    attributionBody: '榜单数据来自 Artificial Analysis 和 Arena，价格来自 models.dev。转载这些数字时请同样注明来源。',
+    attributionBody:
+      '榜单数据来自 Artificial Analysis 和 Arena，价格来自 models.dev。转载这些数字时请同样注明来源。',
   },
   footer: {
     sources: '数据来源：',

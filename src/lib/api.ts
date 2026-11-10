@@ -37,10 +37,7 @@ export interface ApiModel {
     basis: Basis;
     benchmark: number | null;
     subjective: number | null;
-    breakdown: Record<
-      MetricKey,
-      { raw: number | null; normalized: number | null; weight: number }
-    >;
+    breakdown: Record<MetricKey, { raw: number | null; normalized: number | null; weight: number }>;
   };
   cost: TierFields<CostTier> & {
     index: number | null;

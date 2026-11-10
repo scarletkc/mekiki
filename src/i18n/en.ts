@@ -92,7 +92,8 @@ export const en = {
     basisLine: 'Basis: {basis}',
     basisNote: {
       both: 'Benchmarks count for {benchmark}%, the subjective score for {subjective}%.',
-      benchmark_only: "mekiki hasn't scored this model yet, so intelligence equals the benchmark score.",
+      benchmark_only:
+        "mekiki hasn't scored this model yet, so intelligence equals the benchmark score.",
       subjective_only: 'There is no benchmark data, so intelligence equals the subjective score.',
       none: "There is no benchmark data and no subjective score, so it isn't rated.",
     },
@@ -204,7 +205,8 @@ export const en = {
     exampleTitle: 'Example',
     exampleBody: 'This is the live response for {id}.',
     fieldsTitle: 'Fields',
-    fieldScores: 'Scores have one decimal place. Missing values are null; fields are never omitted.',
+    fieldScores:
+      'Scores have one decimal place. Missing values are null; fields are never omitted.',
     fieldTier:
       'tier is a stable English key. label is the English label, and labels holds the label in every language.',
     fieldBasis:

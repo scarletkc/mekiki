@@ -1,7 +1,7 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-@import "@fontsource-variable/instrument-sans";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '@fontsource-variable/instrument-sans';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -11,8 +11,9 @@
  * Everything else stays neutral so the two rating colours carry meaning.
  */
 @theme inline {
-    --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, 'PingFang SC',
-        'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Noto Sans SC', sans-serif;
+    --font-sans:
+        'Instrument Sans Variable', ui-sans-serif, system-ui, 'PingFang SC', 'Hiragino Sans GB',
+        'Microsoft YaHei', 'Noto Sans CJK SC', 'Noto Sans SC', sans-serif;
     --font-heading: var(--font-sans);
     --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
     --color-quality: var(--quality);
@@ -112,7 +113,8 @@
 
     /* Traditional Chinese pages fall back to Traditional system fonts. */
     html:lang(zh-TW) {
-        font-family: 'Instrument Sans Variable', ui-sans-serif, system-ui, 'PingFang TC',
+        font-family:
+            'Instrument Sans Variable', ui-sans-serif, system-ui, 'PingFang TC',
             'Microsoft JhengHei', 'Noto Sans CJK TC', 'Noto Sans TC', sans-serif;
     }
 

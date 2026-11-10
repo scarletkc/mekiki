@@ -240,9 +240,7 @@ export function rateModel(input: RatingInput, config: ScoringConfig = scoringCon
   const intelligence = computeIntelligence(benchmark.score, subjective, config);
 
   const price =
-    input.price && isNumber(input.price.input) && isNumber(input.price.output)
-      ? input.price
-      : null;
+    input.price && isNumber(input.price.input) && isNumber(input.price.output) ? input.price : null;
   const blended = price
     ? blendedPrice(effectiveInputPrice(price.input, price.cache_read, config), price.output, config)
     : null;

@@ -15,11 +15,12 @@ export const SOURCE_IDS = ['modelsdev', 'aa', 'arena'] as const;
 export type SourceId = (typeof SOURCE_IDS)[number];
 
 /** Static facts about each source, used for attribution and links. */
-export const SOURCE_INFO: Record<SourceId, { name: string; url: string; license: string | null }> = {
-  modelsdev: { name: 'models.dev', url: 'https://models.dev/', license: 'MIT' },
-  aa: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', license: null },
-  arena: { name: 'Arena', url: 'https://arena.ai/leaderboard', license: 'CC BY 4.0' },
-};
+export const SOURCE_INFO: Record<SourceId, { name: string; url: string; license: string | null }> =
+  {
+    modelsdev: { name: 'models.dev', url: 'https://models.dev/', license: 'MIT' },
+    aa: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', license: null },
+    arena: { name: 'Arena', url: 'https://arena.ai/leaderboard', license: 'CC BY 4.0' },
+  };
 
 const frontier = z.record(z.string(), z.number().nullable());
 const nullableNumber = z.number().nullable();
@@ -48,9 +49,7 @@ export const modelsdevModelSchema = z.object({
   context: nullableNumber,
   release_date: z.string().nullable(),
   open_weights: z.boolean().nullable(),
-  modalities: z
-    .object({ input: z.array(z.string()), output: z.array(z.string()) })
-    .nullable(),
+  modalities: z.object({ input: z.array(z.string()), output: z.array(z.string()) }).nullable(),
 });
 
 export const aaModelSchema = z.object({

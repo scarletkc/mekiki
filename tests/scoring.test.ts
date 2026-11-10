@@ -31,8 +31,18 @@ const specConfig: ScoringConfig = {
     benchmarkWeight: 0.6,
     subjectiveWeight: 0.4,
     metrics: {
-      aa_intelligence: { source: 'aa', mapping: 'aa', weight: 0.5, floor: { type: 'absolute', value: 0 } },
-      aa_coding: { source: 'aa', mapping: 'aa', weight: 0.2, floor: { type: 'absolute', value: 0 } },
+      aa_intelligence: {
+        source: 'aa',
+        mapping: 'aa',
+        weight: 0.5,
+        floor: { type: 'absolute', value: 0 },
+      },
+      aa_coding: {
+        source: 'aa',
+        mapping: 'aa',
+        weight: 0.2,
+        floor: { type: 'absolute', value: 0 },
+      },
       arena_text: {
         source: 'arena',
         mapping: 'arena_text',
@@ -50,7 +60,12 @@ const specConfig: ScoringConfig = {
     indexCeilPrice: 30,
     tiers: { low: 1, mid: 5, high: 15 },
   },
-  value: { intelligenceExponent: 0.6, affordabilityExponent: 0.4, minAffordability: 5, tiers: { top: 70, high: 60, mid: 50 } },
+  value: {
+    intelligenceExponent: 0.6,
+    affordabilityExponent: 0.4,
+    minAffordability: 5,
+    tiers: { top: 70, high: 60, mid: 50 },
+  },
 };
 
 interface Fixture {
@@ -293,7 +308,10 @@ describe('computeBenchmark', () => {
   });
 
   it('ignores scores for metrics that are not in the config', () => {
-    const { score, breakdown } = computeBenchmark({ made_up: 99, arena_text: 1350 }, { made_up: 100, arena_text: 1500 });
+    const { score, breakdown } = computeBenchmark(
+      { made_up: 99, arena_text: 1350 },
+      { made_up: 100, arena_text: 1500 },
+    );
     expect(score).toBe(50);
     expect(breakdown.made_up).toBeUndefined();
   });
@@ -359,7 +377,11 @@ describe('cost', () => {
       subjective: null,
       price: { input: 5, output: 25, cache_read: 0.5 },
     };
-    expect(rateModel(input, noCache).cost).toMatchObject({ blended: 10, index: 80.7, tier: 'high' });
+    expect(rateModel(input, noCache).cost).toMatchObject({
+      blended: 10,
+      index: 80.7,
+      tier: 'high',
+    });
   });
 
   it('maps the blended price to a log-scaled index', () => {
@@ -476,7 +498,12 @@ describe('rateModel edge cases', () => {
     config.intelligence.benchmarkWeight = 1;
     config.intelligence.subjectiveWeight = 1;
     const rating = rateModel(
-      { metrics: { aa_intelligence: 35 }, frontier: { aa_intelligence: 70 }, subjective: 100, price: null },
+      {
+        metrics: { aa_intelligence: 35 },
+        frontier: { aa_intelligence: 70 },
+        subjective: 100,
+        price: null,
+      },
       config,
     );
     expect(rating.intelligence.score).toBe(75);

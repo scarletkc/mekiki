@@ -14,7 +14,10 @@ export const MODELS_DIR = 'src/content/models';
  * (dots and upper case are kept) because it has to match models.dev.
  */
 export function modelIdFromPath(relativePath: string): string {
-  return relativePath.replace(/\\/g, '/').replace(/^\.?\//, '').replace(/\.md$/i, '');
+  return relativePath
+    .replace(/\\/g, '/')
+    .replace(/^\.?\//, '')
+    .replace(/\.md$/i, '');
 }
 
 // YAML turns an empty value (`score:`) into null and an empty string is
@@ -63,17 +66,16 @@ export const modelSchema = z.object({
     .preprocess(
       (value) => value ?? {},
       z.object({
-        price: z
-          .preprocess(
-            blankToUndefined,
-            z
-              .object({
-                input: price,
-                output: price,
-                cache_read: z.preprocess(blankToUndefined, price.optional()),
-              })
-              .optional(),
-          ),
+        price: z.preprocess(
+          blankToUndefined,
+          z
+            .object({
+              input: price,
+              output: price,
+              cache_read: z.preprocess(blankToUndefined, price.optional()),
+            })
+            .optional(),
+        ),
       }),
     )
     .default({}),
