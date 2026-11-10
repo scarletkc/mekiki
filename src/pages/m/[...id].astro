@@ -1,0 +1,14 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import { DEFAULT_LOCALE } from '../../i18n';
+import { modelStaticPaths } from '../../lib/routes';
+import ModelView from '../../views/ModelView.astro';
+
+export const getStaticPaths = modelStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { model, entry } = Astro.props;
+---
+
+<ModelView locale={DEFAULT_LOCALE} model={model} entry={entry} />

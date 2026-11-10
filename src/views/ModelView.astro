@@ -1,0 +1,296 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import { TierMeter } from '../components/TierMeter';
+import { fmt, localePath, useTranslations, type Locale } from '../i18n';
+import Base from '../layouts/Base.astro';
+import type { ModelRecord } from '../lib/dataset';
+import { formatPercent, formatPrice, formatScore, formatTokens } from '../lib/format';
+import { METRIC_KEYS, scoringConfig } from '../lib/scoring.config';
+
+interface Props {
+  locale: Locale;
+  model: ModelRecord;
+  entry: CollectionEntry<'models'>;
+}
+
+const { locale, model, entry } = Astro.props;
+const t = useTranslations(locale);
+const { Content } = await render(entry);
+
+const { intelligence, cost, value } = model.rating;
+const { benchmarkWeight, subjectiveWeight } = scoringConfig.intelligence;
+const share = (weight: number) =>
+  formatPercent(weight / (benchmarkWeight + subjectiveWeight)).replace('%', '');
+
+const metrics = METRIC_KEYS.map((key) => {
+  const item = intelligence.breakdown[key];
+  const source = scoringConfig.intelligence.metrics[key].source;
+  const mapped = source === 'aa' ? model.source_ids.aa : model.source_ids.arena_text;
+  // Say why a figure is missing: no mapping, not in the snapshot, or simply no score.
+  const missing = mapped === null ? t.detail.notMapped : !model.matched[source] ? t.detail.notFound : t.empty.noData;
+  return { key, label: t.metric[key], ...item, mapped, missing };
+});
+
+const reviewed = model.reviewed_at !== null || intelligence.subjective !== null || model.verdict !== null;
+const hasNotes = model.pros.length > 0 || model.cons.length > 0 || model.best_for.length > 0;
+
+const links = [
+  { href: model.links.aa, label: t.detail.linkAa },
+  { href: model.links.arena, label: t.detail.linkArena },
+  { href: model.links.modelsdev, label: t.detail.linkModelsdev },
+  { href: `/api/models/${model.id}.json`, label: t.detail.linkJson },
+].filter((link): link is { href: string; label: string } => link.href !== null);
+
+const description = model.verdict ?? `${model.name} (${model.vendor}): ${t.meta.tagline}`;
+---
+
+<Base locale={locale} path={`/m/${model.id}`} title={model.name} description={description}>
+  <p class="text-muted-foreground mb-3 text-sm">
+    <a href={localePath(locale, '/')} class="hover:text-foreground underline">{t.detail.back}</a>
+  </p>
+
+  <header class="mb-6">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <h1 class="text-2xl font-semibold tracking-tight">{model.name}</h1>
+      {model.status === 'legacy' && <span class="text-muted-foreground rounded border px-1.5 text-xs leading-5">{t.badge.legacy}</span>}
+      {model.facts.open_weights === true && <span class="text-muted-foreground rounded border px-1.5 text-xs leading-5">{t.badge.openWeights}</span>}
+    </div>
+    <p class="text-muted-foreground mt-0.5 text-sm">
+      {model.vendor}
+      <span class="mx-1" aria-hidden="true">/</span>
+      <code class="font-mono text-[0.8125rem]">{model.id}</code>
+    </p>
+    {model.verdict && <p class="mt-3 max-w-[68ch] text-[1.0625rem]">{model.verdict}</p>}
+    <p class="text-muted-foreground mt-2 text-sm">
+      {
+        model.reviewed_at ? (
+          <>
+            {fmt(t.detail.reviewedAt, { date: model.reviewed_at })}
+            {model.stale && <span class="text-expense ml-2">{t.badge.stale}</span>}
+          </>
+        ) : !reviewed ? (
+          t.detail.notReviewed
+        ) : null
+      }
+    </p>
+  </header>
+
+  <dl class="mb-8 grid gap-px overflow-hidden rounded-md border bg-[var(--border)] sm:grid-cols-3">
+    <div class="bg-card px-4 py-3">
+      <dt class="text-muted-foreground text-xs">{t.rating.intelligence}</dt>
+      <dd class="mt-1 text-base">
+        <TierMeter
+          kind="intelligence"
+          tier={intelligence.tier}
+          label={intelligence.tier ? t.tier.intelligence[intelligence.tier] : t.empty.unrated}
+          figure={intelligence.score === null ? null : formatScore(intelligence.score)}
+        />
+      </dd>
+      <dd class="text-muted-foreground mt-1 text-xs">{fmt(t.detail.basisLine, { basis: t.basis[intelligence.basis] })}</dd>
+    </div>
+    <div class="bg-card px-4 py-3">
+      <dt class="text-muted-foreground text-xs">{t.rating.cost}</dt>
+      <dd class="mt-1 text-base">
+        <TierMeter
+          kind="cost"
+          tier={cost.tier}
+          label={cost.tier ? t.tier.cost[cost.tier] : t.empty.noPrice}
+          figure={cost.free ? t.empty.free : cost.blended === null ? null : formatPrice(cost.blended)}
+        />
+      </dd>
+      <dd class="text-muted-foreground mt-1 text-xs">
+        {
+          cost.blended === null ? t.empty.noPrice : t.detail.blendedUnit
+        }
+      </dd>
+    </div>
+    <div class="bg-card px-4 py-3">
+      <dt class="text-muted-foreground text-xs">{t.rating.value}</dt>
+      <dd class="mt-1 text-base">
+        <TierMeter
+          kind="value"
+          tier={value.tier}
+          label={value.tier ? t.tier.value[value.tier] : t.empty.unrated}
+          figure={value.score === null ? null : formatScore(value.score)}
+        />
+      </dd>
+      <dd class="text-muted-foreground mt-1 text-xs">
+        {
+          cost.index === null
+            ? t.empty.noPrice
+            : `${t.detail.costIndex} ${formatScore(cost.index)}`
+        }
+      </dd>
+    </div>
+  </dl>
+
+  <div class="grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0">
+      <section aria-labelledby="breakdown">
+        <h2 id="breakdown" class="mb-2 text-base font-semibold">{t.detail.breakdown}</h2>
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <caption>{t.detail.breakdown}</caption>
+            <thead>
+              <tr>
+                <th scope="col">{t.detail.metricCol}</th>
+                <th scope="col" class="num">{t.detail.raw}</th>
+                <th scope="col" class="num">{t.detail.frontier}</th>
+                <th scope="col" class="num">{t.detail.normalized}</th>
+                <th scope="col" class="num">{t.detail.weight}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                metrics.map((metric) => (
+                  <tr>
+                    <th scope="row">
+                      {metric.label}
+                      {metric.mapped && (
+                        <span class="text-muted-foreground block text-xs font-normal">{metric.mapped}</span>
+                      )}
+                    </th>
+                    {metric.raw === null ? (
+                      <td class="num text-muted-foreground" colspan="1">{metric.missing}</td>
+                    ) : (
+                      <td class="num">{metric.raw}</td>
+                    )}
+                    <td class="num">
+                      {metric.frontier === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : metric.frontier}
+                    </td>
+                    <td class="num">
+                      {metric.normalized === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : formatScore(metric.normalized)}
+                    </td>
+                    <td class="num">{formatPercent(metric.weight)}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
+          <dt class="text-muted-foreground">{t.detail.benchmark}</dt>
+          <dd class="num">
+            {intelligence.benchmark === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : formatScore(intelligence.benchmark)}
+          </dd>
+          <dt class="text-muted-foreground">{t.detail.subjective}</dt>
+          <dd class="num">
+            {intelligence.subjective === null ? <span class="text-muted-foreground">{t.empty.unrated}</span> : formatScore(intelligence.subjective)}
+          </dd>
+          <dt class="text-muted-foreground">{t.rating.intelligence}</dt>
+          <dd class="num font-medium">
+            {intelligence.score === null ? <span class="text-muted-foreground font-normal">{t.empty.unrated}</span> : formatScore(intelligence.score)}
+          </dd>
+        </dl>
+        <p class="text-muted-foreground mt-2 max-w-[68ch] text-sm">
+          {
+            fmt(t.detail.basisNote[intelligence.basis], {
+              benchmark: share(benchmarkWeight),
+              subjective: share(subjectiveWeight),
+            })
+          }
+        </p>
+      </section>
+
+      {
+        hasNotes && (
+          <section class="mt-8 grid gap-6 sm:grid-cols-2">
+            {model.pros.length > 0 && (
+              <div>
+                <h2 class="mb-1.5 text-base font-semibold">{t.detail.pros}</h2>
+                <ul class="list-disc space-y-1 pl-5 text-sm">
+                  {model.pros.map((item) => <li>{item}</li>)}
+                </ul>
+              </div>
+            )}
+            {model.cons.length > 0 && (
+              <div>
+                <h2 class="mb-1.5 text-base font-semibold">{t.detail.cons}</h2>
+                <ul class="list-disc space-y-1 pl-5 text-sm">
+                  {model.cons.map((item) => <li>{item}</li>)}
+                </ul>
+              </div>
+            )}
+            {model.best_for.length > 0 && (
+              <div class="sm:col-span-2">
+                <h2 class="mb-1.5 text-base font-semibold">{t.detail.bestFor}</h2>
+                <ul class="flex flex-wrap gap-1.5 text-sm">
+                  {model.best_for.map((item) => <li class="bg-secondary rounded px-2 py-0.5">{item}</li>)}
+                </ul>
+              </div>
+            )}
+          </section>
+        )
+      }
+
+      {
+        model.has_review && (
+          <section class="mt-8" aria-labelledby="review">
+            <h2 id="review" class="mb-1 text-base font-semibold">{t.detail.review}</h2>
+            <div class="prose">
+              <Content />
+            </div>
+          </section>
+        )
+      }
+    </div>
+
+    <aside class="min-w-0 text-sm">
+      <h2 class="mb-2 text-base font-semibold">{t.detail.facts}</h2>
+      <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 [&_dd]:text-end [&_dt]:text-muted-foreground">
+        <dt>{t.detail.input}</dt>
+        <dd class="num">{cost.input === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : cost.free ? t.empty.free : formatPrice(cost.input)}</dd>
+        <dt>{t.detail.output}</dt>
+        <dd class="num">{cost.output === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : cost.free ? t.empty.free : formatPrice(cost.output)}</dd>
+        <dt>{t.detail.cacheRead}</dt>
+        <dd class="num">{cost.cache_read === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : formatPrice(cost.cache_read)}</dd>
+        <dt>{t.detail.blended}</dt>
+        <dd class="num">{cost.blended === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : formatPrice(cost.blended)}</dd>
+        <dt>{t.detail.context}</dt>
+        <dd class="num">
+          {model.facts.context === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : fmt(t.detail.tokens, { n: formatTokens(model.facts.context) })}
+        </dd>
+        <dt>{t.detail.releaseDate}</dt>
+        <dd class="num">{model.facts.release_date ?? <span class="text-muted-foreground">{t.empty.noData}</span>}</dd>
+        <dt>{t.detail.weights}</dt>
+        <dd>
+          {model.facts.open_weights === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : model.facts.open_weights ? t.detail.open : t.detail.closed}
+        </dd>
+        <dt>{t.detail.modalities}</dt>
+        <dd>
+          {
+            model.facts.modalities === null ? (
+              <span class="text-muted-foreground">{t.empty.noData}</span>
+            ) : (
+              <>
+                <span class="text-muted-foreground">{t.detail.modalityIn}</span> {model.facts.modalities.input.join(', ') || t.empty.noData}
+                <br />
+                <span class="text-muted-foreground">{t.detail.modalityOut}</span> {model.facts.modalities.output.join(', ') || t.empty.noData}
+              </>
+            )
+          }
+        </dd>
+        <dt>{t.detail.indexCost}</dt>
+        <dd class="num">
+          {model.facts.index_cost_usd === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : formatPrice(model.facts.index_cost_usd)}
+        </dd>
+      </dl>
+      <p class="text-muted-foreground mt-2 text-xs">
+        {fmt(t.detail.priceNote, { input: scoringConfig.cost.inputWeight, output: scoringConfig.cost.outputWeight })}
+        {model.price_source === 'override' && t.detail.priceOverride}
+        {model.facts.index_cost_usd !== null && t.detail.indexCostNote}
+      </p>
+
+      <h2 class="mt-7 mb-2 text-base font-semibold">{t.detail.links}</h2>
+      <ul class="space-y-1">
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href} class="text-primary underline">{link.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </aside>
+  </div>
+</Base>

@@ -1,0 +1,94 @@
+---
+import { fmt, useTranslations, type Locale } from '../i18n';
+import Base from '../layouts/Base.astro';
+import { API_VERSION, toApiModel } from '../lib/api';
+import { SITE_URL } from '../lib/dataset';
+import { getDataset } from '../lib/site-data';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const a = t.api;
+const dataset = await getDataset();
+
+// Show a real response, preferring a model that has every rating.
+const sample =
+  dataset.models.find((model) => model.rating.value.score !== null) ?? dataset.models[0];
+const samplePath = sample ? `/api/models/${sample.id}.json` : '/api/models/<provider>/<model>.json';
+
+const endpoints = [
+  { path: '/api.json', href: '/api.json', content: a.endpointFull },
+  { path: '/api/models.json', href: '/api/models.json', content: a.endpointList },
+  {
+    path: '/api/models/<provider>/<model>.json',
+    href: sample ? samplePath : null,
+    content: a.endpointOne,
+  },
+];
+---
+
+<Base locale={locale} path="/api" title={a.title}>
+  <article class="prose">
+    <h1 class="text-xl font-semibold tracking-tight">{a.title}</h1>
+    <p>{a.intro}</p>
+
+    <h2 id="endpoints">{a.endpointsTitle}</h2>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <caption>{a.endpointsCaption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{a.path}</th>
+            <th scope="col">{a.content}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            endpoints.map((endpoint) => (
+              <tr>
+                <th scope="row" class="whitespace-nowrap">
+                  {endpoint.href ? (
+                    <a href={endpoint.href}>
+                      <code>{endpoint.path}</code>
+                    </a>
+                  ) : (
+                    <code>{endpoint.path}</code>
+                  )}
+                </th>
+                <td>{endpoint.content}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="example">{a.exampleTitle}</h2>
+    <pre><code>curl {SITE_URL}{samplePath}</code></pre>
+    {
+      sample && (
+        <>
+          <p>{fmt(a.exampleBody, { id: sample.id })}</p>
+          <pre><code>{JSON.stringify(toApiModel(sample), null, 2)}</code></pre>
+        </>
+      )
+    }
+
+    <h2 id="fields">{a.fieldsTitle}</h2>
+    <ul>
+      <li>{a.fieldScores}</li>
+      <li>{a.fieldTier}</li>
+      <li>{a.fieldBasis}</li>
+      <li>{a.fieldPrice}</li>
+    </ul>
+
+    <h2 id="versioning">{a.versionTitle}</h2>
+    <p>{fmt(a.versionBody, { version: API_VERSION })}</p>
+
+    <h2 id="attribution">{a.attributionTitle}</h2>
+    <p>{a.attributionBody}</p>
+  </article>
+</Base>

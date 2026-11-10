@@ -1,0 +1,15 @@
+---
+import type { Locale } from '../../i18n';
+import { localeStaticPaths } from '../../lib/routes';
+import MethodView from '../../views/MethodView.astro';
+
+export const getStaticPaths = localeStaticPaths;
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+---
+
+<MethodView locale={locale} />

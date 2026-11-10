@@ -1,0 +1,46 @@
+---
+import { ModelTable, type ModelRow } from '../components/ModelTable';
+import { LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
+import Base from '../layouts/Base.astro';
+import { getDataset } from '../lib/site-data';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const dataset = await getDataset();
+
+const rows: ModelRow[] = dataset.models.map((model) => ({
+  id: model.id,
+  name: model.name,
+  vendor: model.vendor,
+  legacy: model.status === 'legacy',
+  href: localePath(locale, `/m/${model.id}`),
+  intelligence: {
+    score: model.rating.intelligence.score,
+    tier: model.rating.intelligence.tier,
+  },
+  cost: {
+    tier: model.rating.cost.tier,
+    blended: model.rating.cost.blended,
+    input: model.rating.cost.input,
+    output: model.rating.cost.output,
+    free: model.rating.cost.free,
+  },
+  value: { score: model.rating.value.score, tier: model.rating.value.tier },
+  verdict: model.verdict,
+  reviewedAt: model.reviewed_at,
+  stale: model.stale,
+  openWeights: model.facts.open_weights,
+}));
+
+const strings = { table: t.table, tier: t.tier, empty: t.empty, badge: t.badge };
+---
+
+<Base locale={locale} path="/">
+  <h1 class="text-xl font-semibold tracking-tight">{t.home.title}</h1>
+  <p class="text-muted-foreground mt-1 mb-5 max-w-[68ch] text-sm">{t.home.intro}</p>
+  <ModelTable client:load models={rows} strings={strings} lang={LOCALE_INFO[locale].tag} />
+</Base>

@@ -19,3 +19,6 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# local tooling
+.claude/

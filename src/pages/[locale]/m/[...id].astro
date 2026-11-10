@@ -1,0 +1,13 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import { localizedModelStaticPaths } from '../../../lib/routes';
+import ModelView from '../../../views/ModelView.astro';
+
+export const getStaticPaths = localizedModelStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { locale, model, entry } = Astro.props;
+---
+
+<ModelView locale={locale} model={model} entry={entry} />

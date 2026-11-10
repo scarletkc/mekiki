@@ -1,0 +1,242 @@
+---
+import { fmt, useTranslations, type Locale } from '../i18n';
+import Base from '../layouts/Base.astro';
+import { formatDateTime, formatPercent } from '../lib/format';
+import {
+  COST_TIERS,
+  INTELLIGENCE_TIERS,
+  METRIC_KEYS,
+  VALUE_TIERS,
+  scoringConfig,
+} from '../lib/scoring.config';
+import { getDataset } from '../lib/site-data';
+import { SOURCE_IDS, SOURCE_INFO } from '../lib/snapshots';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const m = t.method;
+const dataset = await getDataset();
+const { intelligence, cost, value } = scoringConfig;
+
+// Everything below is derived from scoring.config.ts so the page cannot
+// drift from the numbers the site actually uses.
+const totalWeight = METRIC_KEYS.reduce((sum, key) => sum + intelligence.metrics[key].weight, 0);
+const metrics = METRIC_KEYS.map((key) => {
+  const { source, weight, floor } = intelligence.metrics[key];
+  return {
+    label: t.metric[key],
+    source: SOURCE_INFO[source].name,
+    weight: formatPercent(weight / totalWeight),
+    floor:
+      floor.type === 'absolute'
+        ? fmt(m.floorAbsolute, { value: floor.value })
+        : fmt(m.floorBelowFrontier, { gap: floor.gap }),
+  };
+});
+const eloGap = METRIC_KEYS.map((key) => intelligence.metrics[key].floor).find(
+  (floor) => floor.type === 'below_frontier',
+);
+
+const blend = intelligence.benchmarkWeight + intelligence.subjectiveWeight;
+const shares = {
+  benchmark: formatPercent(intelligence.benchmarkWeight / blend).replace('%', ''),
+  subjective: formatPercent(intelligence.subjectiveWeight / blend).replace('%', ''),
+};
+const basisRows = [
+  { when: m.caseBoth, formula: fmt(m.formulaBoth, shares), basis: 'both' },
+  { when: m.caseBenchmark, formula: m.formulaBenchmark, basis: 'benchmark_only' },
+  { when: m.caseSubjective, formula: m.formulaSubjective, basis: 'subjective_only' },
+  { when: m.caseNone, formula: m.formulaNone, basis: 'none' },
+] as const;
+
+const tierRows = [
+  {
+    rating: t.rating.intelligence,
+    tiers: INTELLIGENCE_TIERS.map((key) => ({
+      key,
+      label: t.tier.intelligence[key],
+      rule: key === 'low' ? `< ${intelligence.tiers.mid}` : `≥ ${intelligence.tiers[key]}`,
+    })),
+  },
+  {
+    rating: `${t.rating.cost} (${m.blendedShort})`,
+    tiers: COST_TIERS.map((key) => ({
+      key,
+      label: t.tier.cost[key],
+      rule: key === 'very_high' ? `≥ $${cost.tiers.high}` : `< $${cost.tiers[key]}`,
+    })),
+  },
+  {
+    rating: t.rating.value,
+    tiers: VALUE_TIERS.map((key) => ({
+      key,
+      label: t.tier.value[key],
+      rule: key === 'low' ? `< ${value.tiers.mid}` : `≥ ${value.tiers[key]}`,
+    })),
+  },
+];
+
+const sourceUse = { modelsdev: m.useModelsdev, aa: m.useAa, arena: m.useArena };
+const sources = SOURCE_IDS.map((id) => ({
+  ...dataset.sources[id],
+  use: sourceUse[id],
+  licenseText: dataset.sources[id].license ?? m.licenseAa,
+}));
+---
+
+<Base locale={locale} path="/method" title={m.title}>
+  <article class="prose">
+    <h1 class="text-xl font-semibold tracking-tight">{m.title}</h1>
+    <p>{m.intro}</p>
+
+    <h2 id="intelligence">{m.intelligenceTitle}</h2>
+    <p>{fmt(m.intelligenceBody, { gap: eloGap?.type === 'below_frontier' ? eloGap.gap : 0 })}</p>
+    <pre><code>n = clamp(100 × (x − floor) ÷ (frontier − floor), 0, 100)</code></pre>
+    <p>{m.benchmarkBody}</p>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <caption>{m.weightsCaption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{t.detail.metricCol}</th>
+            <th scope="col">{m.source}</th>
+            <th scope="col">{m.floor}</th>
+            <th scope="col" class="num">{t.detail.weight}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            metrics.map((metric) => (
+              <tr>
+                <th scope="row">{metric.label}</th>
+                <td>{metric.source}</td>
+                <td>{metric.floor}</td>
+                <td class="num">{metric.weight}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h3>{m.basisTitle}</h3>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <caption>{m.basisCaption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{m.basisCase}</th>
+            <th scope="col">{m.basisFormula}</th>
+            <th scope="col"><code>basis</code></th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            basisRows.map((row) => (
+              <tr>
+                <th scope="row">{row.when}</th>
+                <td>{row.formula}</td>
+                <td><code>{row.basis}</code></td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <p>{m.subjectiveBody}</p>
+
+    <h2 id="cost">{m.costTitle}</h2>
+    <p>
+      {
+        fmt(m.costBody, {
+          input: cost.inputWeight,
+          output: cost.outputWeight,
+          total: cost.inputWeight + cost.outputWeight,
+        })
+      }
+    </p>
+    <p>{fmt(m.costIndexBody, { floor: cost.indexFloorPrice, ceil: cost.indexCeilPrice })}</p>
+    <pre><code>cost_index = clamp(100 × log10(blended ÷ {cost.indexFloorPrice}) ÷ log10({cost.indexCeilPrice} ÷ {cost.indexFloorPrice}), 0, 100)</code></pre>
+
+    <h2 id="value">{m.valueTitle}</h2>
+    <p>
+      {
+        fmt(m.valueBody, {
+          a: value.intelligenceExponent,
+          b: value.affordabilityExponent,
+          min: value.minAffordability,
+        })
+      }
+    </p>
+    <pre><code>value = intelligence^{value.intelligenceExponent} × max(100 − cost_index, {value.minAffordability})^{value.affordabilityExponent}</code></pre>
+
+    <h2 id="tiers">{m.tiersTitle}</h2>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <caption>{m.tiersCaption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{m.tierRating}</th>
+            <th scope="col" colspan="4">{m.tierConditions}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            tierRows.map((row) => (
+              <tr>
+                <th scope="row">{row.rating}</th>
+                {row.tiers.map((tier) => (
+                  <td>
+                    <code>{tier.key}</code> {tier.label}
+                    <span class="num text-muted-foreground block">{tier.rule}</span>
+                  </td>
+                ))}
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="sources">{m.sourcesTitle}</h2>
+    <p>{m.sourcesBody}</p>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <caption>{m.sourcesCaption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{m.sourceName}</th>
+            <th scope="col">{m.sourceUse}</th>
+            <th scope="col">{m.sourceLicense}</th>
+            <th scope="col">{m.sourceUpdated}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            sources.map((source) => (
+              <tr>
+                <th scope="row"><a href={source.url}>{source.name}</a></th>
+                <td>{source.use}</td>
+                <td>{source.licenseText}</td>
+                <td class="whitespace-nowrap tabular-nums">
+                  {source.fetched_at ? formatDateTime(source.fetched_at) : <span class="text-muted-foreground">{t.empty.noData}</span>}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="caveats">{m.caveatsTitle}</h2>
+    <ul>
+      <li>{m.caveatAaCoding}</li>
+      <li>{m.caveatVariants}</li>
+      <li>{m.caveatPersonal}</li>
+    </ul>
+  </article>
+</Base>

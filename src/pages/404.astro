@@ -1,0 +1,27 @@
+---
+import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, localePath, useTranslations } from '../i18n';
+import Base from '../layouts/Base.astro';
+
+// GitHub Pages serves this one file for every unknown URL, so it carries
+// the message in every language.
+const t = useTranslations(DEFAULT_LOCALE);
+---
+
+<Base locale={DEFAULT_LOCALE} path="/404" title={t.notFound.title}>
+  <div class="space-y-6 py-6">
+    {
+      LOCALES.map((locale) => {
+        const text = useTranslations(locale).notFound;
+        return (
+          <section lang={LOCALE_INFO[locale].tag}>
+            <h1 class="text-lg font-semibold">{text.title}</h1>
+            <p class="text-muted-foreground mt-1">{text.body}</p>
+            <p class="mt-2">
+              <a href={localePath(locale, '/')} class="text-primary underline">{text.home}</a>
+            </p>
+          </section>
+        );
+      })
+    }
+  </div>
+</Base>

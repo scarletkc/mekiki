@@ -1,0 +1,242 @@
+---
+import '../styles/global.css';
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  LOCALE_INFO,
+  localePath,
+  useTranslations,
+  type Locale,
+} from '../i18n';
+import { latestSync, SITE_URL } from '../lib/dataset';
+import { formatDateTime } from '../lib/format';
+import { getDataset } from '../lib/site-data';
+import { SOURCE_INFO } from '../lib/snapshots';
+
+interface Props {
+  locale: Locale;
+  /** Page path without the locale prefix, e.g. `/method` or `/m/openai/gpt-6.1-sol`. */
+  path: string;
+  /** Page title; omitted on the home page. */
+  title?: string;
+  description?: string;
+}
+
+const { locale, path, title, description } = Astro.props;
+const t = useTranslations(locale);
+const dataset = await getDataset();
+const synced = latestSync(dataset);
+
+const pageTitle = title ? `${title} | mekiki` : `mekiki | ${t.meta.tagline}`;
+const pageDescription = description ?? t.meta.description;
+const canonical = new URL(localePath(locale, path), SITE_URL).href;
+
+const nav = [
+  { href: localePath(locale, '/'), label: t.nav.models, key: '/' },
+  { href: localePath(locale, '/method'), label: t.nav.method, key: '/method' },
+  { href: localePath(locale, '/api'), label: t.nav.api, key: '/api' },
+];
+const section = path === '/' || path.startsWith('/m/') ? '/' : path;
+
+const REPO_URL = 'https://github.com/scarletkc/mekiki';
+const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
+---
+
+<!doctype html>
+<html lang={LOCALE_INFO[locale].tag}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical} />
+    {
+      LOCALES.map((item) => (
+        <link
+          rel="alternate"
+          hreflang={LOCALE_INFO[item].tag}
+          href={new URL(localePath(item, path), SITE_URL).href}
+        />
+      ))
+    }
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href={new URL(localePath(DEFAULT_LOCALE, path), SITE_URL).href}
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/json" href="/api.json" title="mekiki API" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="mekiki" />
+    <meta name="theme-color" content="#fafbfc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14181f" media="(prefers-color-scheme: dark)" />
+    <script is:inline>
+      // Runs before first paint so the page never flashes the wrong theme.
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch (error) {}
+        var dark =
+          stored === 'dark' ||
+          (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a
+      href="#main"
+      class="bg-background sr-only z-50 rounded px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
+    >
+      {t.nav.skip}
+    </a>
+
+    <header class="border-b">
+      <div
+        class="mx-auto flex w-full max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6"
+      >
+        <a
+          href={localePath(locale, '/')}
+          class="flex items-center gap-2.5"
+          aria-label={`mekiki, ${t.meta.tagline}`}
+        >
+          <svg viewBox="0 0 32 32" class="size-6 shrink-0" aria-hidden="true">
+            <rect width="32" height="32" rx="6" class="fill-expense"></rect>
+            <g fill="none" class="stroke-background" stroke-width="2.6">
+              <rect x="10" y="6.5" width="12" height="19"></rect>
+              <path d="M10 12.8h12M10 19.2h12"></path>
+            </g>
+          </svg>
+          <span class="text-[1.0625rem] leading-none font-semibold tracking-tight">mekiki</span>
+          <span class="text-muted-foreground text-sm leading-none" lang="ja">目利き</span>
+        </a>
+
+        <nav aria-label={t.nav.main} class="order-3 w-full sm:order-none sm:w-auto">
+          <ul class="flex items-center gap-5 text-sm">
+            {
+              nav.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={item.key === section ? 'page' : undefined}
+                    class="text-muted-foreground hover:text-foreground aria-[current=page]:text-foreground py-1 aria-[current=page]:font-medium"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+
+        <div class="ml-auto flex items-center gap-3 text-sm">
+          <ul class="flex items-center gap-0.5" aria-label={t.nav.language}>
+            {
+              LOCALES.map((item) => (
+                <li>
+                  <a
+                    href={localePath(item, path)}
+                    hreflang={LOCALE_INFO[item].tag}
+                    lang={LOCALE_INFO[item].tag}
+                    title={LOCALE_INFO[item].name}
+                    aria-label={LOCALE_INFO[item].name}
+                    aria-current={item === locale ? 'true' : undefined}
+                    data-locale-link
+                    class="text-muted-foreground hover:text-foreground aria-[current=true]:bg-accent aria-[current=true]:text-foreground rounded px-1.5 py-1 leading-none"
+                  >
+                    {LOCALE_INFO[item].short}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+          <button
+            type="button"
+            data-theme-toggle
+            aria-label={t.theme.toggle}
+            title={t.theme.toggle}
+            class="text-muted-foreground hover:text-foreground hover:bg-accent grid size-7 place-items-center rounded"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              class="size-4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"></path>
+            </svg>
+          </button>
+          <a href={REPO_URL} class="text-muted-foreground hover:text-foreground">{t.nav.github}</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="mx-auto w-full max-w-[1280px] flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <slot />
+    </main>
+
+    <footer class="text-muted-foreground border-t text-sm">
+      <div
+        class="mx-auto flex w-full max-w-[1280px] flex-col gap-1.5 px-4 py-5 sm:px-6 lg:flex-row lg:items-baseline lg:justify-between lg:gap-8"
+      >
+        <p>
+          {t.footer.sources}{
+            attribution.map((source, index) => (
+              <>
+                {index > 0 && t.footer.listSeparator}
+                <a class="hover:text-foreground underline" href={source.url}>{source.name}</a>
+              </>
+            ))
+          }{t.footer.fullStop}<a
+            class="hover:text-foreground underline"
+            href="https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset">{t.footer.arenaLicense}</a
+          >{t.footer.fullStop}
+        </p>
+        <p class="lg:text-end">
+          {t.footer.synced}
+          <span class="num">{synced ? formatDateTime(synced) : t.footer.never}</span>
+          <span class="mx-1.5" aria-hidden="true">/</span>
+          <a class="hover:text-foreground underline" href={REPO_URL}>{t.footer.repo}</a>
+        </p>
+      </div>
+    </footer>
+
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        var toggle = document.querySelector('[data-theme-toggle]');
+        if (toggle) {
+          toggle.addEventListener('click', function () {
+            var dark = !root.classList.contains('dark');
+            root.classList.toggle('dark', dark);
+            try {
+              localStorage.setItem('theme', dark ? 'dark' : 'light');
+            } catch (error) {}
+          });
+        }
+        // Follow the system while the visitor has not chosen a theme.
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (event) {
+          var stored = null;
+          try {
+            stored = localStorage.getItem('theme');
+          } catch (error) {}
+          if (!stored) root.classList.toggle('dark', event.matches);
+        });
+        // Keep the current filters and sort when switching language.
+        document.querySelectorAll('[data-locale-link]').forEach(function (link) {
+          link.addEventListener('click', function () {
+            link.setAttribute('href', link.pathname + window.location.search + window.location.hash);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

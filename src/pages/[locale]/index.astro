@@ -1,0 +1,15 @@
+---
+import type { Locale } from '../../i18n';
+import { localeStaticPaths } from '../../lib/routes';
+import HomeView from '../../views/HomeView.astro';
+
+export const getStaticPaths = localeStaticPaths;
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+---
+
+<HomeView locale={locale} />
