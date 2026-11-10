@@ -1,237 +1,347 @@
-# mekiki 需求与技术方案
+# mekiki design
 
-交给 Claude Code 实现用。仓库 `scarletkc/mekiki`，站点 `https://mekiki.fog.moe`。
-本文档位于 `docs/SPEC.md`，实现过程中有偏离就回来改这份文档。实现时的偏离和补充集中记在 §14。
+The rules, data model, rating algorithm and API contract behind
+<https://mekiki.fog.moe>. When the implementation changes one of them, change this
+document in the same commit.
 
-## 1. 这是什么
+How-to guides live elsewhere: [development](development.md),
+[adding a model](adding-models.md) and [deployment](deployment.md). The current
+weights and thresholds are not repeated here: they live in `scoringConfig` in
+[`src/lib/scoring.config.ts`](../src/lib/scoring.config.ts), and the site's Method page
+is generated from that file.
 
-一个静态网站加一份公开 JSON API，维护一份个人对 AI 模型的评价。每个模型给三个评级：
+## 1. Scope
 
-- **智能**：权威榜单分数（自动拉取）归一化到当前榜首后加权得出
-- **成本**：根据价格自动得出
-- **性价比**：由智能和模型实际用起来的花费自动得出（看的是实测花费，不只是单价）
+mekiki is a static site and a public JSON API that rate a curated list of AI models.
+Each model gets three ratings:
 
-定位参考 models.dev，区别是 models.dev 收录事实数据（价格、上下文、能力），mekiki 只收维护者关心的模型，并给出带个人判断的评级。「mekiki」是日语「目利き」，指鉴别好坏的眼光。
+- **Intelligence**: public leaderboard scores, normalised to the current leader and
+  weighted.
+- **Cost**: from the official price.
+- **Value**: from intelligence and what the model costs to actually run, which counts
+  how many tokens it burns and not only its price per token.
 
-不做的事：
+[models.dev](https://models.dev) catalogues facts about every model; mekiki keeps a short
+list of the models worth comparing and rates them. mekiki (目利き) is Japanese for a
+discerning eye. The site name is written `mekiki` only.
 
-- 不做全量模型数据库，只维护一份精选列表（预计几十个模型）
-- 不做登录、评论、投票，不要后端和数据库
-- 不自己跑评测
-- 不写文字评价：网站只展示评级和分数，没有短评、优缺点、长评（见 §14）
+Non-goals:
 
-## 2. 默认假设
+- **No full model database.** The list is curated, a few dozen models at most.
+- **No accounts, comments or votes**, and so no backend or database.
+- **No evaluations of our own.** Every score comes from a public leaderboard.
+- **No text reviews and no subjective score.** The site shows ratings and scores only:
+  no verdicts, pros and cons, or hand-entered intelligence score (§9).
 
-以下是写这份文档时替维护者定的默认值，维护者开工前可以改。Claude Code 按这里写的执行，不要另行发挥。
+## 2. Rules
 
-| 项 | 默认值 |
-|---|---|
-| 界面语言 | 英语（默认）、简体中文、繁体中文；字段名、API、代码用英文 |
-| 榜单来源 | Artificial Analysis（智能指数）+ Arena 文本榜 + Arena WebDev 榜 |
-| 智能分 | 只用榜单，没有主观分（见 §14） |
-| 榜单内部权重 | AA 智能指数 0.5，Arena 文本榜 0.3，Arena WebDev 榜 0.2（WebDev 榜顶替 AA 编程指数，见 §14） |
-| 初始模型 | 维护者给清单；没给的话先放 8–10 个当前主流模型当示例 |
-| 包管理器 | pnpm |
-| 代码许可 | MIT |
+1. **Intelligence comes from leaderboards only.** No hand-entered score and no on-site
+   voting (§9).
+2. **The build never goes online.** `pnpm sync` writes external data to snapshot files
+   that are committed; the build reads local files only. No data source can break the
+   build.
+3. **Secrets stay out of the front end and the repository.** The Artificial Analysis key
+   lives in the GitHub Actions secret `AA_API_KEY` and is read only by `pnpm sync`.
+4. **Every tunable number lives in one config file** (`src/lib/scoring.config.ts`), and
+   the algorithm is pure functions with unit tests (`src/lib/scoring.ts`).
+5. **Pages and the API read the same dataset.** `src/lib/dataset.ts` merges model files
+   and snapshots once per build, so a model shows the same numbers everywhere.
+6. **Look at a real response before writing an adapter.** Upstream field names drift;
+   fetch once, then write the Zod schema.
+7. **Missing data is shown as missing.** "Not rated", "no data" or "no price", never a
+   blank or a 0.
 
-## 3. 硬性规则
+## 3. Architecture
 
-1. **智能分只来自榜单。** 不加手填的主观分，也不做站内众投（Arena 本身就是大规模众投）。原因见 §14。
-2. **构建不联网。** 外部数据由同步脚本写成快照文件提交进仓库，构建只读本地文件。任何数据源挂掉都不能让站点构建失败。
-3. **密钥不进前端、不进仓库。** AA 的 API key 只存在于 GitHub Actions secret，只有同步脚本用。
-4. **评分参数集中在一个配置文件**（权重、阈值、归一化参数），评分逻辑写成纯函数并有单元测试。
-5. **写适配器前先看真实响应。** 本文档里的外部字段名来自各家文档，可能已变。先请求一次、看清结构，再写 Zod schema 和适配器。
-6. **依赖用当前稳定版。** 安装和配置以官方文档为准（有 Context7 就用它查），不要照记忆里的旧写法。
+| Layer | Choice | Notes |
+| --- | --- | --- |
+| Framework | Astro, static output | Pages ship no JavaScript except the table island |
+| UI | React, shadcn/ui, Tailwind CSS | shadcn/ui is React, so the island is React |
+| Table | TanStack Table | Sorting, filtering, search |
+| Content | Astro content collections with Zod | One Markdown file per model |
+| Language | TypeScript, strict | TypeScript 6: `@astrojs/check` does not support 7 yet |
+| Tests | Vitest; Playwright for the smoke test | |
+| Lint and format | Biome | Markdown is not formatted |
+| Hosting | GitHub Actions and GitHub Pages | Custom domain `mekiki.fog.moe` |
 
-## 4. 技术栈
+Data flows one way:
 
-| 层 | 选择 | 说明 |
-|---|---|---|
-| 框架 | Astro，静态输出 | 页面默认零 JS，只有表格是交互 island |
-| UI | React + shadcn/ui + Tailwind CSS | shadcn/ui 是 React 组件，所以 island 用 React |
-| 表格 | TanStack Table | 排序、筛选、搜索 |
-| 内容 | Astro Content Collections + Zod | 每个模型一个 Markdown 文件 |
-| 语言 | TypeScript，strict | |
-| 测试 | Vitest | 至少覆盖评分函数 |
-| 部署 | GitHub Actions + GitHub Pages | 自定义域名 `mekiki.fog.moe` |
+```text
+src/content/models/**.md ─┐
+                          ├─> src/lib/dataset.ts ─> pages, JSON API, pnpm report
+data/snapshots/*.json ────┘
+      ▲
+      └── pnpm sync (scripts/sources/, one adapter per source)
+```
 
-不需要 Cloudflare Worker。只有在 §7 的 CORS 检查不通过时才考虑。
+- The model schema (`src/lib/model-schema.ts`) and snapshot schemas
+  (`src/lib/snapshots.ts`) use Astro's own Zod (`astro/zod`), so the content collection
+  and the Node scripts share one schema and one Zod version.
+- Only one Latin font is bundled (Instrument Sans via `@fontsource-variable`); Chinese
+  text uses system fonts. The build makes no remote requests.
 
-## 5. 数据
+## 4. Data
 
-### 5.1 三类数据
+| Kind | Source | Location | Maintained by |
+| --- | --- | --- | --- |
+| Model list and mappings | Hand-written | `src/content/models/**.md` | The maintainer |
+| External snapshots | `pnpm sync` | `data/snapshots/*.json` | The daily workflow |
+| Rating parameters | Config | `src/lib/scoring.config.ts` | The maintainer |
 
-| 类别 | 来源 | 存放位置 | 谁维护 |
-|---|---|---|---|
-| 模型清单与映射 | 维护者手填 | `src/content/models/**.md` | 维护者 |
-| 外部快照 | 同步脚本拉取 | `data/snapshots/*.json` | GitHub Actions 定时任务 |
-| 评分参数 | 配置 | `src/lib/scoring.config.ts` | 维护者 |
+### 4.1 Model files
 
-### 5.2 模型文件
-
-路径决定 ID：`src/content/models/<provider>/<model>.md` 的规范 ID 是 `<provider>/<model>`，沿用 models.dev 的命名。文件只有 frontmatter，正文不使用。
+The path is the ID: `src/content/models/<provider>/<model>.md` has the canonical ID
+`<provider>/<model>`, following models.dev's naming. The file is frontmatter only; any
+body is ignored.
 
 ```markdown
 ---
-name: Claude Opus 4.6            # 显示名
-vendor: Anthropic
-status: active                   # active | legacy（legacy 在首页默认折叠）
-sources:                         # 这个模型在各数据源里的 ID，没有就不写
-  modelsdev: anthropic/claude-opus-4-6   # 省略时默认等于规范 ID
-  aa: <AA 里的 slug>
-  arena_text: <Arena 文本榜里的模型名>
-  arena_webdev: <Arena WebDev 榜里的模型名>
-overrides:                       # 可选，手动覆盖自动数据
-  price: { input: 5, output: 25 }
+name: GPT-6.1 Sol            # display name
+vendor: OpenAI
+status: active               # active | legacy (legacy is collapsed on the home page)
+sources:                     # the model's ID in each source; omit what doesn't exist
+  modelsdev: openai/gpt-6.1-sol   # defaults to the canonical ID
+  aa: gpt-6-1-sol                  # Artificial Analysis slug
+  arena_text: "GPT-6.1 Sol (Max)"  # exact name on the Arena text board
+  arena_webdev: "GPT-6.1 Sol (Max)" # exact name on the Arena WebDev board
+overrides:                   # optional
+  price: { input: 5, output: 25 }  # USD per 1M tokens; cache_read optional
 ---
 ```
 
-（上面的模型名只是格式示例，实际 ID 以 models.dev 为准。）
+- **Mappings are always explicit.** A model's name differs between leaderboards, and
+  nothing is matched by guessing. `pnpm sync` lists the mappings that did not match,
+  with the closest names in that source; candidates are printed, never written.
+- Artificial Analysis and Arena often list one model once per reasoning level. A mapping
+  points at the level the maintainer actually uses. The two Arena boards list different
+  levels, so each has its own field.
+- A price override replaces the models.dev input and output prices. Without
+  `cache_read`, the models.dev cache price is kept.
+- Invalid frontmatter fails `pnpm test` and `pnpm build` with the file and the field.
 
-要点：
+### 4.2 Sources
 
-- **`sources` 映射必须显式填写。** 同一个模型在各榜单里的名字不一样，不要用模糊匹配自动对应。同步脚本负责报告哪些映射没对上，并列出候选名，方便维护者补。
-- AA 和 Arena 常把同一模型的不同推理档位列成多个条目，`sources` 指向维护者实际使用的那个档位。Arena 的文本榜和 WebDev 榜列出的档位不一样，所以两个榜各有一个映射字段。
+| Source | Provides | Access | Terms |
+| --- | --- | --- | --- |
+| [models.dev](https://models.dev) | Price (input, output, cache read), context window, release date, open weights, modalities | `GET https://models.dev/api.json`, no key | MIT. Data is grouped by provider and prices follow the provider, so `sources.modelsdev` carries the provider prefix |
+| [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index; what it cost to run the index | Free API, key in the `x-api-key` header | Attribution required on every tier; the key never reaches the front end |
+| [Arena](https://arena.ai/leaderboard) | Text and WebDev board ratings | Hugging Face dataset `lmarena-ai/leaderboard-dataset`, configs `text` and `webdev`, split `latest`, no key | CC BY 4.0, attributed per the licence |
 
-### 5.3 外部数据源
+- Artificial Analysis is read from `GET /api/v2/language/models/free?page=N`, the only
+  model list the free tier can reach (100 requests per 24 hours).
+- **Coding ability comes from Arena WebDev.** Artificial Analysis also publishes a Coding
+  Index, but its free API returns `null` for it on every model.
+- **Arena is read as Parquet.** The Datasets Server's `/filter` endpoint intermittently
+  returns 500 or times out, and `/rows` needs more than 100 pages for the `latest`
+  split. Each board's auto-converted Parquet file is one request (about 0.6 MB for
+  text), parsed with `hyparquet`; only rows with `category = overall` are used.
+- Every page's footer attributes Artificial Analysis, Arena and models.dev. Keep it.
 
-| 源 | 取什么 | 怎么取 | 备注 |
-|---|---|---|---|
-| models.dev | 价格（输入、输出、缓存读）、上下文长度、发布日期、是否开源权重、模态 | `GET https://models.dev/api.json`，无需 key | 数据按 provider 分组，价格跟着 provider 走，所以 `sources.modelsdev` 带 provider 前缀 |
-| Artificial Analysis | 智能指数、跑完整套智能指数的总花费 | 免费 API，请求头 `x-api-key` | 必须署名；key 不能出现在前端 |
-| Arena（原 LMArena） | 文本榜和 WebDev 榜的分数 | Hugging Face 数据集 `lmarena-ai/leaderboard-dataset`，子集 `text` 和 `webdev`，split `latest`，读它自动转换出的 Parquet 文件（原因见 §14），无需 key | CC BY 4.0，按许可署名 |
+Each source has one adapter in `scripts/sources/` with the same contract
+(`scripts/sources/types.ts`): fetch, validate with Zod, trim, return a snapshot. Adding a
+leaderboard means one adapter and one metric in the config.
 
-实现时注意：
+### 4.3 Snapshots
 
-- AA 用 `GET /api/v2/language/models/free?page=N`（2026-11-11 的文档：这是免费档唯一能访问的模型列表接口，`/language/models` 仅限 Pro；每 24 小时 100 次请求）。
-- AA 要求所有档位都署名，页脚放一个指向 `https://artificialanalysis.ai/` 的来源链接即可。Arena 同理，按其许可写来源。
-- 每个源一个适配器，接口统一：拉取 → Zod 校验 → 裁剪 → 写快照。以后加榜单只需加一个适配器和一条配置。
-
-### 5.4 快照
-
-每个源一个文件，如 `data/snapshots/aa.json`：
+One file per source, for example `data/snapshots/aa.json`:
 
 ```json
 {
   "source": "aa",
   "fetched_at": "2026-11-11T00:00:00Z",
+  "total": 734,
   "frontier": { "aa_intelligence": 70 },
   "models": {
-    "<该源里的模型 ID>": { "aa_intelligence": 68, "index_cost_usd": 123.4 }
+    "<the model's ID in this source>": { "aa_intelligence": 68, "index_cost_usd": 123.4 }
   }
 }
 ```
 
-- 只保留 mekiki 跟踪的模型，加上每个指标的榜首分数 `frontier`（取自该源的全部模型，不只是跟踪的那些）。这样 diff 小，也不会把别人的整份数据搬进仓库。
-- 另有 `total` 字段记录该源返回的模型总数，用来判断下一次同步是否异常。
-- `fetched_at` 只在 `frontier` 或 `models` 有变化时更新，数据没变就不改文件，避免每天产生一次空提交。`total` 的变化不算（models.dev 几乎每天都有新模型）。
-- 拉取失败、校验失败、或返回的模型数量明显异常时，保留旧快照不覆盖，把原因写进 Actions 的 job summary。
+- `models` keeps only the tracked models. `frontier` holds the best score of each metric
+  across the source's whole leaderboard, not just the tracked models. Diffs stay small,
+  and nobody else's full dataset is copied into the repository.
+- `arena.json` holds both boards, keyed by model name; each entry has `arena_text` and
+  `arena_webdev`, `null` when the model is not on that board.
+- `total` is how many models the source listed, used to spot a broken sync.
+- `fetched_at` changes only when `frontier` or `models` change, so a quiet day produces
+  no commit. A change in `total` alone doesn't count: models.dev gains models almost
+  daily.
 
-## 6. 评分算法
+### 4.4 Sync
 
-所有数字都是 `scoring.config.ts` 里的默认值。
+`pnpm sync` runs every adapter (`--only=<source>` for one, `--dry-run` to write
+nothing).
 
-### 6.1 智能
+- A source that fails, returns invalid data, returns fewer models than its adapter's
+  `minTotal`, or fewer than half of last time keeps its old snapshot. The reason is
+  printed and written to the GitHub Actions job summary.
+- `pnpm sync` exits 0 even then, so a broken source never blocks a deploy.
+- A missing snapshot file still builds; the site shows "no data" for that source.
+- Without `AA_API_KEY`, Artificial Analysis is skipped.
 
-对每个榜单指标 s，模型原始分 x 归一化到 0–100：
+## 5. Rating
 
-```
-n_s = clamp( 100 × (x − floor_s) / (frontier_s − floor_s), 0, 100 )
-```
+Parameter names below are fields of `scoringConfig`. §5.5 lists the reference values the
+fixtures use.
 
-- `frontier_s`：该指标当前榜首分数
-- `floor_s`：指数类（AA 智能指数）取 0；Elo 类（Arena）取 `frontier_s − gap_s`，文本榜的 gap 是 300，WebDev 榜是 450（WebDev 榜分数拉得更开，这样两个榜都是约 70% 的模型在零点以上）
+### 5.1 Intelligence
 
-榜单分是有分数的指标的加权平均，缺的指标不计入、权重重新归一：
+Each leaderboard metric `s` is normalised to 0–100:
 
-```
-benchmark = Σ(w_s × n_s) / Σ(w_s)      权重：aa_intelligence 0.5, arena_text 0.3, arena_webdev 0.2
-```
-
-智能分就是这个榜单分。一个榜单都没上的模型不评级（智能分为空），排序时排在最后。
-
-因为每次同步都按当前榜首重新归一化，新模型登顶后，旧模型的智能分会自动下降，不用改任何文件。
-
-### 6.2 成本
-
-价格取 `sources.modelsdev` 对应条目的官方价（单位：美元 / 百万 token），有 `overrides.price` 时用覆盖值。
-
-```
-cached     = min(cache_read, input)                                            // 没有 cache_read 时 cached = input
-blended    = (7 × cached + 2 × input + 1 × output) / 10
-cost_index = clamp( 100 × log10(blended / 0.04) / log10(12 / 0.04), 0, 100 )   // blended ≤ 0.04 时为 0
+```text
+n_s = clamp(100 × (x − floor_s) / (frontier_s − floor_s), 0, 100)
 ```
 
-- 权重 7 : 2 : 1（缓存读取 : 输入 : 输出）沿用 Artificial Analysis 混合价的默认比例（[方法说明](https://artificialanalysis.ai/methodology)，2026-11-11 查）。它相当于约 78% 的输入 token 命中缓存、输入和输出 9 : 1。
-  - 理由：实际用量以 Agent 和长对话为主，上下文会反复重发。OpenRouter 上 Agent 流量 2026 年 9 月的缓存占比接近 90%，人类对话里输出只占约 12% 的 token。旧的 3 : 1（不算缓存）会高估输入成本、高估输出的分量。
-  - 没有 `cache_read` 的模型，缓存那部分也按 `input` 计价，不猜折扣。
-  - `cache_read` 高于 `input` 时按 `input` 算（手动覆盖了输入价、缓存价仍来自 models.dev 时可能出现）。
-  - 缓存写入的额外费用（如按输入价加价收取的写入费）不计。
-- `cost_index` 的上下限和成本档位是随混合方式一起换算的：常见定价（输出是输入的 5 倍、缓存读取是输入的 10%）下，7 : 2 : 1 的混合价约是 3 : 1 的 0.385 倍，原来的 0.1 / 30 和 $1 / $5 / $15 按这个系数换算后取整。
-- 档位按 `blended` 的绝对值划分（见 §6.4），`cost_index` 只用于算性价比。
-- 价格为 0：`cost_index` 为 0，页面显示「免费」。
-- 查不到价格：成本和性价比都为空，页面显示「暂无价格」。
-- AA 的「跑完整套智能指数的总花费」不影响成本档位，但用于计算性价比（见 §6.3）。它比单价更接近真实开销，因为推理型模型会多烧很多 token。
+- `frontier_s` is the current leader's score on that metric.
+- `floor_s` is a fixed raw score for index-style metrics (`absolute`, 0 for the AA
+  Intelligence Index). Elo-style metrics have no meaningful zero, so their floor is
+  `frontier_s − gap_s` (`below_frontier`). The WebDev board is spread wider than the
+  text board, so it gets a wider gap; each gap leaves about 70% of its board above zero.
 
-### 6.3 性价比
+The intelligence score is the weighted mean over the metrics a model has:
 
-```
-token_use_i     = run_cost_i / blended_i                 // 有 AA 评测花费且有价格的模型
-typical         = median(token_use)                       // 对本站收录的全部模型取中位数（含旧模型）
-measured        = run_cost / typical                      // 实测花费折算成「美元 / 百万 token」
-effective_price = blended^(1 − w) × measured^w            // w = runCostWeight，现为 1，即只用 measured
-                = blended                                 // 没有评测花费时
-value = intelligence^0.6 × max(100 − cost_index(effective_price), 5)^0.4
+```text
+intelligence = Σ(w_s × n_s) / Σ(w_s)
 ```
 
-- 单价低不等于用起来便宜：同样的标价，费 token 的模型实际花费可以高出数倍。所以性价比的成本端用 AA 公布的「跑完整套智能指数的实际花费」（`run_cost`），所有模型跑的是同一套题，花费可以直接比较。
-- 除以 `typical` 是为了把花费换算回价格的刻度：token 用量处于中位水平的模型，折算价等于它自己的混合价；省 token 的更低，费 token 的更高。这样有实测花费和没有实测花费（直接用混合价）的模型可以放在一起比。
-- `typical` 取自本站收录的模型，所以增删模型会让其他模型的性价比略有变动；旧模型也计入，改 `status` 不会影响它。
-- 成本档位仍只看混合价，不受实测花费影响。
-- `cost_index(p)` 就是 §6.2 的对数刻度，把 `blended` 换成 `p`。
+- A missing metric is left out and the remaining weights are re-normalised.
+- A model on none of the leaderboards is not rated (`null`) and sorts last.
+- Every sync re-normalises to the current leader, so when a new model takes the lead,
+  every other score drops without anyone editing a file.
+- The algorithm iterates over the metrics the config lists and never names one.
+  Adding or removing a leaderboard changes only `scoring.config.ts`, the adapter and the
+  metric's label in `src/i18n/`.
 
-几何平均的效果是两头都不能太差：聪明但很贵、便宜但很笨，都拿不到高分。
+### 5.2 Cost
 
-### 6.4 档位
+Prices are the official models.dev prices of `sources.modelsdev`, or the override, in
+USD per 1M tokens.
 
-API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
+```text
+cached     = min(cache_read, input)                           input when there is no cache_read
+blended    = (wc × cached + wi × input + wo × output) / (wc + wi + wo)
+                                                              wc, wi, wo = cost.cacheReadWeight,
+                                                              cost.inputWeight, cost.outputWeight
+cost_index = clamp(100 × log10(blended / p0) / log10(p1 / p0), 0, 100)
+                                                              p0, p1 = cost.indexFloorPrice, cost.indexCeilPrice
+```
 
-| 评级 | 档位（key / 标签 / 条件） |
-|---|---|
-| 智能 | `top` 最高 ≥ 90　`high` 高 ≥ 75　`mid` 中 ≥ 55　`low` 低 < 55 |
-| 成本（按 blended） | `low` 低 < $0.4　`mid` 中 < $2　`high` 高 < $6　`very_high` 很高 ≥ $6 |
-| 性价比 | `top` 最高 ≥ 70　`high` 高 ≥ 60　`mid` 中 ≥ 50　`low` 低 < 50 |
+- **Token mix.** The weights follow Artificial Analysis's default blend of 7 : 2 : 1
+  (cache read : input : output, per its
+  [methodology](https://artificialanalysis.ai/methodology), checked 2026-11-11). That
+  counts about 78% of input tokens as cache hits and weighs input against output 9 : 1.
+  Real use is mostly agents and long chats that resend their context: on OpenRouter,
+  agent traffic ran close to 90% cached in September 2026, and output is about 12% of
+  the tokens in human chats. The earlier 3 : 1 input-to-output blend without cache
+  overstated input cost and the weight of output.
+  - A model without `cache_read` pays the input price for the cached share too; no
+    discount is guessed.
+  - A `cache_read` above `input` counts as `input`. This happens when an override
+    changes the input price but the cache price still comes from models.dev.
+  - Cache-write surcharges are not counted.
+- **The index bounds and cost tiers moved with the blend.** On a typical price list
+  (output 5× input, cache reads 10% of input) the 7 : 2 : 1 blend is about 0.385× a
+  3 : 1 input-to-output blend, so the earlier bounds and tiers were scaled by that factor
+  and rounded. They mean what they meant before.
+- Cost tiers are set by the absolute `blended` price (§5.4). `cost_index` is used only
+  to compute value.
+- A price of 0 has `cost_index` 0 and is shown as "free".
+- No price: cost and value are `null`, shown as "no price".
 
-这些阈值是起点。真实数据接入后跑一次 `pnpm report`（§9），把全部模型的分数分布打成表给维护者，由维护者定最终阈值。
+### 5.3 Value
 
-### 6.5 测试用例
+```text
+token_use_i     = run_cost_i / blended_i        for every listed model with both
+typical         = median(token_use)             over every listed model, legacy included
+measured        = run_cost / typical            USD per 1M tokens
+effective_price = blended^(1 − w) × measured^w  w = value.runCostWeight
+                = blended                       when there is no run cost
+value = intelligence^a × max(100 − cost_index(effective_price), m)^b
+                                                a, b, m = value.intelligenceExponent,
+                                                value.affordabilityExponent, value.minAffordability
+```
 
-下表是用上面的公式实际算出来的，直接当单元测试的 fixture，容差 ±0.1。数据是虚构的，榜首设为：AA 智能指数 70、AA 编程指数 62、Arena 文本 1500。
+- **Run cost over list price.** The same list price can cost several times more on a
+  model that burns more tokens. Artificial Analysis publishes what it paid to run its
+  whole Intelligence Index on each model (`run_cost`). Every model runs the same suite,
+  so those costs compare directly.
+- **Why divide by `typical`.** It puts run cost back on the per-token price scale: a
+  model with typical token use lands on its own blended price, a frugal one below and a
+  wasteful one above. Models with and without a run cost can then be compared.
+- **Why the listed models.** A yardstick taken from the top 50 of the whole Artificial
+  Analysis board came out too low, because that board lists many low-reasoning entries:
+  9 of the first 10 listed models came out above their list price, at a median of about
+  four times it, their cost indexes bunched together, and models without a run cost
+  gained an unfair edge. The cost is
+  that adding or removing a model shifts the others' value slightly. Changing a model's
+  `status` does not.
+- **Artificial Analysis bills two models at a higher price tier.** For its run cost it
+  prices Gemini 4 Argon at $4 / $20 and DeepSeek V4 Pro at its peak $1.32 / $3.96,
+  twice what models.dev lists ($2 / $10, and the off-peak $0.66 / $1.98). Both are
+  official prices (checked against Artificial Analysis's model pages and both vendors'
+  price pages on 2026-11-11). Those two run costs are therefore high and their value
+  conservative, and they enter the typical-use median at the higher figure. With few
+  listed models, the median is sensitive to outliers like these.
+- Artificial Analysis also publishes `cost_per_task`, but it is not total cost ÷ task
+  count (the ratio ranges from 631 to 1782 across the board), so it is not used.
+- The cost tier still uses the blended price only.
+- `cost_index(p)` is the §5.2 scale applied to `p`.
 
-这张表固定的是算法本身，所以用的是一组参考指标（两个指数类 0.5 / 0.2，一个 Elo 类 0.3，gap 300），与现行配置里用哪些榜单无关。测试里以 `specConfig` 传入。
+The geometric mean means neither side can be terrible: smart but very expensive and
+cheap but dim both score low.
 
-F 没有缓存价，缓存那部分按输入价计算，用来固定这个回退。
+### 5.4 Tiers
 
-| 用例 | AA 智能 / 编程 / Arena | 价格 入 / 出 / 缓存 | intelligence | blended | cost_index | value |
-|---|---|---|---|---|---|---|
-| A 旗舰 | 68 / 60 / 1490 | 5 / 25 / 0.5 | 96.9 最高 | 3.85 高 | 80.1 | 51.5 中 |
-| B 均衡 | 60 / 52 / 1450 | 1.25 / 10 / 0.125 | 84.6 高 | 1.3375 中 | 61.5 | 61.7 高 |
-| C 便宜好用 | 50 / 40 / 1400 | 0.3 / 2.5 / 0.03 | 68.6 中 | 0.331 低 | 37.0 | 66.3 高 |
-| D 超便宜 | 30 / 22 / 1300 | 0.05 / 0.2 / 0.005 | 38.5 低 | 0.0335 低 | 0 | 56.4 中 |
-| E 不在任何榜单 | 无 | 3 / 15 / 0.3 | 空 | 2.31 高 | 71.1 | 空 |
-| F 缺编程指数、无缓存价 | 56 / 无 / 1430 | 2 / 8 / 无 | 78.8 高 | 2.60 高 | 73.2 | 51.2 中 |
+| Rating | Tier keys, best first | Decided by |
+| --- | --- | --- |
+| Intelligence | `top`, `high`, `mid`, `low` | Score at or above `intelligence.tiers` |
+| Cost | `low`, `mid`, `high`, `very_high` | Blended price below `cost.tiers` |
+| Value | `top`, `high`, `mid`, `low` | Score at or above `value.tiers` |
 
-## 7. JSON API
+- Tiers are decided on the score rounded to one decimal, so a model shown as 90.0 is
+  always in the tier that starts at 90.
+- The API uses the English keys and an English `label`; pages show the label in the
+  current language.
+- Thresholds are tuned against real data: `pnpm report` prints every model's scores and
+  how they spread across the tiers.
 
-全部是构建时生成的静态文件（Astro 的静态 endpoint）。
+### 5.5 Reference fixtures
 
-| 路径 | 内容 |
-|---|---|
-| `/api.json` | 全量：元信息 + 所有模型的完整评级 |
-| `/api/models.json` | 模型名列表：`id`、`name`、`vendor`、`status` |
-| `/api/models/<provider>/<model>.json` | 单个模型 |
+`tests/scoring.test.ts` pins the algorithm with the table below, computed from the
+formulas above, tolerance ±0.1. The data is fictional; the leaders are AA Intelligence
+70, AA Coding 62 and Arena text 1500.
 
-`/api.json` 的结构：
+The fixtures fix the algorithm, not the live config, so they use their own reference
+config (`specConfig` in the test file): two index-style metrics weighted 0.5 and 0.2, one
+Elo-style metric weighted 0.3 with a gap of 300, a 7 : 2 : 1 cache-read : input :
+output blend, a cost scale from $0.04 to $12, value exponents 0.6 and 0.4 with a minimum
+affordability of 5, and tier thresholds of 90 / 75 / 55 (intelligence),
+$0.4 / $2 / $6 (cost) and 70 / 60 / 50 (value). Tuning `scoring.config.ts` does not
+break them.
+
+F has no cache price, so its cached share is billed at the input price, which pins that
+fallback.
+
+| Case | AA intelligence / coding / Arena | Price in / out / cache | Intelligence | Blended | Cost index | Value |
+| --- | --- | --- | --- | --- | --- | --- |
+| A flagship | 68 / 60 / 1490 | 5 / 25 / 0.5 | 96.9 top | 3.85 high | 80.1 | 51.5 mid |
+| B balanced | 60 / 52 / 1450 | 1.25 / 10 / 0.125 | 84.6 high | 1.3375 mid | 61.5 | 61.7 high |
+| C cheap and good | 50 / 40 / 1400 | 0.3 / 2.5 / 0.03 | 68.6 mid | 0.331 low | 37.0 | 66.3 high |
+| D very cheap | 30 / 22 / 1300 | 0.05 / 0.2 / 0.005 | 38.5 low | 0.0335 low | 0 | 56.4 mid |
+| E on no leaderboard | none | 3 / 15 / 0.3 | null | 2.31 high | 71.1 | null |
+| F no coding score, no cache price | 56 / none / 1430 | 2 / 8 / none | 78.8 high | 2.60 high | 73.2 | 51.2 mid |
+
+## 6. JSON API
+
+Static files generated at build time (Astro static endpoints):
+
+| Path | Returns |
+| --- | --- |
+| `/api.json` | Metadata and the full rating of every model |
+| `/api/models.json` | `id`, `name`, `vendor`, `status` of every model |
+| `/api/models/<provider>/<model>.json` | One model |
+
+`/api.json`, abridged to one model and one metric:
 
 ```json
 {
@@ -247,16 +357,19 @@ F 没有缓存价，缓存那部分按输入价计算，用来固定这个回退
       "vendor": "...",
       "status": "active",
       "intelligence": {
-        "score": 96.9, "tier": "top", "label": "Top",
-        "breakdown": { "aa_intelligence": { "raw": 68, "normalized": 97.1 } }
+        "score": 93.2, "tier": "top", "label": "Top",
+        "labels": { "en": "Top", "zh-CN": "最高", "zh-TW": "最高" },
+        "breakdown": {
+          "aa_intelligence": { "raw": 59.1, "normalized": 91.5, "weight": 0.5 }
+        }
       },
       "cost": {
-        "tier": "high", "label": "High", "index": 80.1,
-        "blended": 3.85, "input": 5, "output": 25, "cache_read": 0.5
+        "tier": "high", "label": "High", "labels": { "...": "..." },
+        "index": 75.3, "blended": 2.94, "input": 4, "output": 20, "cache_read": 0.2
       },
       "value": {
-        "score": 51.5, "tier": "mid", "label": "Mid",
-        "cost_basis": "run_cost", "run_cost": 123.4, "effective_price": 3.85, "cost_index": 80.1
+        "score": 59.6, "tier": "mid", "label": "Mid", "labels": { "...": "..." },
+        "cost_basis": "run_cost", "run_cost": 8909.67, "effective_price": 2.113009, "cost_index": 69.6
       },
       "url": "https://mekiki.fog.moe/m/<provider>/<model>"
     }
@@ -264,222 +377,121 @@ F 没有缓存价，缓存那部分按输入价计算，用来固定这个回退
 }
 ```
 
-- 分数保留一位小数，缺失值用 `null`，不要省略字段。
-- 每个评级除了 `label`（英文）还有 `labels`，按语言给出标签：`{ "zh-CN": "最高", "zh-TW": "最高", "en": "Top" }`。`breakdown` 的每一项另带 `weight`。API 本身不分语言，只有一份。
-- 字段只加不改。有破坏性变更时 `version` 加一。
-- 上线后用 `curl -I https://mekiki.fog.moe/api.json` 确认响应带 `Access-Control-Allow-Origin: *`。没有的话，在域名侧加响应头规则，或把 API 单独挪到 Worker。
+- Scores have one decimal place. Missing values are `null`; no field is ever omitted.
+- `breakdown` lists every configured metric.
+- `label` is English and `labels` holds the label in every UI language, keyed by BCP 47
+  tag. The API itself is not localised.
+- `cost.index` is the cost index of the blended price. `value.effective_price` is the
+  price value is computed from, `value.cost_index` its index, and `value.cost_basis`
+  says whether it comes from a measured run cost (`run_cost`) or the price list
+  (`list_price`).
+- `url` is the unprefixed, language-neutral link (§7).
+- **Fields are only added.** A breaking change bumps `version` (`API_VERSION` in
+  `src/lib/api.ts`).
+- Responses must carry `Access-Control-Allow-Origin: *` so browsers can call the API
+  from any site. If the host does not send it, add the header at the domain or move the
+  API to a Worker. [Deployment](deployment.md) has the check.
 
-## 8. 页面
+## 7. Site
 
-| 路由 | 内容 |
-|---|---|
-| `/` | 模型总表 |
-| `/m/<provider>/<model>` | 模型详情 |
-| `/method` | 评分方法、数据来源与署名、各源最近更新时间 |
-| `/api` | API 说明和示例 |
+| Route | Content |
+| --- | --- |
+| `/<locale>/` | The model table |
+| `/<locale>/m/<provider>/<model>` | One model |
+| `/<locale>/method` | Rating method, data sources and attribution, when each source last changed |
+| `/<locale>/api` | API fields and a live example |
 
-每种语言都有自己的前缀：`/en/`、`/zh-cn/`、`/zh-tw/`，路径结构相同，例如 `/zh-cn/m/<provider>/<model>`。上表这些不带前缀的路由只做跳转，跳到某种语言的对应页面，并保留查询参数：访客在语言切换器里选过语言就去那个语言；没选过就看浏览器语言，中文用户去 `/zh-tw/`（繁体或台湾、香港、澳门）或 `/zh-cn/`（其余中文），其他人去 `/en/`。
+### Languages
 
-**首页表格**：列为模型、厂商、智能、成本、性价比、输入/输出价。三个评级列显示档位徽章加分数。支持按任意列排序（默认智能降序）、按厂商/档位/是否开源筛选、按名称搜索。排序和筛选状态写进 URL 查询参数，方便分享某个视图。`legacy` 模型默认折叠。
+- English (default), Simplified Chinese and Traditional Chinese (Taiwan usage). Each has
+  a prefix: `/en/`, `/zh-cn/`, `/zh-tw/`. Locales are defined in `src/i18n/locales.ts`;
+  Astro's own i18n routing is not used.
+- UI strings live in `src/i18n/`, one dictionary per language. `en.ts` defines the shape
+  and the others are type-checked against it, so a missing string fails `pnpm check`.
+- Unprefixed URLs (`/`, `/method`, `/api`, `/m/<provider>/<model>`) only redirect to the
+  same page in one language, keeping the query string and hash. The target is, in order:
+  the language last picked in the switcher (`localStorage` key `locale`), the first
+  browser language that matches, then English. Chinese goes to `/zh-tw/` for
+  Traditional script or Taiwan, Hong Kong and Macau, and to `/zh-cn/` otherwise. GitHub
+  Pages cannot send HTTP redirects, so the redirect runs in the browser
+  (`src/layouts/Redirect.astro`); without JavaScript a meta refresh goes to English.
+- Every page carries `hreflang` links, and switching language keeps the table's
+  filters and sort.
+- There is one `404` page, a GitHub Pages limit, with the message in every language.
+- No copy names the maintainer. Where a sentence needs a subject, it is "mekiki".
 
-**详情页**：三个评级；智能分的构成（每个榜单的原始分、归一化分、权重）；价格、上下文长度、发布日期；各榜单原始页面的链接。
+### Home table
 
-**通用要求**：
+Columns: model, vendor, intelligence, cost, value, input and output price. Each rating
+column shows a tier badge and the score.
 
-- 视觉以数据表为主体，信息密度参考 models.dev。不要做成营销落地页，不要 hero 区和大渐变标题。
-- 深色、浅色都支持，默认跟随系统，可手动切换。
-- 380px 宽的手机上可用：表格固定首列横向滚动（已选这个方案）。
-- 没有数据的地方明确显示「未评」「暂无数据」，不要留空白或显示 0。
-- 页脚：数据来源署名（AA、Arena、models.dev）、最近同步时间、GitHub 仓库链接。
+- Sort by any column; the default is intelligence, descending.
+- Filter by vendor, by each rating's tier and by open weights; search by name.
+- Sorting and filters live in the URL so a view can be shared. The parameters are the
+  same in every language: `q`, `vendor`, `int`, `cost`, `val`, `open`, `sort`, `dir`,
+  `legacy`.
+- Legacy models are collapsed by default.
 
-## 9. 同步与部署
+### Model page
 
-### 脚本
+The three ratings; how the intelligence score is built (raw score, leader, normalised
+score and weight per leaderboard); price, context window, release date, open weights and
+modalities; how value was priced; links to the source data and the model's JSON.
 
-| 命令 | 作用 |
-|---|---|
-| `pnpm sync` | 跑所有适配器，更新 `data/snapshots/`；打印每个源里没对上映射的模型和候选名 |
-| `pnpm report` | 打印所有模型的各项分数和档位分布，用于校准阈值 |
-| `pnpm test` | 单元测试 |
-| `pnpm check` | 类型检查（`astro check`） |
-| `pnpm lint` | Biome lint 和格式检查，与 CI 一致 |
-| `pnpm format` | Biome 格式化，不碰 Markdown |
-| `pnpm smoke` | 用 Playwright 对构建产物做浏览器冒烟测试，先跑 `pnpm build` |
-| `pnpm build` | 构建，不联网 |
+### Everywhere
 
-### 工作流
+- A dense data table in the spirit of models.dev. No marketing hero or giant gradient
+  headline.
+- Dark and light, following the system by default, with a manual switch.
+- Usable at 380 px wide: the table scrolls sideways with the first column pinned.
+- The footer carries the source attribution (Artificial Analysis, Arena, models.dev),
+  the last sync time and a link to the repository.
 
-只用一个 `.github/workflows/deploy.yml`，触发条件：推送到 `main`、每天一次定时、手动触发。
+## 8. Sync and deployment
 
-1. checkout，装依赖
-2. 仅定时和手动触发时：跑 `pnpm sync`（注入 `AA_API_KEY`），快照有变化就提交并推送
-3. lint 和格式检查（`biome ci`）、类型检查（`pnpm check`）、`pnpm test`
-4. `pnpm build`，上传产物，部署到 GitHub Pages
-5. 另起一个 `smoke` job，下载同一份产物跑 `pnpm smoke`。它是可选的：和部署并行，不阻塞部署，失败只把这个 job 标红
+One workflow, `.github/workflows/deploy.yml`, runs on every push to `main`, once a day,
+and on manual dispatch:
 
-同步和部署必须在同一次运行里。原因：用默认 `GITHUB_TOKEN` 推送的提交不会触发其他工作流，如果拆成两个工作流，同步后的数据不会自动上线。工作流权限需要 `contents: write`、`pages: write`、`id-token: write`。
+1. Check out and install.
+2. Daily and manual runs only: `pnpm sync` with `AA_API_KEY`, then commit and push any
+   snapshot change.
+3. `biome ci`, `pnpm check`, `pnpm test`.
+4. `pnpm build`, upload, deploy to GitHub Pages.
+5. A separate `smoke` job runs `pnpm smoke` on the same build artifact. It is optional:
+   it runs beside the deploy, never blocks it, and a failure only marks that job red.
 
-Astro 构建和部署步骤的具体写法（官方 action 的版本号等）照 Astro 官方的 GitHub Pages 部署指南。
+**Sync and deploy must share a run.** A commit pushed with the default `GITHUB_TOKEN`
+does not trigger other workflows, so a separate sync workflow would leave fresh data
+undeployed. For the same reason the workflow spells out install, test, build and upload
+as steps instead of using `withastro/action`: sync and tests have to run before the build
+in the same job. The workflow needs `contents: write`, `pages: write` and
+`id-token: write`.
 
-### 自定义域名
+The custom domain is set by `public/CNAME` (`mekiki.fog.moe`) and `site` in
+`astro.config.mjs`, with no `base`. One-time setup is in [deployment](deployment.md).
 
-- `public/CNAME` 内容为 `mekiki.fog.moe`
-- `astro.config` 里 `site: 'https://mekiki.fog.moe'`，不要设 `base`
+## 9. Decisions
 
-## 10. 目录结构
+**No text reviews.** Short verdicts, pros and cons, best-for lists, long reviews and
+review dates were removed. Model files have no such fields, pages don't show them, and
+the API has no `verdict`, `best_for` or `reviewed_at`.
 
-```
-mekiki/
-├─ src/
-│  ├─ content/models/<provider>/<model>.md
-│  ├─ content.config.ts        # 内容集合配置
-│  ├─ lib/
-│  │  ├─ scoring.ts            # 纯函数
-│  │  ├─ scoring.config.ts     # 全部权重和阈值
-│  │  ├─ model-schema.ts       # 模型文件的 frontmatter schema（Astro 和脚本共用）
-│  │  ├─ snapshots.ts          # 快照的 schema 和读取
-│  │  ├─ dataset.ts            # 合并内容 + 快照，产出页面和 API 共用的数据
-│  │  ├─ api.ts                # JSON API 的结构
-│  │  └─ site-data.ts          # Astro 侧入口，每次构建只算一次
-│  ├─ i18n/                    # 各语言字典和路径工具
-│  ├─ layouts/、views/         # 布局、跳转页和各页面主体（各语言共用）
-│  ├─ components/              # shadcn 组件、表格 island、档位徽章
-│  └─ pages/
-│     ├─ [locale]/…            # 各语言的页面：index、method、api、m/[...id]
-│     ├─ index.astro、method.astro、api.astro、m/[...id].astro   # 不带前缀，只跳转到默认语言
-│     ├─ api.json.ts
-│     └─ api/…                 # models.json 和单模型 JSON
-├─ data/snapshots/             # modelsdev.json, aa.json, arena.json
-├─ scripts/
-│  ├─ sync.ts
-│  ├─ report.ts
-│  ├─ lib/                     # 读模型文件、HTTP、候选名
-│  └─ sources/                 # 每个数据源一个适配器
-├─ tests/                      # scoring、sources、dataset
-├─ e2e/                        # 浏览器冒烟测试
-├─ public/CNAME
-├─ docs/SPEC.md                # 本文档
-└─ .github/workflows/deploy.yml
-```
+**No subjective score.** Intelligence used to blend a hand-entered score with the
+leaderboards. It was removed because:
 
-页面和 API 都从 `dataset.ts` 取数，保证两边数字一致。Content Collections 配置文件的位置按当前 Astro 版本的约定。
+- one person's judgement made up 40% of the intelligence score;
+- leaderboard scores drop automatically when a new leader arrives, but a hand-entered
+  score stays on the old scale, so old flagships drifted upwards unless every model was
+  re-scored at every generation;
+- the alternatives fell short: normalising hand scores to the highest one still needs
+  fine-grained numbers, coarse tiers can't follow new generations, and on-site voting
+  draws few votes, is easy to game and goes stale too. Arena's text and WebDev boards
+  are large-scale votes already and make up half the intelligence weight.
 
-## 11. 需要维护者手动做的事
+A `subjective` block left in a model file is ignored. The API dropped
+`intelligence.basis`, `intelligence.subjective` and `intelligence.benchmark` (which had
+become identical to `score`). Like the text-review fields before them, they were removed
+without bumping `version`.
 
-1. 创建公开仓库 `scarletkc/mekiki`
-2. 注册 Artificial Analysis 账号，生成 API key，加到仓库 secret `AA_API_KEY`
-3. DNS：给 `mekiki.fog.moe` 加 CNAME 记录指向 `scarletkc.github.io`（如果走 Cloudflare，先用仅 DNS 模式，等 GitHub 签好证书）
-4. 仓库 Settings → Pages：来源选 GitHub Actions，填自定义域名，开启强制 HTTPS
-5. 给出模型清单，填每个模型的 `sources` 映射
-
-Claude Code 做完自己的部分后，把这几项列成清单提醒维护者，不要尝试代做。
-
-## 12. 实现顺序和验收
-
-顺序：
-
-1. 项目骨架、内容 schema、评分函数和测试
-2. 三个适配器和 `pnpm sync`、`pnpm report`
-3. 页面和 JSON API
-4. 工作流和部署
-
-验收标准：
-
-- [ ] `pnpm test` 通过，§6.5 的六个用例全部在容差内
-- [ ] 断网状态下 `pnpm build` 成功
-- [ ] 删掉任意一个快照文件，站点仍能构建，对应数据显示「暂无数据」
-- [ ] 新增一个模型只需要新增一个 Markdown 文件
-- [ ] `/api.json`、`/api/models.json`、单模型 JSON 都能访问，结构符合 §7
-- [ ] 页面和 API 里同一个模型的分数一致
-- [ ] 首页表格的排序、筛选、搜索可用，状态能通过 URL 还原
-- [ ] 深色和浅色模式正常，380px 宽度下可用
-- [ ] 页脚有 AA、Arena、models.dev 的来源署名
-- [ ] 仓库里搜不到任何 API key
-- [ ] README 写清楚：怎么加模型、怎么改权重和阈值、怎么本地跑
-
-## 13. 本期不做
-
-- 给每个模型生成分享用的 OG 图片（发 X 时有用，优先级最高的后续项）
-- 分数历史趋势
-- RSS 或更新日志
-- 更多界面语言
-- 更多榜单（如 Arena 的 webdev 榜）
-
-## 14. 实现记录（2026-11-11）
-
-实现时与前文不同的地方，以及前文没定、实现时定下来的做法。前面各节已同步改过，这里说明原因。
-
-### 多语言
-
-维护者在开工时追加的要求，覆盖了原先「不做多语言」的设定。
-
-- 语言：英语（默认）、简体中文、繁体中文（台湾用语）。界面文案在 `src/i18n/`，一个语言一个字典；英文字典 `en.ts` 定义结构，其余语言按它做类型检查，缺 key 时 `pnpm check` 报错。
-- 路由：三种语言都带前缀（`/en/`、`/zh-cn/`、`/zh-tw/`）。§8 那些不带前缀的路由只输出一个跳转页，跳到对应页面并保留查询参数。目标语言依次取：语言切换器里手动选过的语言（存在 `localStorage` 的 `locale` 里）、浏览器语言列表里第一个能对上的语言、英语。GitHub Pages 发不了 HTTP 重定向，所以是浏览器端跳转（脚本；没有 JavaScript 时由 meta refresh 跳到英语）。API 里的 `url` 仍用不带前缀的形式，作为与语言无关的固定链接。没有启用 Astro 自带的 i18n 路由，路由全部由页面文件和 `src/i18n/locales.ts` 决定。
-- 每页带 `hreflang`，切换语言时保留当前的筛选和排序。
-- 站名只写 `mekiki`，不带日语。界面文案和仓库文件里不出现维护者的名字，需要主语的地方写 mekiki（如「mekiki 还未评价这个模型」）。
-- 首页表格的 URL 参数与语言无关：`q`、`vendor`、`int`、`cost`、`val`、`open`、`sort`、`dir`、`legacy`。
-- JSON API 只有一份，面向英文：`label` 是英文标签，另加 `labels` 给出各语言的标签。
-- `404` 页面只有一个文件（GitHub Pages 的限制），三种语言的提示都写在里面。
-
-### 数据源
-
-- **Artificial Analysis 适配器已用真实响应验证。** 适配器先是照文档写的；加上 key 之后在 CI 里跑通，734 个模型全部通过校验。
-- **AA 免费档不返回编程指数，改用 Arena WebDev 榜。** 免费档的 `artificial_analysis_coding_index` 对所有模型都是 `null`（真实响应已确认），所以不再读取这个字段。编程能力改由 Arena 的 WebDev 榜衡量，权重沿用原来给编程指数的 0.2。
-- **Arena 改读 Parquet 文件。** 实测 HF Datasets Server 的 `/filter` 接口会间歇返回 500（「the dataset index is loading」）或超时，而 `/rows` 要翻 100 多页（`latest` 这个 split 有 29 个分类共一万多行）。改为下载该 split 自动转换出的 Parquet 文件（每个榜一个请求，文本榜约 0.6 MB），用 `hyparquet` 解析，只取 `category = overall` 的行。两个榜写进同一份 `arena.json`，按模型名为键，每条带 `arena_text` 和 `arena_webdev` 两个分数（不在某个榜上就是 `null`）。
-- Arena 现在的站点是 `https://arena.ai/leaderboard`（`lmarena.ai` 会跳转过去）。
-- 同步时的异常判断：返回的模型总数低于适配器设的下限，或不到上次的一半，都视为异常，保留旧快照。失败时 `pnpm sync` 仍以 0 退出。
-- 候选名只用来打印提示，从不自动写入映射。
-
-### 评分
-
-- 档位按四舍五入到一位小数后的分数判定，这样页面上显示 90.0 的模型一定是「最高」，不会出现分数和档位对不上的情况。
-- 评分函数按配置里列出的指标计算，不写死指标名。加减榜单只改 `scoring.config.ts`（外加适配器和字典里的名称）。
-- §6.5 的用例和数据集测试都用固定的参考配置，调整现行权重时测试不会跟着变。
-- **性价比按实测花费计算（§6.3）。** 换算基准试过「AA 榜上智能指数前 50 名的中位数」，结果偏低（榜上有大量低推理档的条目）：10 个示例模型里 9 个的折算价高于标价，中位数约为标价的 4 倍，成本指数挤在 84–92，没有实测花费的模型反而白占便宜。所以改为对本站收录的模型取中位数。
-- **AA 对两个模型按高价档计费。** AA 计算评测花费时，Gemini 4 Argon 用的是 $4 / $20，DeepSeek V4 Pro 用的是高峰价 $1.32 / $3.96，都是 models.dev 所列价格（$2 / $10，非高峰 $0.66 / $1.98）的 2 倍。2026-11-11 核对过 AA 的模型页和两家的官方价格页，两种价格都是官方价。这两个模型的实测花费因此偏高、性价比偏保守，它们在典型用量的中位数里也按偏高的数值计入。收录的模型少时，中位数对这类个别数值比较敏感。
-- AA 的 `cost_per_task` 不是「总花费 ÷ 题数」（全榜的比值在 631–1782 之间），不使用。AA 方法页列出的是一套固定的题目和重复次数，所以直接比较总花费。
-- API 的 `value` 新增 `cost_basis`（`run_cost` 或 `list_price`）、`run_cost`、`effective_price`、`cost_index`；原有字段的含义不变，`cost.index` 仍是混合价的成本指数。
-
-### 技术选型
-
-- TypeScript 用 6.x：`@astrojs/check` 目前只支持到 TS 6，TS 7 还装不上。
-- Zod 用 Astro 自带的那一份（`astro/zod`），脚本和内容集合共用同一个 schema，避免两份 Zod 版本不一致。
-- 部署工作流没有用 `withastro/action`，而是把安装、测试、构建、上传拆成显式步骤，因为同步和测试必须在构建之前、且在同一个 job 里完成。action 的版本号取自各仓库当天的最新 release。工作流没有办法在本地验证，第一次运行后要看一下结果。
-- 字体只打包了一个拉丁字体（Instrument Sans，经 `@fontsource-variable` 本地打包），中文用系统字体，构建期间没有任何远程请求。
-
-### 文字评价
-
-维护者决定网站不放文字评价。短评、优缺点、适用场景、长评、评价日期都已删除：模型文件里没有这些字段，页面不显示，API 里也没有 `verdict`、`best_for`、`reviewed_at`。数字形式的主观分当时保留为可选项，后来也删除了，见下一节。
-
-### 主观分
-
-维护者决定智能分只用榜单，删除主观分。原因：
-
-- 主观分是一个人的判断，却占智能分的 40%。
-- 新模型发布后，榜单分会按新榜首自动下降，主观分却停在旧尺子上，旧旗舰因此虚高。要保持准确，每次换代都得回头改旧模型的分数。
-- 考虑过的替代方案都不理想：按最高手填分自动归一化仍要填精细的数字；改成粗档位就没法自动跟着换代；站内众投票少、容易被刷，而且同样会过时。Arena 的文本榜和 WebDev 榜本身就是大规模众投，已经占榜单分的一半。
-
-模型文件里的 `subjective` 字段会被忽略。API 去掉了 `intelligence.basis`、`intelligence.subjective`，以及此后与 `score` 恒等的 `intelligence.benchmark`；和删除文字评价时一样，没有升 `version`。
-
-### 示例数据
-
-维护者还没给清单，先放了 10 个模型，取自 2026-11-11 的 models.dev，都用第一方 provider 的条目。
-
-| 模型 | AA | Arena 文本榜 | Arena WebDev 榜 |
-|---|---|---|---|
-| `anthropic/claude-opus-5-5` | `claude-opus-5-5` | `Claude Opus 5.5 (High)` | `Claude Opus 5.5 (Max)` |
-| `anthropic/claude-sonnet-5-5` | `claude-sonnet-5-5` | `Claude Sonnet 5.5 (xHigh)` | `Claude Sonnet 5.5 (xHigh)` ※ |
-| `anthropic/claude-haiku-5-5` | `claude-haiku-5-5` | `Claude Haiku 5.5 (High)` | `Claude Haiku 5.5 (High)` |
-| `anthropic/claude-opus-5`（legacy） | `claude-opus-5` | `Claude Opus 5 (Max)` ※ | `Claude Opus 5 (Max)` ※ |
-| `openai/gpt-6.1-sol` | `gpt-6-1-sol` | `GPT-6.1 Sol (Max)` | `GPT-6.1 Sol (Max)` |
-| `openai/gpt-6.1-terra` | `gpt-6-1-terra` | 榜上没有 | `GPT-6.1 Terra (Max)` |
-| `google/gemini-4-argon` | `gemini-4-argon` | `Gemini 4 Argon (High)` | `Gemini 4 Argon (High)` |
-| `google/gemini-3.8-flash` | `gemini-3-8-flash` | `Gemini 3.8 Flash (High)` | `Gemini 3.8 Flash (High)` |
-| `deepseek/deepseek-v4-pro` | `deepseek-v4-pro` | `DeepSeek-V4-Pro (High, 20260813)` ※ | `DeepSeek-V4-Pro (High, 20260813)` ※ |
-| `xai/grok-4.7` | `grok-4-7` | `Grok 4.7 (xHigh)` | `Grok 4.7 (xHigh)` |
-
-这些映射是实现时填的，维护者应该过一遍：
-
-- 没有标记的格子，榜上只有这一个条目。
-- 带 ※ 的格子，榜上有多个推理档位。取法是：另一个榜已经定了档位就取同一档，否则取最高档的正式版。
-- AA 一列取的都是不带后缀的基础 slug（例如 `gpt-6-1-sol`，而不是 `gpt-6-1-sol-high`）。同步后确认，基础 slug 对应的就是该模型的最高推理档（AA 里的名称是 `GPT-6.1 Sol (Max)`、`Gemini 4 Argon (High)` 这样）。AA 同样按推理档位拆条目，要换档位就改这一列。
+Not built yet: share images per model, score history, an RSS feed or changelog, and more
+UI languages.

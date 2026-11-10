@@ -1,6 +1,6 @@
 /**
  * Frontmatter schema of `src/content/models/<provider>/<model>.md`
- * (docs/SPEC.md §5.2), shared by the Astro content collection and the
+ * (docs/SPEC.md §4.1), shared by the Astro content collection and the
  * Node scripts. Must not import `astro:*` modules.
  */
 import { z } from 'astro/zod';

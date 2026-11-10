@@ -1,5 +1,5 @@
 /**
- * Shapes of the public JSON API (docs/SPEC.md §7), derived from the same
+ * Shapes of the public JSON API (docs/SPEC.md §6), derived from the same
  * dataset the pages use.
  *
  * Contract: fields are only ever added. A breaking change bumps
@@ -71,7 +71,7 @@ export interface ApiFull {
   models: ApiModel[];
 }
 
-// `label` is English by contract (docs/SPEC.md §7), whatever the site's default
+// `label` is English by contract (docs/SPEC.md §6), whatever the site's default
 // locale is. `labels` carries every language.
 const defaultLabels = useTranslations('en').tier;
 

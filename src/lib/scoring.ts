@@ -1,5 +1,5 @@
 /**
- * Rating algorithm (docs/SPEC.md §6). Pure functions only: no I/O, no
+ * Rating algorithm (docs/SPEC.md §5). Pure functions only: no I/O, no
  * dates, no Astro imports, so the same code runs in the site build, in
  * `pnpm report` and in unit tests.
  *

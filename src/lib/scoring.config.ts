@@ -1,6 +1,6 @@
 /**
  * Every tunable number of the rating algorithm lives here: weights,
- * normalisation parameters and tier thresholds. See docs/SPEC.md §6.
+ * normalisation parameters and tier thresholds. See docs/SPEC.md §5.
  *
  * After changing anything, run `pnpm test` and `pnpm report`.
  */

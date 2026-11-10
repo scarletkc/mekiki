@@ -16,11 +16,11 @@ import {
 } from '@/lib/scoring';
 import { METRIC_KEYS, scoringConfig, type ScoringConfig } from '@/lib/scoring.config';
 
-/** Fictional leaderboard tops used by the fixtures in docs/SPEC.md §6.5. */
+/** Fictional leaderboard tops used by the fixtures in docs/SPEC.md §5.5. */
 const frontier = { aa_intelligence: 70, aa_coding: 62, arena_text: 1500 };
 
 /**
- * The metric set the fixtures in docs/SPEC.md §6.5 were computed with: two
+ * The metric set the fixtures in docs/SPEC.md §5.5 were computed with: two
  * index-style metrics and one Elo-style metric. The fixtures pin the
  * algorithm, so they use this reference set and not whatever the live
  * config in scoring.config.ts currently lists.
@@ -82,7 +82,7 @@ interface Fixture {
   };
 }
 
-// The table from docs/SPEC.md §6.5, verbatim. Tolerance ±0.1.
+// The table from docs/SPEC.md §5.5, verbatim. Tolerance ±0.1.
 const fixtures: Fixture[] = [
   {
     name: 'A flagship',
@@ -194,7 +194,7 @@ function near(actual: number | null, expected: number) {
   expect(Math.abs((actual as number) - expected)).toBeLessThanOrEqual(TOLERANCE + 1e-9);
 }
 
-describe('SPEC §6.5 fixtures', () => {
+describe('SPEC §5.5 fixtures', () => {
   for (const { name, input, expected } of fixtures) {
     it(name, () => {
       const rating = rateModel(input, specConfig);

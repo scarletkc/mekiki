@@ -1,254 +1,112 @@
+<div align="center">
+
+<img src="public/favicon.svg" alt="mekiki logo" width="96" />
+
 # mekiki
 
-Opinionated ratings of AI models, published as a static site and a public JSON API at
-<https://mekiki.fog.moe>.
+**AI models rated on intelligence, cost and value, refreshed daily from public leaderboards, with a free JSON API**
 
-Each model gets three ratings:
+[Website](https://mekiki.fog.moe) | [Method](https://mekiki.fog.moe/method) | [API](https://mekiki.fog.moe/api)
 
-- **Intelligence**: public leaderboard scores, fetched automatically and normalised to the
-  current leader.
-- **Cost**: a blend of the official cache-read, input and output prices.
-- **Value**: derived from intelligence and what the model costs to actually run, which
-  counts how many tokens it burns and not only its price per token.
+[![Astro](https://img.shields.io/badge/Astro-7-BC52EE?logo=astro&logoColor=white)](https://astro.build/)
+[![API](https://img.shields.io/badge/API-JSON%20%2B%20CORS-2EA44F)](https://mekiki.fog.moe/api)
+[![Data](https://img.shields.io/badge/data-refreshed%20daily-C2452B)](docs/SPEC.md#4-data)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-mekiki (目利き) is Japanese for a discerning eye. Unlike [models.dev](https://models.dev),
-which catalogues facts about every model, this is a short, curated list with an opinion
-attached. The full design is in [docs/SPEC.md](docs/SPEC.md) (in Chinese).
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshot-dark.png" />
+  <img src="docs/assets/screenshot-light.png" alt="The mekiki model table, with each model's intelligence, cost and value tiers and its price" />
+</picture>
 
-The site is available in English (default), Simplified Chinese and Traditional Chinese.
+</div>
 
-## Run it locally
+mekiki rates a short list of AI models on how smart they are, what they cost, and how much
+intelligence you get for the money. The numbers come from public leaderboards and
+official prices, and refresh every day.
 
-Requirements: Node.js 22.23.4 or newer and pnpm 12.
+- **No hand-entered scores.** Intelligence combines the Artificial Analysis
+  Intelligence Index with Arena's text and WebDev leaderboards, and every weight and
+  threshold is published on the Method page.
+- **Value counts the tokens a model burns.** Two models with the same price per token can
+  cost very different amounts to use. Value is priced on what it actually cost to run each
+  model through the same benchmark, not on the price list alone.
+- **Measured against today's leader.** Scores are normalised to the current best model,
+  so an old flagship slides down when a new one arrives.
+- **Curated.** The models worth comparing, not every model ever released.
+- **Open data.** Every rating is in a free JSON API that any site can call.
+
+## Features
+
+- **Model table**: sort by any column, filter by vendor, tier or open weights, and search
+  by name. The URL keeps the view, so you can share it.
+- **Model pages**: how the intelligence score is built, leaderboard by leaderboard; price,
+  context window, release date and modalities; links to the source data.
+- **Method page**: every formula, weight and threshold, generated from the same config the
+  scores are computed with.
+- **JSON API**: the full dataset, a model list and one file per model.
+- **Daily updates**: prices and leaderboard scores are fetched again every day.
+- **Languages**: English, Simplified Chinese and Traditional Chinese, in dark or light,
+  on a desktop or a phone.
+
+## How the ratings work
+
+**Intelligence** is a weighted mean of three leaderboards: the Artificial Analysis
+Intelligence Index, Arena text and Arena WebDev. Each is normalised so its current leader
+scores 100. A model on none of them is shown as not rated, never as 0.
+
+**Cost** is a blended price per million tokens that mixes the official cache-read, input
+and output prices in the proportions of typical agent and chat use, where most input is
+served from the prompt cache. Its tier, from Low to Very high, follows the price itself.
+
+**Value** weighs intelligence against what the model costs to run. Artificial Analysis
+publishes what it paid to run its whole benchmark on each model, so a model that thinks
+for longer pays for it here even when its price per token is low. Value is a geometric
+mean: smart but very expensive and cheap but dim both score low.
+
+The [Method page](https://mekiki.fog.moe/method) has the formulas and the current
+weights and thresholds.
+
+## Use the API
+
+Everything on the site is also JSON. `/api.json` holds every rating, `/api/models.json`
+lists the models, and `/api/models/<provider>/<model>.json` returns one model. Any site
+can call it from the browser.
 
 ```bash
-pnpm install
+curl -s https://mekiki.fog.moe/api.json | jq '.models[] | {name, intelligence: .intelligence.score, value: .value.tier}'
 ```
 
-```bash
-pnpm dev
-```
+Missing values are `null`, and fields are only ever added: a breaking change bumps
+`version`. The [API page](https://mekiki.fog.moe/api) documents every field with a live
+example.
 
-The dev server runs at <http://localhost:4321>.
+## Missing a model?
 
-| Command | What it does |
-| --- | --- |
-| `pnpm dev` | Start the dev server. |
-| `pnpm build` | Build the site into `dist/`. Reads local files only; never goes online. |
-| `pnpm preview` | Serve the built site. |
-| `pnpm test` | Run the unit tests. |
-| `pnpm check` | Type-check the project (`astro check`). |
-| `pnpm lint` | Lint and check formatting with [Biome](https://biomejs.dev), as CI does. |
-| `pnpm format` | Format with Biome. Markdown files are left alone. |
-| `pnpm smoke` | Browser smoke test of the built site (Playwright). Run `pnpm build` first. |
-| `pnpm sync` | Fetch the data sources and update `data/snapshots/`. |
-| `pnpm report` | Print every model's scores and the tier distribution. |
+[Open an issue](https://github.com/scarletkc/mekiki/issues) with its
+[models.dev](https://models.dev) ID. Or add it yourself: a model is a single Markdown
+file, and [adding a model](docs/adding-models.md) walks through it.
 
-`pnpm smoke` needs a Chromium build once: `pnpm exec playwright install --only-shell chromium`.
+## Documentation
 
-## Add a model
-
-Adding a model means adding one Markdown file. Nothing else needs to change.
-
-1. Find the model on [models.dev](https://models.dev) and note its provider and model ID,
-   for example `openai/gpt-6.1-sol`.
-2. Create `src/content/models/<provider>/<model>.md`. The path is the model's ID and is
-   used as-is, so keep dots and capital letters exactly as models.dev writes them.
-
-   ```markdown
-   ---
-   name: GPT-6.1 Sol
-   vendor: OpenAI
-   status: active          # active | legacy (legacy models are collapsed on the home page)
-   sources:
-     modelsdev: openai/gpt-6.1-sol   # optional; defaults to the file's ID
-     aa: gpt-6-1-sol                       # slug on Artificial Analysis
-     arena_text: "GPT-6.1 Sol (Max)"       # exact name on the Arena text leaderboard
-     arena_webdev: "GPT-6.1 Sol (Max)"     # exact name on the Arena WebDev leaderboard
-   ---
-   ```
-
-   The file is frontmatter only; anything below it is ignored.
-
-3. Run `pnpm sync`. It fetches the model's price and scores, and lists every mapping that
-   did not match together with the closest names in that source:
-
-   ```text
-   Unmatched in Arena (set the field in the model file):
-     openai/gpt-6.1-terra: sources.arena_text is empty; candidates: "GPT-5.6 Terra (xHigh)", "GPT-6.1 Sol (Max)"
-   ```
-
-   Copy the right name into the file and run `pnpm sync` again. Until a model has been
-   synced, the site shows "no data" for it. In production, the daily workflow (or a manual
-   run of it) does the same.
-
-Things to know:
-
-- **Mappings are always explicit.** Names differ between leaderboards, and the same model
-  is often listed once per reasoning level. Nothing is matched by guessing; choose the entry
-  for the level you actually use. The two Arena boards list different levels, so each has
-  its own field.
-- **Intelligence comes from the leaderboards only.** There is no hand-entered score, so
-  nothing needs revisiting when a new model takes the lead: every score is normalised to
-  the current leader on each sync.
-- A model that is missing from a leaderboard is rated on the ones it is on; the weights are
-  re-normalised. A model on none of them is shown as "not rated", never as 0.
-- **Value uses the measured run cost when there is one.** Artificial Analysis publishes
-  what it paid to run its Intelligence Index on a model. That cost is divided by typical
-  token use (the median, over the models listed here, of run cost ÷ blended price) to get
-  a price per 1M tokens, and value is computed from that price. A model that burns few
-  tokens for its score comes out cheaper than its price list, a wasteful one dearer. A
-  model without a run cost is rated on its blended price. Because the yardstick is the
-  listed models, adding or removing a model can shift the others' value slightly.
-- The site has no text reviews (no verdict, pros and cons, or long review) and no
-  subjective score. Old `subjective` blocks in a model file are ignored.
-- To override the models.dev price, add:
-
-  ```yaml
-  overrides:
-    price: { input: 5, output: 25 }   # USD per 1M tokens; cache_read is optional
-  ```
-
-  Without `cache_read` the models.dev cache price is kept, and it counts toward the
-  blended price.
-
-- Invalid frontmatter fails `pnpm test` and `pnpm build` with the file name and the field.
-
-## Change weights and thresholds
-
-Every number of the rating algorithm lives in
-[`src/lib/scoring.config.ts`](src/lib/scoring.config.ts):
-which leaderboard metrics are used with their weight and zero point, the blended-price
-weights (cache read, input, output), how far value trusts the measured run cost
-(`runCostWeight`), the value exponents and the tier thresholds.
-
-1. Edit `src/lib/scoring.config.ts`.
-2. Run `pnpm report` to see the scores and how the models spread across the tiers.
-3. Run `pnpm test`. The tests pin the algorithm with a fixed reference config taken from
-   the spec, so tuning the live weights does not break them.
-
-To add a leaderboard, add a metric to that file, make its source's adapter in
-`scripts/sources/` write it to the snapshot, and give it a name in `src/i18n/`.
-
-The method page is generated from the same file and cannot drift from it. The algorithm
-itself is in [`src/lib/scoring.ts`](src/lib/scoring.ts), as pure functions.
+- [Method](https://mekiki.fog.moe/method): formulas, current weights and thresholds, and when each source last changed
+- [API reference](https://mekiki.fog.moe/api): every field, with a live example
+- [Adding a model](docs/adding-models.md): the model file, mapping it to each leaderboard, and price overrides
+- [Development guide](docs/development.md): running locally, commands, tuning the ratings, and adding a language
+- [Deployment](docs/deployment.md): the daily workflow and one-time setup
+- [Design](docs/SPEC.md): rules, data model, rating algorithm, and the API contract
 
 ## Data sources
 
-| Source | Used for | Access |
-| --- | --- | --- |
-| [models.dev](https://models.dev) | Price, context window, release date, open weights, modalities | `https://models.dev/api.json`, no key |
-| [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index, cost of running the index (the cost side of value) | Free API, key in `AA_API_KEY` |
-| [Arena](https://arena.ai/leaderboard) | Text and WebDev leaderboard ratings | Hugging Face dataset `lmarena-ai/leaderboard-dataset` (CC BY 4.0), no key |
-
-Intelligence is built from three metrics: the AA Intelligence Index (weight 0.5), the Arena
-text rating (0.3) and the Arena WebDev rating (0.2), which stands in for coding ability.
-
-`pnpm sync` runs one adapter per source (`scripts/sources/`). Each adapter fetches,
-validates with Zod, keeps only the tracked models plus the best score on the full
-leaderboard, and writes `data/snapshots/<source>.json`. Snapshots are committed; the build
-reads them and nothing else.
-
-- If a source is down, returns invalid data or returns far fewer models than last time, its
-  old snapshot is kept and the reason is printed (and written to the GitHub Actions job
-  summary). `pnpm sync` still exits 0, so a broken source never blocks a deploy.
-- If a snapshot file is missing, the site still builds and shows "no data" for that source.
-- A snapshot's `fetched_at` only changes when its data changes, so a quiet day produces no
-  commit.
-- To sync Artificial Analysis locally, copy `.env.example` to `.env` and set `AA_API_KEY`.
-  Without a key that source is skipped. The key is only ever read by `pnpm sync`; it must
-  never be committed or reach the front end.
-
-Artificial Analysis also publishes a Coding Index, but its free API returns `null` for it on
-every model, so it is not used; Arena's WebDev board covers coding instead.
-
-Attribution is required by Artificial Analysis and by the Arena dataset's licence. The
-footer of every page carries it; keep it there.
-
-## JSON API
-
-Static files, regenerated on every build:
-
-| Path | Returns |
+| Source | Used for |
 | --- | --- |
-| `/api.json` | Metadata and the full rating of every model |
-| `/api/models.json` | `id`, `name`, `vendor`, `status` of every model |
-| `/api/models/<provider>/<model>.json` | One model |
+| [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index, and what it cost to run the index on each model |
+| [Arena](https://arena.ai/leaderboard) | Text and WebDev leaderboard ratings, from the [`lmarena-ai/leaderboard-dataset`](https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset) dataset (CC BY 4.0) |
+| [models.dev](https://models.dev) | Prices, context window, release date, open weights and modalities |
 
-Scores have one decimal place, missing values are `null`, and no field is ever omitted.
-`tier` is a stable English key; `label` is the English label and `labels` holds
-every language. `value.effective_price` is the price the value score is computed from,
-and `value.cost_basis` says whether it comes from a measured run cost or the price list. Fields are only added; a breaking change bumps `version`. The page at
-[`/api`](https://mekiki.fog.moe/api) documents the fields and shows a live example.
-
-## Languages
-
-UI strings live in `src/i18n/` as one dictionary per language. `en.ts` defines the shape
-and the others are type-checked against it, so a missing string fails `pnpm check`.
-
-- Every language has its own prefix: `/en/`, `/zh-cn/` and `/zh-tw/`.
-- Unprefixed page URLs (`/`, `/method`, `/api`, `/m/<provider>/<model>`) redirect to the
-  same page in the language the visitor last picked in the switcher. Without such a choice,
-  they follow the browser's language: Chinese goes to `/zh-tw/` for Traditional script or
-  Taiwan, Hong Kong and Macau and to `/zh-cn/` otherwise, and everything else goes to
-  `/en/`. The query string and hash are kept. GitHub Pages cannot send HTTP redirects, so
-  they redirect in the browser; without JavaScript they go to English. The API's `url`
-  field uses the unprefixed form as a language-neutral link.
-- The JSON API is not localised; it carries tier labels for every language instead.
-
-To add a language, add it to `LOCALES` and `LOCALE_INFO` in `src/i18n/locales.ts`, then add
-a dictionary and register it in `src/i18n/index.ts`. To change the default language, change
-`DEFAULT_LOCALE` in the same file.
-
-## Deployment
-
-`.github/workflows/deploy.yml` runs on every push to `main`, once a day, and on manual
-dispatch. Daily and manual runs sync the snapshots first and commit any change; every run
-then lints, type-checks, tests, builds and deploys to GitHub Pages. A separate `smoke` job
-runs the browser smoke test against the built site. It is optional: it never blocks the
-deploy, and a failure only marks that job red.
-
-One-time setup, done by the repository owner:
-
-1. Create an Artificial Analysis account, generate an API key and add it as the repository
-   secret `AA_API_KEY`.
-2. DNS: add a `CNAME` record for `mekiki.fog.moe` pointing to `scarletkc.github.io`. With
-   Cloudflare, use DNS-only mode until GitHub has issued the certificate.
-3. Repository Settings → Pages: set the source to GitHub Actions, enter the custom domain
-   and enable Enforce HTTPS.
-4. Once it is live, check that the API allows cross-origin requests:
-
-   ```bash
-   curl -I https://mekiki.fog.moe/api.json
-   ```
-
-   The response should include `Access-Control-Allow-Origin: *`.
-
-The sync step pushes to `main` with the workflow's own token. If `main` is protected, allow
-GitHub Actions to push to it, or the daily sync cannot save its snapshots.
-
-## Project layout
-
-```text
-src/
-  content/models/<provider>/<model>.md   one file per model
-  lib/scoring.config.ts                  every weight and threshold
-  lib/scoring.ts                         rating algorithm (pure functions)
-  lib/dataset.ts                         merges models and snapshots for pages, API and report
-  lib/api.ts                             JSON API shapes
-  i18n/                                  dictionaries and locale helpers
-  views/                                 page bodies, shared by all languages
-  pages/                                 routes and JSON endpoints
-  components/                            table island, tier meter, shadcn/ui components
-data/snapshots/                          modelsdev.json, aa.json, arena.json
-scripts/sync.ts, scripts/report.ts       pnpm sync, pnpm report
-scripts/sources/                         one adapter per data source
-tests/                                   unit tests
-e2e/                                     browser smoke test
-docs/SPEC.md                             requirements and design (Chinese)
-```
+Thanks to all three. Every page credits them; if you republish the data, credit them
+too.
 
 ## License
 
-Code is [MIT](LICENSE). Leaderboard data belongs to its sources: Artificial Analysis, Arena
-(CC BY 4.0) and models.dev.
+Code is licensed under [MIT](LICENSE). Leaderboard and price data belong to their
+sources.

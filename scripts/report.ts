@@ -1,7 +1,7 @@
 /**
  * `pnpm report`: prints every model's scores and the tier distribution,
  * from the same dataset the site and the API use. Meant for calibrating
- * the thresholds in src/lib/scoring.config.ts (docs/SPEC.md §6.4).
+ * the thresholds in src/lib/scoring.config.ts (docs/SPEC.md §5.4).
  */
 import { buildDataset, type ModelRecord } from '../src/lib/dataset';
 import {

@@ -1,7 +1,7 @@
 /**
  * Merges the model files with the source snapshots into the one dataset
  * that pages, the JSON API and `pnpm report` all read, so every consumer
- * shows the same numbers (docs/SPEC.md §10).
+ * shows the same numbers (docs/SPEC.md §2).
  *
  * Pure: takes its inputs as arguments and must not import `astro:*`.
  */

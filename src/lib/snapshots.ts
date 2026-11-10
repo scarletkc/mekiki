@@ -1,6 +1,6 @@
 /**
  * Snapshot files written by `pnpm sync` and read by the site build
- * (docs/SPEC.md §5.4). The build never touches the network: it only reads
+ * (docs/SPEC.md §4.3). The build never touches the network: it only reads
  * these files, and a missing or broken file simply means "no data".
  *
  * Must not import `astro:*` modules (the Node scripts use this too).

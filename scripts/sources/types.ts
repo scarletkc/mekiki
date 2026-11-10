@@ -1,5 +1,5 @@
 /**
- * Contract every data-source adapter implements (docs/SPEC.md §5.3):
+ * Contract every data-source adapter implements (docs/SPEC.md §4.2):
  * fetch → validate (Zod) → trim to the tracked models → snapshot.
  *
  * To add a leaderboard: make an adapter write the new metric (a new adapter
