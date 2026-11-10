@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { suggest } from '../scripts/lib/candidates';
-import { aaAdapter } from '../scripts/sources/aa';
+import { aaAdapter, tokenUse } from '../scripts/sources/aa';
 import { arenaAdapter } from '../scripts/sources/arena';
 import { modelsdevAdapter } from '../scripts/sources/modelsdev';
 import type { TrackedModel } from '../scripts/sources/types';
@@ -222,11 +222,51 @@ describe('Artificial Analysis adapter', () => {
     ]);
     expect(snapshot.total).toBe(3);
     expect(snapshot.frontier).toEqual({ aa_intelligence: 70.2 });
+    // Only GLM-5.3 has a run cost, so it is the whole reference group.
+    expect(snapshot.reference).toEqual({ index_token_use: 1630, index_token_use_models: 1 });
     expect(snapshot.models).toEqual({
-      'glm-5-3': { name: 'GLM-5.3 (Max)', aa_intelligence: 31.7, index_cost_usd: 3495.62 },
+      'glm-5-3': {
+        name: 'GLM-5.3 (Max)',
+        aa_intelligence: 31.7,
+        index_cost_usd: 3495.62,
+        // 3495.62 ÷ ((3 × 1.4 + 4.4) ÷ 4) = 1625.9 million tokens
+        index_token_use: 1626,
+      },
     });
     expect(unmatched).toEqual([]);
     expect(warnings).toEqual([]);
+    expect(snapshotSchemas.aa.safeParse(withTimestamp(snapshot)).success).toBe(true);
+  });
+
+  it('derives token use from the run cost and the list price', () => {
+    expect(tokenUse(8, 1, 5)).toBe(4);
+    expect(tokenUse(8, 0, 0)).toBeNull();
+    expect(tokenUse(0, 1, 5)).toBeNull();
+    expect(tokenUse(null, 1, 5)).toBeNull();
+    expect(tokenUse(8, 1, undefined)).toBeNull();
+  });
+
+  it('takes typical token use from the leaders, not from the whole board', () => {
+    // 60 models; model n scores n and burns 10 × n million tokens at $1 per million.
+    const board = Array.from({ length: 60 }, (_, index) => ({
+      slug: `m${index + 1}`,
+      evaluations: { artificial_analysis_intelligence_index: index + 1 },
+      artificial_analysis_intelligence_index_cost: { total_cost: 10 * (index + 1) },
+      pricing: { price_1m_input_tokens: 1, price_1m_output_tokens: 1 },
+    }));
+    const { snapshot, notes } = aaAdapter.transform(board, []);
+    // The top 50 are models 11 to 60: median (350 + 360) ÷ 2. All 60 would give 305.
+    expect(snapshot.reference).toEqual({ index_token_use: 355, index_token_use_models: 50 });
+    expect(notes?.join(' ')).toContain('355');
+  });
+
+  it('has no typical token use when no model has a run cost and a price', () => {
+    const { snapshot, warnings } = aaAdapter.transform(
+      [{ slug: 'a', evaluations: { artificial_analysis_intelligence_index: 50 } }],
+      [],
+    );
+    expect(snapshot.reference).toEqual({ index_token_use: null, index_token_use_models: 0 });
+    expect(warnings.join(' ')).toContain('token use');
     expect(snapshotSchemas.aa.safeParse(withTimestamp(snapshot)).success).toBe(true);
   });
 
@@ -256,7 +296,11 @@ describe('Artificial Analysis adapter', () => {
       frontier: { aa_intelligence: 64.6, aa_coding: null },
       models: { x: { name: 'X', aa_intelligence: 50, aa_coding: null, index_cost_usd: 10 } },
     };
-    expect(snapshotSchemas.aa.safeParse(old).success).toBe(true);
+    const parsed = snapshotSchemas.aa.safeParse(old);
+    expect(parsed.success).toBe(true);
+    // Written before token use was recorded: no reference, and null per model.
+    expect(parsed.data?.reference).toBeUndefined();
+    expect(parsed.data?.models.x?.index_token_use).toBeNull();
   });
 });
 

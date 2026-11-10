@@ -64,6 +64,8 @@ const specConfig: ScoringConfig = {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
+    tokenUseExponent: 1,
+    tokenUseReferenceSize: 50,
     tiers: { top: 70, high: 60, mid: 50 },
   },
 };

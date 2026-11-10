@@ -34,6 +34,8 @@ function snapshotOf<S extends string, M extends z.ZodType>(source: S, model: M) 
     total: z.number().int().nonnegative().optional(),
     /** Best raw score of each metric across the source's full leaderboard. */
     frontier,
+    /** Other figures taken from the full leaderboard, such as a typical value to compare against. */
+    reference: z.record(z.string(), z.number().nullable()).optional(),
     /** Tracked models only, keyed by the model's ID in that source. */
     models: z.record(z.string(), model),
   });
@@ -57,6 +59,12 @@ export const aaModelSchema = z.object({
   aa_intelligence: nullableNumber,
   /** Total USD spent running the full Intelligence Index on this model. */
   index_cost_usd: nullableNumber,
+  /**
+   * Token use of that run in millions of tokens: its cost divided by the
+   * model's blended list price. Compared with `reference.index_token_use`,
+   * the typical figure among the leading models.
+   */
+  index_token_use: nullableNumber.default(null),
 });
 
 // One entry per model name. The same name can appear on several boards, and

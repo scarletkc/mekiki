@@ -50,6 +50,8 @@ const config: ScoringConfig = {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
+    tokenUseExponent: 1,
+    tokenUseReferenceSize: 50,
     tiers: { top: 70, high: 60, mid: 50 },
   },
 };
@@ -91,7 +93,12 @@ const snapshots: Snapshots = {
     fetched_at: '2026-11-09T00:00:00.000Z',
     frontier: { aa_intelligence: 70 },
     models: {
-      flagship: { name: 'Flagship', aa_intelligence: 68, index_cost_usd: 123.4 },
+      flagship: {
+        name: 'Flagship',
+        aa_intelligence: 68,
+        index_cost_usd: 123.4,
+        index_token_use: null,
+      },
     },
   },
   // The same model is listed under different names on the two Arena boards.
