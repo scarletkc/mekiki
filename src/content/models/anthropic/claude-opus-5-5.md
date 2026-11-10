@@ -1,0 +1,16 @@
+---
+name: Claude Opus 5.5
+vendor: Anthropic
+status: active
+sources:
+  modelsdev: anthropic/claude-opus-5-5
+  aa:
+  arena_text: Claude Opus 5.5 (High)
+subjective:
+  score:
+  verdict:
+  pros: []
+  cons: []
+  best_for: []
+reviewed_at:
+---
