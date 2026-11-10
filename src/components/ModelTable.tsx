@@ -188,9 +188,28 @@ function FilterSelect({
   options: { value: string; label: string }[];
   allLabel: string;
 }) {
+  // When the menu closes, focus goes back to the trigger so keyboard users
+  // can carry on from there. Browsers then draw the focus ring even if the
+  // menu was used with a mouse, which reads as a stuck "selected" state. So
+  // the ring is hidden after pointer use and comes back with the keyboard.
+  const [open, setOpen] = useState(false);
+  const [byPointer, setByPointer] = useState(false);
+
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger size="sm" aria-label={label} className="min-w-0 gap-1">
+    <Select value={value} onValueChange={onChange} open={open} onOpenChange={setOpen}>
+      <SelectTrigger
+        size="sm"
+        aria-label={label}
+        data-pointer={byPointer ? '' : undefined}
+        onPointerDown={() => setByPointer(true)}
+        onKeyDown={() => setByPointer(false)}
+        onBlur={() => {
+          // Focus also leaves the trigger while the menu is open; only a
+          // real departure resets the state.
+          if (!open) setByPointer(false);
+        }}
+        className="min-w-0 gap-1 data-[pointer]:focus-visible:border-input data-[pointer]:focus-visible:ring-0"
+      >
         <span className="text-muted-foreground">{label}</span>
         <SelectValue />
       </SelectTrigger>
