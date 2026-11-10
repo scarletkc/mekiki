@@ -37,8 +37,13 @@ The dev server runs at <http://localhost:4321>.
 | `pnpm preview` | Serve the built site. |
 | `pnpm test` | Run the unit tests. |
 | `pnpm check` | Type-check the project (`astro check`). |
+| `pnpm lint` | Lint with [Biome](https://biomejs.dev). |
+| `pnpm format` | Format with Biome. Markdown files are left alone. |
+| `pnpm smoke` | Browser smoke test of the built site (Playwright). Run `pnpm build` first. |
 | `pnpm sync` | Fetch the data sources and update `data/snapshots/`. |
 | `pnpm report` | Print every model's scores and the tier distribution. |
+
+`pnpm smoke` needs a Chromium build once: `pnpm exec playwright install --only-shell chromium`.
 
 ## Add a model
 
@@ -188,7 +193,9 @@ a dictionary and register it in `src/i18n/index.ts`. To change the default langu
 
 `.github/workflows/deploy.yml` runs on every push to `main`, once a day, and on manual
 dispatch. Daily and manual runs sync the snapshots first and commit any change; every run
-then tests, builds and deploys to GitHub Pages.
+then lints, type-checks, tests, builds and deploys to GitHub Pages. A separate `smoke` job
+runs the browser smoke test against the built site. It is optional: it never blocks the
+deploy, and a failure only marks that job red.
 
 One-time setup, done by the repository owner:
 
@@ -226,6 +233,7 @@ data/snapshots/                          modelsdev.json, aa.json, arena.json
 scripts/sync.ts, scripts/report.ts       pnpm sync, pnpm report
 scripts/sources/                         one adapter per data source
 tests/                                   unit tests
+e2e/                                     browser smoke test
 docs/SPEC.md                             requirements and design (Chinese)
 ```
 

@@ -1,0 +1,47 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": ["**", "!**/*.md", "!data/snapshots", "!public"]
+  },
+  "formatter": {
+    "includes": ["**", "!src/components/ui"],
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "auto"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "css": {
+    "parser": { "tailwindDirectives": true },
+    "formatter": { "indentWidth": 4, "quoteStyle": "single" }
+  },
+  "yaml": { "formatter": { "quoteStyle": "single" } },
+  "html": { "experimentalFullSupportEnabled": true },
+  "assist": { "actions": { "source": { "organizeImports": "off" } } },
+  "linter": {
+    "rules": {
+      "preset": "recommended",
+      "a11y": { "useSemanticElements": "warn" },
+      "complexity": { "noImportantStyles": "off" },
+      "style": { "noNonNullAssertion": "off" }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.astro", "**/*.ts"],
+      "linter": { "rules": { "correctness": { "useHookAtTopLevel": "off" } } }
+    },
+    {
+      "includes": ["src/i18n/**"],
+      "linter": { "rules": { "suspicious": { "noTemplateCurlyInString": "off" } } }
+    }
+  ]
+}

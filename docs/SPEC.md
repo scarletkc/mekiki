@@ -289,6 +289,10 @@ API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
 | `pnpm sync` | 跑所有适配器，更新 `data/snapshots/`；打印每个源里没对上映射的模型和候选名 |
 | `pnpm report` | 打印所有模型的各项分数和档位分布，用于校准阈值 |
 | `pnpm test` | 单元测试 |
+| `pnpm check` | 类型检查（`astro check`） |
+| `pnpm lint` | Biome lint |
+| `pnpm format` | Biome 格式化，不碰 Markdown |
+| `pnpm smoke` | 用 Playwright 对构建产物做浏览器冒烟测试，先跑 `pnpm build` |
 | `pnpm build` | 构建，不联网 |
 
 ### 工作流
@@ -297,8 +301,9 @@ API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
 
 1. checkout，装依赖
 2. 仅定时和手动触发时：跑 `pnpm sync`（注入 `AA_API_KEY`），快照有变化就提交并推送
-3. `pnpm test`
+3. lint（`biome ci`）、类型检查（`pnpm check`）、`pnpm test`
 4. `pnpm build`，上传产物，部署到 GitHub Pages
+5. 另起一个 `smoke` job，下载同一份产物跑 `pnpm smoke`。它是可选的：和部署并行，不阻塞部署，失败只把这个 job 标红
 
 同步和部署必须在同一次运行里。原因：用默认 `GITHUB_TOKEN` 推送的提交不会触发其他工作流，如果拆成两个工作流，同步后的数据不会自动上线。工作流权限需要 `contents: write`、`pages: write`、`id-token: write`。
 
@@ -339,6 +344,7 @@ mekiki/
 │  ├─ lib/                     # 读模型文件、HTTP、候选名
 │  └─ sources/                 # 每个数据源一个适配器
 ├─ tests/                      # scoring、sources、dataset
+├─ e2e/                        # 浏览器冒烟测试
 ├─ public/CNAME
 ├─ docs/SPEC.md                # 本文档
 └─ .github/workflows/deploy.yml
