@@ -162,23 +162,6 @@
         }
     }
 
-    /* Square header controls: theme, GitHub, the menus' triggers. */
-    .icon-btn {
-        display: inline-flex;
-        flex-shrink: 0;
-        align-items: center;
-        justify-content: center;
-        border-radius: var(--radius-lg);
-        transition:
-            color 150ms,
-            background-color 150ms;
-        user-select: none;
-    }
-
-    .icon-btn:hover {
-        background: var(--accent);
-    }
-
     /* A dropdown panel; matches the Radix select menus. */
     .menu-panel {
         z-index: 50;
