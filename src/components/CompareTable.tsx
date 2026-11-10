@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';
 import {
   Select,
@@ -224,8 +224,14 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
             if (id) update([...ids, id]);
           }}
         >
-          <SelectTrigger size="sm" aria-label={s.compare.add} className="min-w-44">
-            <SelectValue placeholder={s.compare.add} />
+          <SelectTrigger
+            aria-label={s.compare.add}
+            className="min-w-48 data-[size=default]:h-9 sm:data-[size=default]:h-8"
+          >
+            <span className="flex items-center gap-1.5">
+              <Plus className="text-muted-foreground size-4" aria-hidden="true" />
+              <SelectValue placeholder={s.compare.add} />
+            </span>
           </SelectTrigger>
           <SelectContent position="popper" align="start">
             {available.map((model) => (
@@ -244,12 +250,12 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
       </div>
 
       {selected.length === 0 ? (
-        <p className="text-muted-foreground rounded-md border px-4 py-8 text-sm">
+        <p className="text-muted-foreground rounded-xl border border-dashed px-4 py-10 text-center text-sm">
           {s.compare.empty}
         </p>
       ) : (
         <>
-          <div className="-mx-4 overflow-x-auto border-y sm:mx-0 sm:rounded-md sm:border-x">
+          <div className="bg-card overflow-x-auto rounded-xl border">
             <table className="w-full border-collapse text-sm">
               <caption className="sr-only">{s.compare.title}</caption>
               <thead>
@@ -259,7 +265,7 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
                     <th
                       key={model.id}
                       scope="col"
-                      className="bg-muted/60 min-w-44 px-3 py-2.5 text-start align-top font-normal"
+                      className="bg-muted min-w-44 px-3 py-2.5 text-start align-top font-normal"
                     >
                       <span className="flex items-start justify-between gap-2">
                         <span className="min-w-0">
@@ -279,7 +285,7 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
                           onClick={() => update(ids.filter((id) => id !== model.id))}
                           aria-label={fmt(s.compare.remove, { name: model.name })}
                           title={fmt(s.compare.remove, { name: model.name })}
-                          className="text-muted-foreground hover:text-foreground hover:bg-accent -mt-0.5 -mr-1.5 grid size-6 shrink-0 place-items-center rounded"
+                          className="text-muted-foreground hover:text-foreground hover:bg-accent -mt-1 -mr-2 grid size-8 shrink-0 place-items-center rounded-md transition-colors sm:-mt-0.5 sm:-mr-1.5 sm:size-6"
                         >
                           <X className="size-3.5" aria-hidden="true" />
                         </button>
@@ -309,7 +315,7 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
                       >
                         <th
                           scope="row"
-                          className="bg-background group-hover:bg-muted sticky left-0 z-10 px-3 py-2 text-start align-middle font-normal"
+                          className="bg-card sticky left-0 z-10 px-3 py-2 text-start align-middle font-normal transition-colors group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))]"
                         >
                           {row.label}
                         </th>

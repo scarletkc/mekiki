@@ -105,14 +105,14 @@ const sources = SOURCE_IDS.map((id) => ({
 
 <Base locale={locale} path="/method" title={m.title}>
   <article class="prose">
-    <h1 class="text-xl font-semibold tracking-tight">{m.title}</h1>
+    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{m.title}</h1>
     <p>{m.intro}</p>
 
     <h2 id="intelligence">{m.intelligenceTitle}</h2>
     <p>{m.intelligenceBody}</p>
     <pre><code>n = clamp(100 × (x − floor) ÷ (frontier − floor), 0, 100)</code></pre>
     <p>{m.benchmarkBody}</p>
-    <div class="overflow-x-auto">
+    <div class="table-wrap">
       <table class="data-table">
         <caption>{m.weightsCaption}</caption>
         <thead>
@@ -173,7 +173,7 @@ const sources = SOURCE_IDS.map((id) => ({
     <pre><code>value = intelligence^{value.intelligenceExponent} × max(100 − cost_index(effective_price), {value.minAffordability})^{value.affordabilityExponent}</code></pre>
 
     <h2 id="tiers">{m.tiersTitle}</h2>
-    <div class="overflow-x-auto">
+    <div class="table-wrap">
       <table class="data-table">
         <caption>{m.tiersCaption}</caption>
         <thead>
@@ -202,7 +202,7 @@ const sources = SOURCE_IDS.map((id) => ({
 
     <h2 id="sources">{m.sourcesTitle}</h2>
     <p>{m.sourcesBody}</p>
-    <div class="overflow-x-auto">
+    <div class="table-wrap">
       <table class="data-table">
         <caption>{m.sourcesCaption}</caption>
         <thead>

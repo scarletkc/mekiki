@@ -6,6 +6,7 @@
  *
  * Touch devices get the system share sheet; elsewhere the link is copied.
  */
+import Share from '@lucide/astro/icons/share';
 import { buttonVariants } from '@/components/ui/button';
 import { useTranslations, type Locale } from '../i18n';
 
@@ -24,19 +25,9 @@ const t = useTranslations(locale);
   data-label={t.share.action}
   data-copied={t.share.copied}
   data-failed={t.share.failed}
-  class={buttonVariants({ variant: 'outline', size: 'sm' })}
+  class={buttonVariants({ variant: 'outline', size: 'sm', className: 'h-9 sm:h-8' })}
 >
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path>
-  </svg>
+  <Share />
   <span data-share-label>{t.share.action}</span>
 </button>
 <span data-share-status class="sr-only" aria-live="polite"></span>

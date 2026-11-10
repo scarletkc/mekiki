@@ -1,4 +1,8 @@
 ---
+import ArrowLeft from '@lucide/astro/icons/arrow-left';
+import Braces from '@lucide/astro/icons/braces';
+import Columns2 from '@lucide/astro/icons/columns-2';
+import ExternalLink from '@lucide/astro/icons/external-link';
 import ShareButton from '../components/ShareButton.astro';
 import ChangeText from '../components/ChangeText.astro';
 import HistoryChart from '../components/HistoryChart.astro';
@@ -57,14 +61,18 @@ const links = [
     ? {
         href: `https://artificialanalysis.ai/models/${encodeURIComponent(model.source_ids.aa)}`,
         label: t.detail.linkAa,
+        json: false,
       }
     : null,
   ...metrics.map((metric) =>
-    metric.url && metric.mapped ? { href: metric.url, label: metric.label } : null,
+    metric.url && metric.mapped ? { href: metric.url, label: metric.label, json: false } : null,
   ),
-  { href: SOURCE_INFO.modelsdev.url, label: t.detail.linkModelsdev },
-  { href: `/api/models/${model.id}.json`, label: t.detail.linkJson },
+  { href: SOURCE_INFO.modelsdev.url, label: t.detail.linkModelsdev, json: false },
+  { href: `/api/models/${model.id}.json`, label: t.detail.linkJson, json: true },
 ].filter((link) => link !== null);
+
+const badgeClass =
+  'text-muted-foreground inline-flex h-5 items-center rounded-4xl border px-2 text-xs whitespace-nowrap';
 
 // Footnotes under the price list, one paragraph each.
 const priceNotes = [
@@ -110,47 +118,43 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
   image={modelImagePath(model.id)}
   imageAlt={imageAlt}
 >
-  <p class="text-muted-foreground mb-3 text-sm">
-    <a href={localePath(locale, '/')} class="hover:text-foreground underline">{t.detail.back}</a>
-  </p>
+  <a
+    href={localePath(locale, '/')}
+    class="text-muted-foreground hover:text-foreground -ml-0.5 mb-4 inline-flex items-center gap-1.5 text-sm transition-colors"
+  >
+    <ArrowLeft class="size-4" />
+    {t.detail.back}
+  </a>
 
-  <header class="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-    <div>
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h1 class="text-2xl font-semibold tracking-tight">{model.name}</h1>
-        {model.status === 'legacy' && <span class="text-muted-foreground rounded border px-1.5 text-xs leading-5">{t.badge.legacy}</span>}
-        {model.facts.open_weights === true && <span class="text-muted-foreground rounded border px-1.5 text-xs leading-5">{t.badge.openWeights}</span>}
+  <header class="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+    <div class="min-w-0">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h1 class="text-2xl font-semibold tracking-tight break-words sm:text-3xl">{model.name}</h1>
+        {model.status === 'legacy' && <span class={badgeClass}>{t.badge.legacy}</span>}
+        {model.facts.open_weights === true && <span class={badgeClass}>{t.badge.openWeights}</span>}
       </div>
-      <p class="text-muted-foreground mt-0.5 text-sm">
+      <p class="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         {model.vendor}
-        <span class="mx-1" aria-hidden="true">/</span>
-        <code class="font-mono text-[0.8125rem]">{model.id}</code>
+        <span aria-hidden="true">·</span>
+        <code class="bg-muted rounded-md px-1.5 py-0.5 font-mono text-[0.8125rem] break-all">{model.id}</code>
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <a href={compareHref} class={buttonVariants({ variant: 'outline', size: 'sm' })}>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <rect x="3" y="4" width="7" height="16" rx="1.5"></rect>
-          <rect x="14" y="4" width="7" height="16" rx="1.5"></rect>
-        </svg>
+      <a
+        href={compareHref}
+        class={buttonVariants({ variant: 'outline', size: 'sm', className: 'h-9 sm:h-8' })}
+      >
+        <Columns2 />
         {t.compare.action}
       </a>
       <ShareButton locale={locale} />
     </div>
   </header>
 
-  <dl class="mb-8 grid gap-px overflow-hidden rounded-md border bg-[var(--border)] sm:grid-cols-3">
-    <div class="bg-card px-4 py-3">
+  <dl class="mb-10 grid gap-3 sm:grid-cols-3">
+    <div class="bg-card rounded-xl border px-4 py-3.5">
       <dt class="text-muted-foreground text-xs">{t.rating.intelligence}</dt>
-      <dd class="mt-1 text-base">
+      <dd class="mt-1.5 text-base">
         <TierMeter
           kind="intelligence"
           tier={intelligence.tier}
@@ -159,9 +163,9 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         />
       </dd>
     </div>
-    <div class="bg-card px-4 py-3">
+    <div class="bg-card rounded-xl border px-4 py-3.5">
       <dt class="text-muted-foreground text-xs">{t.rating.cost}</dt>
-      <dd class="mt-1 text-base">
+      <dd class="mt-1.5 text-base">
         <TierMeter
           kind="cost"
           tier={cost.tier}
@@ -175,9 +179,9 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         }
       </dd>
     </div>
-    <div class="bg-card px-4 py-3">
+    <div class="bg-card rounded-xl border px-4 py-3.5">
       <dt class="text-muted-foreground text-xs">{t.rating.value}</dt>
-      <dd class="mt-1 text-base">
+      <dd class="mt-1.5 text-base">
         <TierMeter
           kind="value"
           tier={value.tier}
@@ -200,8 +204,8 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
   <div class="grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
     <div class="min-w-0">
       <section aria-labelledby="breakdown">
-        <h2 id="breakdown" class="mb-2 text-base font-semibold">{t.detail.breakdown}</h2>
-        <div class="overflow-x-auto">
+        <h2 id="breakdown" class="mb-3 text-lg font-semibold tracking-tight">{t.detail.breakdown}</h2>
+        <div class="table-wrap my-0">
           <table class="data-table">
             <caption>{t.detail.breakdown}</caption>
             <thead>
@@ -241,7 +245,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
             </tbody>
           </table>
         </div>
-        <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
+        <dl class="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
           <dt class="text-muted-foreground">{t.rating.intelligence}</dt>
           <dd class="num font-medium">
             {intelligence.score === null ? <span class="text-muted-foreground font-normal">{t.empty.unrated}</span> : formatScore(intelligence.score)}
@@ -326,8 +330,10 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
     </div>
 
     <aside class="min-w-0 text-sm">
-      <h2 class="mb-2 text-base font-semibold">{t.detail.facts}</h2>
-      <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 [&_dd]:text-end [&_dt]:text-muted-foreground">
+      <h2 class="mb-3 text-lg font-semibold tracking-tight">{t.detail.facts}</h2>
+      <dl
+        class="bg-card grid grid-cols-[auto_1fr] rounded-xl border px-4 py-1 [&>dd]:border-b [&>dd]:py-2 [&>dd]:text-end [&>dt]:border-b [&>dt]:py-2 [&>dt]:pr-4 [&>dt]:text-muted-foreground [&>:nth-last-child(-n+2)]:border-b-0"
+      >
         <dt>{t.detail.input}</dt>
         <dd class="num">{cost.input === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : cost.free ? t.empty.free : formatPrice(cost.input)}</dd>
         <dt>{t.detail.output}</dt>
@@ -369,16 +375,22 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           {value.effective_price === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : formatPrice(value.effective_price)}
         </dd>
       </dl>
-      <div class="text-muted-foreground mt-2 space-y-1 text-xs">
+      <div class="text-muted-foreground mt-3 space-y-1.5 text-xs leading-relaxed">
         {priceNotes.map((note) => <p>{note}</p>)}
       </div>
 
-      <h2 class="mt-7 mb-2 text-base font-semibold">{t.detail.links}</h2>
-      <ul class="space-y-1">
+      <h2 class="mt-8 mb-3 text-lg font-semibold tracking-tight">{t.detail.links}</h2>
+      <ul class="space-y-2">
         {
           links.map((link) => (
             <li>
-              <a href={link.href} class="text-primary underline">{link.label}</a>
+              <a
+                href={link.href}
+                class="text-primary inline-flex items-center gap-2 underline-offset-4 hover:underline"
+              >
+                {link.json ? <Braces class="size-4 shrink-0" /> : <ExternalLink class="size-4 shrink-0" />}
+                {link.label}
+              </a>
             </li>
           ))
         }

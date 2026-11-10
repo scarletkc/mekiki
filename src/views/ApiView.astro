@@ -33,11 +33,11 @@ const endpoints = [
 
 <Base locale={locale} path="/api" title={a.title}>
   <article class="prose">
-    <h1 class="text-xl font-semibold tracking-tight">{a.title}</h1>
+    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{a.title}</h1>
     <p>{a.intro}</p>
 
     <h2 id="endpoints">{a.endpointsTitle}</h2>
-    <div class="overflow-x-auto">
+    <div class="table-wrap">
       <table class="data-table">
         <caption>{a.endpointsCaption}</caption>
         <thead>
@@ -50,7 +50,7 @@ const endpoints = [
           {
             endpoints.map((endpoint) => (
               <tr>
-                <th scope="row" class="whitespace-nowrap">
+                <th scope="row" class="[overflow-wrap:anywhere] sm:whitespace-nowrap">
                   {endpoint.href ? (
                     <a href={endpoint.href}>
                       <code>{endpoint.path}</code>
@@ -59,7 +59,7 @@ const endpoints = [
                     <code>{endpoint.path}</code>
                   )}
                 </th>
-                <td>{endpoint.content}</td>
+                <td class="min-w-[9rem]">{endpoint.content}</td>
               </tr>
             ))
           }
