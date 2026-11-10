@@ -7,7 +7,7 @@ import Base from '../layouts/Base.astro';
 const t = useTranslations(DEFAULT_LOCALE);
 ---
 
-<Base locale={DEFAULT_LOCALE} path="/404" title={t.notFound.title}>
+<Base locale={DEFAULT_LOCALE} path="/" title={t.notFound.title} noindex>
   <div class="space-y-6 py-6">
     {
       LOCALES.map((locale) => {

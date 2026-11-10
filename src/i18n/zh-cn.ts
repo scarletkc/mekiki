@@ -5,8 +5,8 @@
  */
 export const zhCN = {
   meta: {
-    tagline: 'KC 的 AI 模型评级',
-    description: 'KC 对 AI 模型的个人评级：智能、成本、性价比，并提供公开的 JSON API。',
+    tagline: 'AI 模型评级',
+    description: 'AI 模型的个人评级：智能、成本、性价比，并提供公开的 JSON API。',
   },
   nav: {
     models: '模型',
@@ -49,7 +49,7 @@ export const zhCN = {
   },
   home: {
     title: '模型',
-    intro: 'KC 实际关心的模型，每个给三个评级。智能分由公开榜单和 KC 的主观分加权得出，成本和性价比按价格自动计算。',
+    intro: '每个模型给三个评级。智能分由公开榜单和主观分加权得出，成本和性价比按价格自动计算。',
   },
   table: {
     columns: {

@@ -1,14 +1,15 @@
 ---
-import type { InferGetStaticPropsType } from 'astro';
-import { DEFAULT_LOCALE } from '../../i18n';
-import { modelStaticPaths } from '../../lib/routes';
-import ModelView from '../../views/ModelView.astro';
+import Redirect from '../../layouts/Redirect.astro';
+import { getDataset } from '../../lib/site-data';
 
-export const getStaticPaths = modelStaticPaths;
+// `/m/<provider>/<model>` is the language-neutral link to a model (the JSON
+// API's `url` field). It forwards to the page in the default locale.
+export async function getStaticPaths() {
+  const { models } = await getDataset();
+  return models.map((model) => ({ params: { id: model.id } }));
+}
 
-type Props = InferGetStaticPropsType<typeof getStaticPaths>;
-
-const { model, entry } = Astro.props;
+const { id } = Astro.params;
 ---
 
-<ModelView locale={DEFAULT_LOCALE} model={model} entry={entry} />
+<Redirect path={`/m/${id}`} />

@@ -20,9 +20,11 @@ interface Props {
   /** Page title; omitted on the home page. */
   title?: string;
   description?: string;
+  /** For pages that are not real content (404): no canonical, no hreflang, not indexed. */
+  noindex?: boolean;
 }
 
-const { locale, path, title, description } = Astro.props;
+const { locale, path, title, description, noindex = false } = Astro.props;
 const t = useTranslations(locale);
 const dataset = await getDataset();
 const synced = latestSync(dataset);
@@ -36,7 +38,7 @@ const nav = [
   { href: localePath(locale, '/method'), label: t.nav.method, key: '/method' },
   { href: localePath(locale, '/api'), label: t.nav.api, key: '/api' },
 ];
-const section = path === '/' || path.startsWith('/m/') ? '/' : path;
+const section = noindex ? null : path === '/' || path.startsWith('/m/') ? '/' : path;
 
 const REPO_URL = 'https://github.com/scarletkc/mekiki';
 const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
@@ -49,9 +51,10 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
-    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    {!noindex && <link rel="canonical" href={canonical} />}
     {
-      LOCALES.map((item) => (
+      !noindex && LOCALES.map((item) => (
         <link
           rel="alternate"
           hreflang={LOCALE_INFO[item].tag}
@@ -59,11 +62,15 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
         />
       ))
     }
-    <link
-      rel="alternate"
-      hreflang="x-default"
-      href={new URL(localePath(DEFAULT_LOCALE, path), SITE_URL).href}
-    />
+    {
+      !noindex && (
+        <link
+          rel="alternate"
+          hreflang="x-default"
+          href={new URL(localePath(DEFAULT_LOCALE, path), SITE_URL).href}
+        />
+      )
+    }
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/json" href="/api.json" title="mekiki API" />
     <meta property="og:title" content={pageTitle} />
@@ -112,7 +119,6 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
             </g>
           </svg>
           <span class="text-[1.0625rem] leading-none font-semibold tracking-tight">mekiki</span>
-          <span class="text-muted-foreground text-sm leading-none" lang="ja">目利き</span>
         </a>
 
         <nav aria-label={t.nav.main} class="order-3 w-full sm:order-none sm:w-auto">

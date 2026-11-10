@@ -3,8 +3,8 @@ import type { Dictionary } from './zh-cn';
 
 export const zhTW: Dictionary = {
   meta: {
-    tagline: 'KC 的 AI 模型評級',
-    description: 'KC 對 AI 模型的個人評級：智慧、成本、性價比，並提供公開的 JSON API。',
+    tagline: 'AI 模型評級',
+    description: 'AI 模型的個人評級：智慧、成本、性價比，並提供公開的 JSON API。',
   },
   nav: {
     models: '模型',
@@ -47,7 +47,7 @@ export const zhTW: Dictionary = {
   },
   home: {
     title: '模型',
-    intro: 'KC 實際在意的模型，每個給三個評級。智慧分由公開榜單和 KC 的主觀分加權得出，成本和性價比依價格自動計算。',
+    intro: '每個模型給三個評級。智慧分由公開榜單和主觀分加權得出，成本和性價比依價格自動計算。',
   },
   table: {
     columns: {

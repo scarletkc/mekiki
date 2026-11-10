@@ -14,7 +14,7 @@ mekiki (目利き) is Japanese for a discerning eye. Unlike [models.dev](https:/
 which catalogues facts about every model, this is a short, curated list with an opinion
 attached. The full design is in [docs/SPEC.md](docs/SPEC.md) (in Chinese).
 
-The site is available in Simplified Chinese (default), Traditional Chinese and English.
+The site is available in English (default), Simplified Chinese and Traditional Chinese.
 
 ## Run it locally
 
@@ -170,15 +170,18 @@ every language. Fields are only added; a breaking change bumps `version`. The pa
 UI strings live in `src/i18n/` as one dictionary per language. `zh-cn.ts` defines the shape
 and the others are type-checked against it, so a missing string fails `pnpm check`.
 
-- Simplified Chinese is served without a prefix (`/`, `/m/...`); Traditional Chinese and
-  English are under `/zh-tw/` and `/en/`.
+- Every language has its own prefix: `/en/`, `/zh-cn/` and `/zh-tw/`.
+- Unprefixed page URLs (`/`, `/method`, `/api`, `/m/<provider>/<model>`) redirect to the
+  English page and keep the query string. GitHub Pages cannot send HTTP redirects, so they
+  redirect in the browser. The API's `url` field uses the unprefixed form as a
+  language-neutral link.
 - KC's own text (verdict, strengths, weaknesses, review) is shown as written in every
   language. It is not translated or converted.
 - The JSON API is not localised; it carries tier labels for every language instead.
 
-To add a language, add it to `LOCALES` and `LOCALE_INFO` in `src/i18n/locales.ts` and to
-`i18n.locales` in `astro.config.mjs`, then add a dictionary and register it in
-`src/i18n/index.ts`.
+To add a language, add it to `LOCALES` and `LOCALE_INFO` in `src/i18n/locales.ts`, then add
+a dictionary and register it in `src/i18n/index.ts`. To change the default language, change
+`DEFAULT_LOCALE` in the same file.
 
 ## Deployment
 

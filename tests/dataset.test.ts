@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseModelFile, readModelEntries } from '../scripts/lib/content';
 import { toApiFull, toApiIndex, toApiModel } from '@/lib/api';
 import { buildDataset, latestSync } from '@/lib/dataset';
-import { localePath, stripLocale } from '@/i18n';
+import { DEFAULT_LOCALE, localePath, stripLocale } from '@/i18n';
 import { modelIdFromPath, type ModelEntry } from '@/lib/model-schema';
 import type { Snapshots } from '@/lib/snapshots';
 
@@ -280,16 +280,14 @@ describe('JSON API', () => {
 });
 
 describe('locale paths', () => {
-  it('leaves the default locale unprefixed', () => {
-    expect(localePath('zh-cn')).toBe('/');
-    expect(localePath('zh-cn', '/method')).toBe('/method/');
-    expect(localePath('zh-cn', '/m/openai/gpt-6.1-sol')).toBe('/m/openai/gpt-6.1-sol/');
-  });
-
-  it('prefixes the other locales', () => {
+  it('prefixes every locale, including the default', () => {
+    expect(DEFAULT_LOCALE).toBe('en');
     expect(localePath('en')).toBe('/en/');
+    expect(localePath('zh-cn')).toBe('/zh-cn/');
+    expect(localePath('zh-cn', '/method')).toBe('/zh-cn/method/');
     expect(localePath('zh-tw', 'api')).toBe('/zh-tw/api/');
     expect(localePath('en', '/m/openai/gpt-6.1-sol/')).toBe('/en/m/openai/gpt-6.1-sol/');
+    expect(localePath('zh-cn', '/m/openai/gpt-6.1-sol')).toBe('/zh-cn/m/openai/gpt-6.1-sol/');
   });
 
   it('never localises files', () => {
@@ -302,6 +300,7 @@ describe('locale paths', () => {
   it('strips the prefix again', () => {
     expect(stripLocale('/en/method/')).toBe('/method/');
     expect(stripLocale('/zh-tw')).toBe('/');
+    expect(stripLocale('/zh-cn/api/')).toBe('/api/');
     expect(stripLocale('/m/x/y/')).toBe('/m/x/y/');
     expect(stripLocale('/english/')).toBe('/english/');
   });

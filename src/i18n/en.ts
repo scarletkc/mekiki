@@ -3,9 +3,9 @@ import type { Dictionary } from './zh-cn';
 
 export const en: Dictionary = {
   meta: {
-    tagline: "KC's AI model ratings",
+    tagline: 'AI model ratings',
     description:
-      "KC's personal ratings of AI models: intelligence, cost and value, with a public JSON API.",
+      'Personal ratings of AI models: intelligence, cost and value, with a public JSON API.',
   },
   nav: {
     models: 'Models',
@@ -30,9 +30,9 @@ export const en: Dictionary = {
     value: { top: 'Top', high: 'High', mid: 'Mid', low: 'Low' },
   },
   basis: {
-    both: 'Benchmarks + KC',
+    both: 'Benchmarks + subjective',
     benchmark_only: 'Benchmarks only',
-    subjective_only: 'KC only',
+    subjective_only: 'Subjective only',
     none: 'Not rated',
   },
   empty: {
@@ -49,7 +49,7 @@ export const en: Dictionary = {
   home: {
     title: 'Models',
     intro:
-      "The models KC actually cares about, each with three ratings. Intelligence blends public leaderboards with KC's own score; cost and value follow from the price.",
+      'Every model gets three ratings. Intelligence blends public leaderboards with a subjective score; cost and value follow from the price.',
   },
   table: {
     columns: {
@@ -91,12 +91,12 @@ export const en: Dictionary = {
     normalized: 'Normalised',
     weight: 'Weight',
     benchmark: 'Benchmark score',
-    subjective: "KC's score",
+    subjective: 'Subjective score',
     basisLine: 'Basis: {basis}',
     basisNote: {
-      both: "Benchmarks count for {benchmark}%, KC's score for {subjective}%.",
+      both: 'Benchmarks count for {benchmark}%, the subjective score for {subjective}%.',
       benchmark_only: "KC hasn't scored this model, so intelligence equals the benchmark score.",
-      subjective_only: "There is no benchmark data, so intelligence equals KC's score.",
+      subjective_only: 'There is no benchmark data, so intelligence equals the subjective score.',
       none: "There is no benchmark data and no score from KC, so it isn't rated.",
     },
     notMapped: 'No mapping set',
@@ -155,16 +155,16 @@ export const en: Dictionary = {
     basisCaption: 'The four ways an intelligence score is derived',
     basisCase: 'Case',
     basisFormula: 'Intelligence',
-    caseBoth: "Benchmark score and KC's score",
+    caseBoth: 'Benchmark score and subjective score',
     caseBenchmark: 'Benchmark score only',
-    caseSubjective: "KC's score only",
+    caseSubjective: 'Subjective score only',
     caseNone: 'Neither',
-    formulaBoth: "{benchmark}% × benchmark + {subjective}% × KC's score",
+    formulaBoth: '{benchmark}% × benchmark + {subjective}% × subjective',
     formulaBenchmark: 'Benchmark score',
-    formulaSubjective: "KC's score",
+    formulaSubjective: 'Subjective score',
     formulaNone: 'Not rated; sorted last',
     subjectiveBody:
-      "KC's score is entered by hand. 100 means “the best there is right now, in KC's view”, the same yardstick as a normalised benchmark score of 100.",
+      'The subjective score is entered by hand by KC. 100 means “the best there is right now, as KC sees it”, the same yardstick as a normalised benchmark score of 100.',
     costTitle: 'Cost',
     costBody:
       'Prices are the official ones from models.dev, in USD per 1M tokens. Blended price = ({input} × input + {output} × output) ÷ {total}. Tiers are set by the absolute blended price.',
@@ -195,7 +195,7 @@ export const en: Dictionary = {
       "Artificial Analysis's free API doesn't return the Coding Index at the moment, so that metric is left out for now and its weight is shared by the others.",
     caveatVariants:
       'Leaderboards often list one model several times, once per reasoning level. The entry used here is the level KC actually runs.',
-    caveatPersonal: "KC's scores and comments are personal judgement, not benchmark results.",
+    caveatPersonal: 'Subjective scores and comments are personal judgement, not benchmark results.',
   },
   api: {
     title: 'API',

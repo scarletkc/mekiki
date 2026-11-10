@@ -5,7 +5,7 @@
  * Contract: fields are only ever added. A breaking change bumps
  * API_VERSION. Missing values are `null`; fields are never omitted.
  */
-import { DEFAULT_LOCALE, useTranslations, tierLabels } from '../i18n';
+import { useTranslations, tierLabels } from '../i18n';
 import { round1, type Basis } from './scoring';
 import type { CostTier, IntelligenceTier, MetricKey, ValueTier } from './scoring.config';
 import type { Dataset, ModelRecord } from './dataset';
@@ -64,7 +64,9 @@ export interface ApiFull {
   models: ApiModel[];
 }
 
-const defaultLabels = useTranslations(DEFAULT_LOCALE).tier;
+// `label` is Simplified Chinese by contract (docs/SPEC.md §7), independent of
+// the site's default locale. `labels` carries every language.
+const defaultLabels = useTranslations('zh-cn').tier;
 
 /** Trim floating-point noise from a price without changing its value. */
 function tidy(value: number | null): number | null {

@@ -10,13 +10,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  // Keep in sync with src/i18n/locales.ts. The default locale (zh-cn) is
-  // served without a prefix so the routes and API URLs in docs/SPEC.md hold.
-  i18n: {
-    locales: ['zh-cn', 'zh-tw', 'en'],
-    defaultLocale: 'zh-cn',
-    routing: {
-      prefixDefaultLocale: false,
-    },
-  },
+  // Locales are routed by the page files themselves (src/pages/[locale]/ and
+  // the redirect pages next to it), driven by src/i18n/locales.ts. Astro's
+  // built-in i18n routing is deliberately not enabled.
 });

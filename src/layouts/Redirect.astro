@@ -1,0 +1,37 @@
+---
+/**
+ * A page that only forwards to the same page in the default locale.
+ * Unprefixed URLs (`/`, `/method`, `/m/<provider>/<model>`) are kept as
+ * stable, language-neutral links; this is what they serve.
+ *
+ * GitHub Pages cannot send HTTP redirects, so the page redirects in the
+ * browser: by script (which keeps the query string and hash) and, without
+ * JavaScript, by meta refresh.
+ */
+import { DEFAULT_LOCALE, LOCALE_INFO, localePath } from '../i18n';
+import { SITE_URL } from '../lib/dataset';
+
+interface Props {
+  /** Page path without a locale prefix, e.g. `/method`. */
+  path: string;
+}
+
+const target = localePath(DEFAULT_LOCALE, Astro.props.path);
+---
+
+<!doctype html>
+<html lang={LOCALE_INFO[DEFAULT_LOCALE].tag}>
+  <head>
+    <meta charset="utf-8" />
+    <title>mekiki</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={new URL(target, SITE_URL).href} />
+    <script is:inline define:vars={{ target }}>
+      window.location.replace(target + window.location.search + window.location.hash);
+    </script>
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+  </head>
+  <body>
+    <p><a href={target}>mekiki</a></p>
+  </body>
+</html>
