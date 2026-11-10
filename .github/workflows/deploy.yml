@@ -1,0 +1,85 @@
+name: Sync and deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Once a day, 03:17 UTC (off the hour to avoid the scheduler rush).
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+# Sync and deploy must stay in ONE workflow: a commit pushed with the
+# default GITHUB_TOKEN does not trigger other workflows, so a separate
+# deploy workflow would never see the synced data.
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # A source that is down keeps its old snapshot and the step still
+      # succeeds; details are written to the job summary.
+      - name: Sync snapshots
+        if: github.event_name != 'push'
+        run: pnpm sync
+        env:
+          AA_API_KEY: ${{ secrets.AA_API_KEY }}
+
+      - name: Commit changed snapshots
+        if: github.event_name != 'push'
+        run: |
+          if [ -z "$(git status --porcelain -- data/snapshots)" ]; then
+            echo "Snapshots unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/snapshots
+          git commit -m "chore(data): sync snapshots"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Test
+        run: pnpm test
+
+      # The build only reads local files; it never goes online.
+      - name: Build
+        run: pnpm build
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
