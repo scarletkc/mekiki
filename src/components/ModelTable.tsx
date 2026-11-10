@@ -194,7 +194,9 @@ function FilterSelect({
         <span className="text-muted-foreground">{label}</span>
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      {/* Drop down below the trigger. The default ("item-aligned") lays the
+          list over the trigger, which hides the filter's label. */}
+      <SelectContent position="popper" align="start">
         <SelectItem value={ALL}>{allLabel}</SelectItem>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
