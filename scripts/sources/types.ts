@@ -35,8 +35,6 @@ export interface TransformResult<S extends SourceId> {
   unmatched: Unmatched[];
   /** Non-fatal oddities worth showing in the job summary. */
   warnings: string[];
-  /** Figures the adapter derived from the full leaderboard, shown for information. */
-  notes?: string[];
 }
 
 export interface FetchContext {

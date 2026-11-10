@@ -48,8 +48,7 @@ const config: ScoringConfig = {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
-    tokenUseExponent: 1,
-    tokenUseReferenceSize: 50,
+    runCostWeight: 1,
     tiers: { top: 70, high: 60, mid: 50 },
   },
 };
@@ -95,7 +94,6 @@ const snapshots: Snapshots = {
         name: 'Flagship',
         aa_intelligence: 68,
         index_cost_usd: 123.4,
-        index_token_use: null,
       },
     },
   },
@@ -205,7 +203,15 @@ describe('buildDataset', () => {
       index: 77.5,
       cache_read: 0.5,
     });
-    expect(first?.rating.value).toEqual({ score: 54, tier: 'mid' });
+    // The only model with a run cost is its own yardstick, so its measured
+    // price is its blended price.
+    expect(first?.rating.value).toMatchObject({
+      score: 54,
+      tier: 'mid',
+      cost_basis: 'run_cost',
+      cost_index: 77.5,
+    });
+    expect(first?.rating.value.effective_price).toBeCloseTo(8.3125, 9);
     expect(first?.facts).toMatchObject({
       context: 1000000,
       open_weights: false,
@@ -232,6 +238,52 @@ describe('buildDataset', () => {
     expect(model?.matched).toEqual({ modelsdev: true, aa: false, arena: true });
   });
 
+  it('counts what a model costs to run in its value, not in its cost rating', () => {
+    // Same price list, but the frugal model's run cost a tenth of the flagship's.
+    const frugal = entry(
+      'acme/frugal',
+      'name: Frugal\nvendor: Acme\nsources:\n  modelsdev: acme/flagship\n  aa: frugal\n  arena_webdev: "Flagship (Max)"',
+    );
+    const withFrugal: Snapshots = {
+      ...snapshots,
+      aa: {
+        ...snapshots.aa!,
+        models: {
+          ...snapshots.aa!.models,
+          frugal: { name: 'Frugal', aa_intelligence: 68, index_cost_usd: 12.34 },
+        },
+      },
+    };
+    const built = buildDataset([flagship, frugal], withFrugal, { now: NOW, config });
+    const costly = built.models.find((model) => model.id === 'acme/flagship')!;
+    const cheap = built.models.find((model) => model.id === 'acme/frugal')!;
+
+    // Token use is run cost ÷ blended price; typical token use is the median of the two.
+    expect(built.run_cost.models).toBe(2);
+    expect(built.run_cost.typical_token_use).toBeCloseTo((123.4 + 12.34) / 2 / 8.3125, 9);
+    expect(cheap.rating.cost).toEqual(costly.rating.cost);
+    // Effective price = run cost ÷ typical token use: blended × 2 ÷ 11 and × 20 ÷ 11.
+    expect(cheap.rating.value.effective_price).toBeCloseTo((8.3125 * 2) / 11, 9);
+    expect(costly.rating.value.effective_price).toBeCloseTo((8.3125 * 20) / 11, 9);
+    expect(cheap.rating.value).toMatchObject({ cost_basis: 'run_cost', cost_index: 47.6 });
+    expect(costly.rating.value).toMatchObject({ cost_basis: 'run_cost', cost_index: 88 });
+    expect(cheap.rating.value.score).toBeGreaterThan(costly.rating.value.score as number);
+  });
+
+  it('falls back to the blended price when there is no run cost', () => {
+    const unmeasured = entry(
+      'acme/flagship',
+      'name: Flagship\nvendor: Acme\nsources:\n  arena_webdev: "Flagship (Max)"',
+    );
+    const built = buildDataset([unmeasured], snapshots, { now: NOW, config });
+    expect(built.run_cost).toEqual({ typical_token_use: null, models: 0 });
+    expect(built.models[0]?.rating.value).toMatchObject({
+      cost_basis: 'list_price',
+      effective_price: 8.3125,
+      cost_index: 77.5,
+    });
+  });
+
   it('does not read a rating from the wrong board', () => {
     // "Flagship (Max)" exists in the snapshot, but only with a WebDev rating.
     const wrongBoard = entry(
@@ -251,7 +303,13 @@ describe('buildDataset', () => {
       blended: null,
       free: false,
     });
-    expect(second?.rating.value).toEqual({ score: null, tier: null });
+    expect(second?.rating.value).toEqual({
+      score: null,
+      tier: null,
+      cost_basis: null,
+      effective_price: null,
+      cost_index: null,
+    });
     expect(second?.matched).toEqual({ modelsdev: false, aa: false, arena: false });
     expect(second?.price_source).toBeNull();
   });
@@ -369,6 +427,10 @@ describe('JSON API', () => {
         tier: 'mid',
         label: 'Mid',
         labels: { 'zh-CN': '中', 'zh-TW': '中', en: 'Mid' },
+        cost_basis: 'run_cost',
+        run_cost: 123.4,
+        effective_price: 8.3125,
+        cost_index: 77.5,
       },
       url: 'https://mekiki.fog.moe/m/acme/flagship',
     });

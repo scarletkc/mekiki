@@ -35,7 +35,6 @@ interface SourceReport {
   outcome: Outcome;
   unmatched: Unmatched[];
   warnings: string[];
-  notes: string[];
 }
 
 function parseArgs(argv: string[]) {
@@ -73,16 +72,8 @@ function serialize<T extends { models: Record<string, unknown> }>(snapshot: T): 
  * out on purpose: a source gaining a model nobody tracks (models.dev does
  * so almost daily) is not a change worth a commit.
  */
-function comparable(snapshot: {
-  frontier: unknown;
-  reference?: unknown;
-  models: Record<string, unknown>;
-}): string {
-  return serialize({
-    frontier: snapshot.frontier,
-    reference: snapshot.reference,
-    models: snapshot.models,
-  });
+function comparable(snapshot: { frontier: unknown; models: Record<string, unknown> }): string {
+  return serialize({ frontier: snapshot.frontier, models: snapshot.models });
 }
 
 function describeError(error: unknown): string {
@@ -104,7 +95,6 @@ async function syncSource<S extends SourceId>(
     outcome: { status: 'failed', reason: 'unknown' },
     unmatched: [],
     warnings: [],
-    notes: [],
   };
 
   try {
@@ -114,13 +104,12 @@ async function syncSource<S extends SourceId>(
       return report;
     }
 
-    const { snapshot, unmatched, warnings, notes } = adapter.transform(
+    const { snapshot, unmatched, warnings } = adapter.transform(
       fetched.raw,
       trackedModels(entries),
     );
     report.unmatched = unmatched;
     report.warnings = warnings;
-    report.notes = notes ?? [];
 
     const total = snapshot.total ?? 0;
     const previous = readSnapshot(source);
@@ -150,7 +139,6 @@ async function syncSource<S extends SourceId>(
           fetched_at: new Date().toISOString(),
           total: snapshot.total,
           frontier: snapshot.frontier,
-          reference: snapshot.reference,
           models: snapshot.models,
         }),
       );
@@ -207,12 +195,6 @@ function printConsole(reports: SourceReport[], dryRun: boolean) {
     console.log(`\nWarnings from ${SOURCE_INFO[report.source].name}:`);
     for (const warning of report.warnings) console.log(`  ${warning}`);
   }
-
-  for (const report of reports) {
-    if (report.notes.length === 0) continue;
-    console.log(`\nNotes from ${SOURCE_INFO[report.source].name}:`);
-    for (const note of report.notes) console.log(`  ${note}`);
-  }
   console.log('');
 }
 
@@ -230,10 +212,6 @@ function writeJobSummary(reports: SourceReport[], dryRun: boolean) {
     if (report.warnings.length > 0) {
       lines.push('', `### Warnings from ${SOURCE_INFO[report.source].name}`, '');
       lines.push(...report.warnings.map((line) => `- ${line}`));
-    }
-    if (report.notes.length > 0) {
-      lines.push('', `### Notes from ${SOURCE_INFO[report.source].name}`, '');
-      lines.push(...report.notes.map((line) => `- ${line}`));
     }
   }
   appendFileSync(file, `${lines.join('\n')}\n`);

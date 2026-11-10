@@ -95,6 +95,9 @@ const columns: Column[] = [
   { title: 'blended', align: 'right', value: (m) => price(m.rating.cost.blended) },
   { title: 'cost idx', align: 'right', value: (m) => number(m.rating.cost.index) },
   { title: 'tier', value: (m) => m.rating.cost.tier ?? dash },
+  { title: 'run cost', align: 'right', value: (m) => price(m.facts.index_cost_usd) },
+  { title: 'eff price', align: 'right', value: (m) => price(m.rating.value.effective_price) },
+  { title: 'eff idx', align: 'right', value: (m) => number(m.rating.value.cost_index) },
   { title: 'value', align: 'right', value: (m) => number(m.rating.value.score) },
   { title: 'tier', value: (m) => m.rating.value.tier ?? dash },
 ];
@@ -108,6 +111,10 @@ for (const id of SOURCE_IDS) {
 }
 console.log(
   `  frontier: ${METRIC_KEYS.map((key) => `${key}=${dataset.frontier[key] ?? dash}`).join('  ')}`,
+);
+
+console.log(
+  `  typical token use: ${dataset.run_cost.typical_token_use === null ? dash : Math.round(dataset.run_cost.typical_token_use)} M tokens (median of ${dataset.run_cost.models} listed models); eff price = run cost ÷ that`,
 );
 
 console.log('\nScores (benchmark columns show raw and normalised)\n');
@@ -125,6 +132,8 @@ console.log('\nSpread');
 console.log(`  intelligence  ${quantiles(scores((m) => m.rating.intelligence.score))}`);
 console.log(`  blended $     ${quantiles(scores((m) => m.rating.cost.blended))}`);
 console.log(`  cost index    ${quantiles(scores((m) => m.rating.cost.index))}`);
+console.log(`  eff price $   ${quantiles(scores((m) => m.rating.value.effective_price))}`);
+console.log(`  eff index     ${quantiles(scores((m) => m.rating.value.cost_index))}`);
 console.log(`  value         ${quantiles(scores((m) => m.rating.value.score))}`);
 
 const { intelligence, cost, value } = scoringConfig;

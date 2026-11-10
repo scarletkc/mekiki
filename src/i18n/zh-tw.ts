@@ -40,7 +40,8 @@ export const zhTW: Dictionary = {
   },
   home: {
     title: '模型',
-    intro: '每個模型給三個評級。智慧分來自公開榜單，成本和性價比依價格自動計算。',
+    intro:
+      '每個模型給三個評級。智慧分來自公開榜單；成本依官方價格計算，性價比看智慧和實際用起來的花費。',
   },
   table: {
     columns: {
@@ -91,7 +92,6 @@ export const zhTW: Dictionary = {
     priceNote:
       '價格單位是美元 / 百萬 token。混合價假設 {hit}% 的輸入命中快取，再依輸入 {input}、輸出 {output} 的比例加權。',
     priceOverride: '價格為手動填寫，未採用 models.dev 的資料。',
-    costIndex: '成本指數',
     context: '上下文長度',
     tokens: '{n} token',
     releaseDate: '發布日期',
@@ -102,7 +102,11 @@ export const zhTW: Dictionary = {
     modalityIn: '輸入',
     modalityOut: '輸出',
     indexCost: 'AA 智慧指數評測總花費',
-    indexCostNote: '僅供參考，不列入評分。',
+    effectivePrice: '計入性價比的價格',
+    valueFromRunCost: '依實測花費折算為 {price} / 百萬 token',
+    valueFromListPrice: '以混合價計，尚無實測花費',
+    runCostNote:
+      '性價比用的是這筆評測花費，不是定價：花費 ÷ {typical} 百萬 token（本站收錄模型的典型用量）= 計入性價比的價格。',
     links: '原始資料',
     linkModelsdev: 'models.dev',
     linkAa: 'Artificial Analysis 模型頁',
@@ -131,10 +135,13 @@ export const zhTW: Dictionary = {
     costBody:
       '價格取 models.dev 上的官方價，單位是美元 / 百萬 token。假設 {hit}% 的輸入 token 命中快取：實際輸入價 = {hitRate} × 快取讀取價 + {missRate} × 輸入價。沒有快取讀取價的模型按輸入價全額計算，快取寫入的額外費用不計。混合價 =（{input} × 實際輸入價 + {output} × 輸出價）÷ {total}。級距依混合價的絕對值劃分。',
     costIndexBody:
-      '成本指數只用來算性價比：混合價在 ${floor} 到 ${ceil} 之間取對數後對應到 0–100，不高於 ${floor} 記 0。',
+      '成本指數把價格依對數刻度對應到 0–100：不高於 ${floor} 記 0，不低於 ${ceil} 記 100。它只用來算性價比。',
     valueTitle: '性價比',
+    valueRunCostBody:
+      '單價低不等於用起來便宜：模型如果很耗 token，實際花費照樣高。所以性價比看的是模型實際跑起來花多少錢。Artificial Analysis 公布了每個模型跑完整套智慧指數評測的實際花費。所有模型跑的是同一套題，這筆花費已經反映了模型實際消耗多少 token，推理消耗也算在內。為了換算回「每百萬 token 價格」的刻度，把它除以典型 token 用量，也就是本站收錄模型「花費 ÷ 混合價」的中位數。Token 用量與典型水準相當的模型，折算價就等於混合價；省 token 的更低，耗 token 的更高。沒有評測花費資料的模型直接用混合價。',
+    valueRunCostNow: '目前的典型用量是 {typical} 百萬 token。',
     valueBody:
-      '性價比 = 智慧分^{a} × max(100 − 成本指數, {min})^{b}。這是幾何平均，兩頭都不能太差：聰明但很貴、便宜但很笨，都拿不到高分。',
+      '性價比 = 智慧分^{a} × max(100 − 折算價的成本指數, {min})^{b}。這是幾何平均，兩頭都不能太差：聰明但很貴、便宜但很笨，都拿不到高分。',
     tiersTitle: '級距',
     tiersCaption: '各評級的級距條件',
     tierRating: '評級',
@@ -156,6 +163,8 @@ export const zhTW: Dictionary = {
       '程式能力用 Arena 的 WebDev 榜衡量。Artificial Analysis 也有程式指數，但免費 API 不提供，所以沒有採用。',
     caveatVariants:
       '同一個模型在榜單上常依推理等級分成多個項目，這裡取的是 mekiki 實際使用的那一級。',
+    caveatRunCost:
+      '實測花費來自 Artificial Analysis 自己的評測題，對應的是所對應條目的推理等級。換一種任務或調低推理等級，花費會不一樣。',
   },
   api: {
     title: 'API',
@@ -173,7 +182,9 @@ export const zhTW: Dictionary = {
     fieldScores: '分數保留一位小數。缺少的值是 null，欄位不會被省略。',
     fieldTier: 'tier 是穩定的英文 key；label 是英文標籤，labels 裡有各語言的標籤。',
     fieldPrice:
-      '價格單位是美元 / 百萬 token；cost.blended 是混合價，已計入假設的快取命中（見「評分方法」），cost.index 是 0–100 的成本指數。',
+      '價格單位是美元 / 百萬 token；cost.blended 是混合價，已計入假設的快取命中（見「評分方法」），cost.index 是它的 0–100 成本指數。',
+    fieldValue:
+      'value.effective_price 是計算性價比時使用的價格（美元 / 百萬 token），value.cost_index 是它的 0–100 成本指數。value.cost_basis 說明這個價格的來源：有 Artificial Analysis 實測花費（value.run_cost，美元）時為 run_cost，否則為 list_price。',
     versionTitle: '版本',
     versionBody: '欄位只增不改。有破壞性變更時，version 加一。目前是 version {version}。',
     attributionTitle: '標示來源',

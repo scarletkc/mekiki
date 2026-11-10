@@ -1,7 +1,7 @@
 ---
 import { fmt, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
-import { formatDateTime, formatPercent } from '../lib/format';
+import { formatCount, formatDateTime, formatPercent } from '../lib/format';
 import {
   COST_TIERS,
   INTELLIGENCE_TIERS,
@@ -65,6 +65,17 @@ const tierRows = [
   },
 ];
 
+// How a run cost becomes the price value is computed from. The weight only
+// shows up in the formula when it is not all-or-nothing.
+const typicalTokenUse = dataset.run_cost.typical_token_use;
+const measured = 'run_cost ÷ typical_token_use';
+const effectivePriceFormula =
+  value.runCostWeight >= 1
+    ? `effective_price = ${measured}`
+    : value.runCostWeight <= 0
+      ? 'effective_price = blended'
+      : `effective_price = blended^${Number((1 - value.runCostWeight).toFixed(2))} × (${measured})^${value.runCostWeight}`;
+
 const sourceUse = { modelsdev: m.useModelsdev, aa: m.useAa, arena: m.useArena };
 const sources = SOURCE_IDS.map((id) => ({
   ...dataset.sources[id],
@@ -122,9 +133,14 @@ const sources = SOURCE_IDS.map((id) => ({
       }
     </p>
     <p>{fmt(m.costIndexBody, { floor: cost.indexFloorPrice, ceil: cost.indexCeilPrice })}</p>
-    <pre><code>cost_index = clamp(100 × log10(blended ÷ {cost.indexFloorPrice}) ÷ log10({cost.indexCeilPrice} ÷ {cost.indexFloorPrice}), 0, 100)</code></pre>
+    <pre><code>cost_index(price) = clamp(100 × log10(price ÷ {cost.indexFloorPrice}) ÷ log10({cost.indexCeilPrice} ÷ {cost.indexFloorPrice}), 0, 100)</code></pre>
 
     <h2 id="value">{m.valueTitle}</h2>
+    <p>
+      {m.valueRunCostBody}
+      {typicalTokenUse !== null && ` ${fmt(m.valueRunCostNow, { typical: formatCount(typicalTokenUse) })}`}
+    </p>
+    <pre><code>{effectivePriceFormula}</code></pre>
     <p>
       {
         fmt(m.valueBody, {
@@ -134,7 +150,7 @@ const sources = SOURCE_IDS.map((id) => ({
         })
       }
     </p>
-    <pre><code>value = intelligence^{value.intelligenceExponent} × max(100 − cost_index, {value.minAffordability})^{value.affordabilityExponent}</code></pre>
+    <pre><code>value = intelligence^{value.intelligenceExponent} × max(100 − cost_index(effective_price), {value.minAffordability})^{value.affordabilityExponent}</code></pre>
 
     <h2 id="tiers">{m.tiersTitle}</h2>
     <div class="overflow-x-auto">
@@ -198,6 +214,7 @@ const sources = SOURCE_IDS.map((id) => ({
     <ul>
       <li>{m.caveatAaCoding}</li>
       <li>{m.caveatVariants}</li>
+      <li>{m.caveatRunCost}</li>
     </ul>
   </article>
 </Base>

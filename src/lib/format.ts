@@ -17,6 +17,13 @@ export function formatScore(value: number): string {
   return value.toFixed(1);
 }
 
+/** Whole number with thousands separators: `481`, `1,250`. */
+export function formatCount(value: number): string {
+  return Math.round(value)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
 /** Token count: `1M`, `1.05M`, `200K`. */
 export function formatTokens(value: number): string {
   if (value >= 1_000_000) return `${trimZeros((value / 1_000_000).toFixed(2))}M`;

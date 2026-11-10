@@ -6,6 +6,7 @@ import {
   costIndex,
   costTier,
   effectiveInputPrice,
+  effectivePrice,
   intelligenceTier,
   normalizeMetric,
   rateModel,
@@ -61,8 +62,7 @@ const specConfig: ScoringConfig = {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
-    tokenUseExponent: 1,
-    tokenUseReferenceSize: 50,
+    runCostWeight: 1,
     tiers: { top: 70, high: 60, mid: 50 },
   },
 };
@@ -391,6 +391,52 @@ describe('computeValue', () => {
   });
 });
 
+describe('effectivePrice', () => {
+  it('takes a measured price over the blended list price', () => {
+    expect(effectivePrice(4, 1, specConfig)).toEqual({ price: 1, basis: 'run_cost' });
+    expect(effectivePrice(0.2, 3, specConfig)).toEqual({ price: 3, basis: 'run_cost' });
+  });
+
+  it('keeps the blended price when nothing usable was measured', () => {
+    for (const measured of [null, undefined, 0, -1, Number.NaN]) {
+      expect(effectivePrice(4, measured, specConfig)).toEqual({ price: 4, basis: 'list_price' });
+    }
+  });
+
+  it('blends the two geometrically by runCostWeight', () => {
+    const half: ScoringConfig = {
+      ...specConfig,
+      value: { ...specConfig.value, runCostWeight: 0.5 },
+    };
+    expect(effectivePrice(4, 1, half).price).toBeCloseTo(2, 9);
+    const off: ScoringConfig = { ...specConfig, value: { ...specConfig.value, runCostWeight: 0 } };
+    expect(effectivePrice(4, 1, off)).toEqual({ price: 4, basis: 'list_price' });
+  });
+
+  it('moves value but leaves the cost rating alone', () => {
+    const input: RatingInput = {
+      metrics: { aa_intelligence: 56 },
+      frontier,
+      price: { input: 2, output: 8 },
+    };
+    const listed = rateModel(input, specConfig);
+    const measured = rateModel({ ...input, measuredPrice: 0.35 }, specConfig);
+    expect(measured.cost).toEqual(listed.cost);
+    expect(listed.value).toMatchObject({
+      cost_basis: 'list_price',
+      effective_price: 3.5,
+      cost_index: 62.3,
+    });
+    // A tenth of the price is 100 ÷ log10(300) = 40.4 index points lower.
+    expect(measured.value).toMatchObject({
+      cost_basis: 'run_cost',
+      effective_price: 0.35,
+      cost_index: 22,
+    });
+    expect(measured.value.score).toBeGreaterThan(listed.value.score as number);
+  });
+});
+
 describe('rateModel edge cases', () => {
   it('leaves everything null when there is no data at all', () => {
     const rating = rateModel({ metrics: {}, frontier: {}, price: null });
@@ -405,7 +451,13 @@ describe('rateModel edge cases', () => {
       cache_read: null,
       free: false,
     });
-    expect(rating.value).toEqual({ score: null, tier: null });
+    expect(rating.value).toEqual({
+      score: null,
+      tier: null,
+      cost_basis: null,
+      effective_price: null,
+      cost_index: null,
+    });
   });
 
   it('rates cost without intelligence, but not value', () => {

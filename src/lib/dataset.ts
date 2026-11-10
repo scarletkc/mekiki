@@ -13,7 +13,7 @@ import {
   type MetricKey,
   type ScoringConfig,
 } from './scoring.config';
-import { rateModel, type Price, type Rating } from './scoring';
+import { listPrice, rateModel, type Price, type Rating } from './scoring';
 import { SOURCE_IDS, SOURCE_INFO, type Snapshots, type SourceId } from './snapshots';
 
 export const SITE_URL = 'https://mekiki.fog.moe';
@@ -41,7 +41,7 @@ export interface ModelRecord {
     release_date: string | null;
     open_weights: boolean | null;
     modalities: { input: string[]; output: string[] } | null;
-    /** USD spent running the full AA Intelligence Index (reference only). */
+    /** USD spent running the full AA Intelligence Index. */
     index_cost_usd: number | null;
   };
   /** The model's ID in each source, as mapped in its frontmatter. */
@@ -57,6 +57,17 @@ export interface Dataset {
   sources: Record<SourceId, SourceStatus>;
   /** Best raw score of each benchmark metric, null when unknown. */
   frontier: Record<MetricKey, number | null>;
+  /** How a run cost becomes a price per 1M tokens. */
+  run_cost: {
+    /**
+     * Typical token use of an AA index run, in millions of tokens: the
+     * median of run cost ÷ blended price over the listed models. A run cost
+     * is divided by it. Null when no model has both figures.
+     */
+    typical_token_use: number | null;
+    /** How many models that figure is the median of. */
+    models: number;
+  };
   models: ModelRecord[];
 }
 
@@ -67,6 +78,13 @@ export interface BuildOptions {
 
 const asNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
+}
 
 /** A metric's raw score for one model: snapshot → mapped ID → metric. */
 function metricValue(
@@ -115,16 +133,14 @@ export function buildDataset(
   const config = options.config ?? scoringConfig;
   const frontier = frontierOf(snapshots, config);
 
-  const models = entries.map((entry): ModelRecord => {
+  // First pass: each model's source data and price.
+  const prepared = entries.map((entry) => {
     const { data } = entry;
     const { sources } = data;
     const modelsdevId = sources.modelsdev ?? entry.id;
 
     const facts = snapshots.modelsdev?.models[modelsdevId] ?? null;
     const aa = sources.aa ? (snapshots.aa?.models[sources.aa] ?? null) : null;
-    const arena = [sources.arena_text, sources.arena_webdev].some(
-      (id) => id !== undefined && snapshots.arena?.models[id] !== undefined,
-    );
 
     let price: Price | null = null;
     let priceSource: ModelRecord['price_source'] = null;
@@ -140,12 +156,51 @@ export function buildDataset(
       priceSource = 'modelsdev';
     }
 
+    return {
+      entry,
+      modelsdevId,
+      facts,
+      aa,
+      price,
+      priceSource,
+      runCost: asNumber(aa?.index_cost_usd),
+    };
+  });
+
+  // Typical token use: the median, over the listed models, of run cost ÷
+  // blended price. Dividing a run cost by it puts the cost back on the
+  // per-token price scale, where a model of typical token use lands on its
+  // own blended price. That keeps measured models comparable with those
+  // that have no run cost and are rated on the blended price. Legacy models
+  // count too, so a status change does not move the figure.
+  const tokenUses = prepared.flatMap(({ runCost, price }) => {
+    const blended = listPrice(price, config);
+    return runCost !== null && runCost > 0 && blended !== null && blended > 0
+      ? [runCost / blended]
+      : [];
+  });
+  const typicalTokenUse = median(tokenUses);
+
+  const models = prepared.map((item): ModelRecord => {
+    const { entry, modelsdevId, facts, aa, price, priceSource, runCost } = item;
+    const { data } = entry;
+    const { sources } = data;
+    const arena = [sources.arena_text, sources.arena_webdev].some(
+      (id) => id !== undefined && snapshots.arena?.models[id] !== undefined,
+    );
+
     const metrics: Record<string, number | null> = {};
     for (const key of Object.keys(config.intelligence.metrics)) {
       metrics[key] = metricValue(snapshots, entry, key, config);
     }
 
-    const rating = rateModel({ metrics, frontier, price }, config);
+    // What the model cost to run, as a price per 1M tokens.
+    const measuredPrice =
+      runCost !== null && typicalTokenUse !== null && runCost > 0 && typicalTokenUse > 0
+        ? runCost / typicalTokenUse
+        : null;
+
+    const rating = rateModel({ metrics, frontier, price, measuredPrice }, config);
 
     return {
       id: entry.id,
@@ -159,7 +214,7 @@ export function buildDataset(
         release_date: facts?.release_date ?? null,
         open_weights: facts?.open_weights ?? null,
         modalities: facts?.modalities ?? null,
-        index_cost_usd: aa?.index_cost_usd ?? null,
+        index_cost_usd: runCost,
       },
       source_ids: {
         modelsdev: modelsdevId,
@@ -182,7 +237,13 @@ export function buildDataset(
   const liveFrontier = {} as Record<MetricKey, number | null>;
   for (const key of METRIC_KEYS) liveFrontier[key] = frontier[key] ?? null;
 
-  return { generated_at: now.toISOString(), sources, frontier: liveFrontier, models };
+  return {
+    generated_at: now.toISOString(),
+    sources,
+    frontier: liveFrontier,
+    run_cost: { typical_token_use: typicalTokenUse, models: tokenUses.length },
+    models,
+  };
 }
 
 /** Latest `fetched_at` across all sources, or null when nothing was ever synced. */

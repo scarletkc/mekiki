@@ -32,7 +32,15 @@ export interface RatingInput {
   frontier: Record<string, number | null | undefined>;
   /** Official price, or null when unknown. */
   price: Price | null;
+  /**
+   * What the model was measured to cost on real work, as USD per 1M
+   * tokens. Null or absent when it was never measured.
+   */
+  measuredPrice?: number | null;
 }
+
+/** What the cost side of value rests on. */
+export type ValueCostBasis = 'run_cost' | 'list_price';
 
 export interface MetricBreakdown {
   raw: number | null;
@@ -63,6 +71,12 @@ export interface Rating {
   value: {
     score: number | null;
     tier: ValueTier | null;
+    /** `run_cost` when a measured price was used, else `list_price`. Null without a price. */
+    cost_basis: ValueCostBasis | null;
+    /** The price value is computed from, USD per 1M tokens. */
+    effective_price: number | null;
+    /** Cost index of the effective price. */
+    cost_index: number | null;
   };
 }
 
@@ -152,6 +166,38 @@ export function blendedPrice(
   return (inputWeight * input + outputWeight * output) / (inputWeight + outputWeight);
 }
 
+/**
+ * The price value is computed from. A low price per token means little if
+ * the model burns many tokens, so a measured price takes the place of the
+ * blended list price when there is one. `runCostWeight` blends the two
+ * geometrically; without a measured price the blended price stands.
+ */
+export function effectivePrice(
+  blended: number,
+  measured: number | null | undefined,
+  config: ScoringConfig = scoringConfig,
+): { price: number; basis: ValueCostBasis } {
+  const weight = clamp(config.value.runCostWeight, 0, 1);
+  if (!isNumber(measured) || !(measured > 0) || weight === 0) {
+    return { price: blended, basis: 'list_price' };
+  }
+  if (weight === 1) return { price: measured, basis: 'run_cost' };
+  return { price: blended ** (1 - weight) * measured ** weight, basis: 'run_cost' };
+}
+
+/** Blended list price of a model, with the assumed cache hits counted. Null without a usable price. */
+export function listPrice(
+  price: Price | null | undefined,
+  config: ScoringConfig = scoringConfig,
+): number | null {
+  if (!price || !isNumber(price.input) || !isNumber(price.output)) return null;
+  return blendedPrice(
+    effectiveInputPrice(price.input, price.cache_read, config),
+    price.output,
+    config,
+  );
+}
+
 /** Log-scaled cost index, 0 (cheapest) to 100 (most expensive). */
 export function costIndex(blended: number, config: ScoringConfig = scoringConfig): number {
   const { indexFloorPrice, indexCeilPrice } = config.cost;
@@ -211,14 +257,15 @@ export function rateModel(input: RatingInput, config: ScoringConfig = scoringCon
 
   const price =
     input.price && isNumber(input.price.input) && isNumber(input.price.output) ? input.price : null;
-  const blended = price
-    ? blendedPrice(effectiveInputPrice(price.input, price.cache_read, config), price.output, config)
-    : null;
+  const blended = listPrice(price, config);
   const index = blended !== null ? costIndex(blended, config) : null;
 
+  // Value looks at what the model costs to use, not only at its price list.
+  const effective = blended !== null ? effectivePrice(blended, input.measuredPrice, config) : null;
+  const valueIndex = effective !== null ? costIndex(effective.price, config) : null;
   const value =
-    benchmark.score !== null && index !== null
-      ? computeValue(benchmark.score, index, config)
+    benchmark.score !== null && valueIndex !== null
+      ? computeValue(benchmark.score, valueIndex, config)
       : null;
 
   const breakdown: Record<string, MetricBreakdown> = {};
@@ -250,6 +297,9 @@ export function rateModel(input: RatingInput, config: ScoringConfig = scoringCon
     value: {
       score: valueScore,
       tier: valueScore === null ? null : valueTier(valueScore, config),
+      cost_basis: effective?.basis ?? null,
+      effective_price: effective?.price ?? null,
+      cost_index: valueIndex === null ? null : round1(valueIndex),
     },
   };
 }

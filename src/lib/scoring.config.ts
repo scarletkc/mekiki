@@ -68,20 +68,16 @@ export interface ScoringConfig {
     affordabilityExponent: number;
     minAffordability: number;
     /**
-     * How much token efficiency counts. A model's token use is the cost of
-     * its AA Intelligence Index run divided by its blended list price, and
-     * value is computed from
-     *   blended price × (token use ÷ typical token use)^tokenUseExponent
-     * instead of the blended price. 0 ignores token use, 1 counts it in full.
-     * A model without a run cost is rated on its blended price alone.
+     * How far value trusts what a model cost to run over its price list.
+     * Artificial Analysis publishes the cost of running its Intelligence
+     * Index on each model. Divided by typical token use (the median, over
+     * the models listed on the site, of run cost ÷ blended price) it becomes
+     * a price per 1M tokens, the measured price. Value is computed from
+     *   blended^(1 − runCostWeight) × measured^runCostWeight
+     * so 1 uses the measured price alone and 0 ignores it. A model without
+     * a run cost is rated on its blended price.
      */
-    tokenUseExponent: number;
-    /**
-     * "Typical" is the median token use of this many models at the top of
-     * the AA Intelligence Index. `pnpm sync` computes it, so sync again
-     * after changing this.
-     */
-    tokenUseReferenceSize: number;
+    runCostWeight: number;
     /** Minimum (rounded) score for each tier; anything lower is `low`. */
     tiers: { top: number; high: number; mid: number };
   };
@@ -143,8 +139,7 @@ export const scoringConfig: ScoringConfig = {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
-    tokenUseExponent: 1,
-    tokenUseReferenceSize: 50,
+    runCostWeight: 1,
     tiers: { top: 70, high: 60, mid: 50 },
   },
 };

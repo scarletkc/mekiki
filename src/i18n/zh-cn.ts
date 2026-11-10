@@ -40,7 +40,8 @@ export const zhCN: Dictionary = {
   },
   home: {
     title: '模型',
-    intro: '每个模型给三个评级。智能分来自公开榜单，成本和性价比按价格自动计算。',
+    intro:
+      '每个模型给三个评级。智能分来自公开榜单；成本按官方价格计算，性价比看智能和实际用起来的花费。',
   },
   table: {
     columns: {
@@ -91,7 +92,6 @@ export const zhCN: Dictionary = {
     priceNote:
       '价格单位是美元 / 百万 token。混合价假设 {hit}% 的输入命中缓存，再按输入 {input}、输出 {output} 的比例加权。',
     priceOverride: '价格为手动填写，未采用 models.dev 的数据。',
-    costIndex: '成本指数',
     context: '上下文长度',
     tokens: '{n} token',
     releaseDate: '发布日期',
@@ -102,7 +102,11 @@ export const zhCN: Dictionary = {
     modalityIn: '输入',
     modalityOut: '输出',
     indexCost: 'AA 智能指数评测总花费',
-    indexCostNote: '仅供参考，不参与评分。',
+    effectivePrice: '计入性价比的价格',
+    valueFromRunCost: '按实测花费折算为 {price} / 百万 token',
+    valueFromListPrice: '按混合价计，暂无实测花费',
+    runCostNote:
+      '性价比用的是这笔评测花费，不是标价：花费 ÷ {typical} 百万 token（本站收录模型的典型用量）= 计入性价比的价格。',
     links: '原始数据',
     linkModelsdev: 'models.dev',
     linkAa: 'Artificial Analysis 模型页',
@@ -131,10 +135,13 @@ export const zhCN: Dictionary = {
     costBody:
       '价格取 models.dev 上的官方价，单位是美元 / 百万 token。假设 {hit}% 的输入 token 命中缓存：实际输入价 = {hitRate} × 缓存读取价 + {missRate} × 输入价。没有缓存读取价的模型按输入价全额计算，缓存写入的额外费用不计。混合价 =（{input} × 实际输入价 + {output} × 输出价）÷ {total}。档位按混合价的绝对值划分。',
     costIndexBody:
-      '成本指数只用来算性价比：混合价在 ${floor} 到 ${ceil} 之间取对数后映射到 0–100，不高于 ${floor} 记 0。',
+      '成本指数把价格按对数刻度映射到 0–100：不高于 ${floor} 记 0，不低于 ${ceil} 记 100。它只用来算性价比。',
     valueTitle: '性价比',
+    valueRunCostBody:
+      '单价低不等于用起来便宜：模型如果很费 token，实际花费照样高。所以性价比看的是模型实际跑起来花多少钱。Artificial Analysis 公布了每个模型跑完整套智能指数评测的实际花费。所有模型跑的是同一套题，这笔花费已经反映了模型实际消耗多少 token，推理消耗也算在内。为了换算回“每百万 token 价格”的刻度，把它除以典型 token 用量，即本站收录模型“花费 ÷ 混合价”的中位数。Token 用量与典型水平相当的模型，折算价就等于混合价；省 token 的更低，费 token 的更高。没有评测花费数据的模型直接用混合价。',
+    valueRunCostNow: '当前的典型用量是 {typical} 百万 token。',
     valueBody:
-      '性价比 = 智能分^{a} × max(100 − 成本指数, {min})^{b}。这是几何平均，两头都不能太差：聪明但很贵、便宜但很笨，都拿不到高分。',
+      '性价比 = 智能分^{a} × max(100 − 折算价的成本指数, {min})^{b}。这是几何平均，两头都不能太差：聪明但很贵、便宜但很笨，都拿不到高分。',
     tiersTitle: '档位',
     tiersCaption: '各评级的档位条件',
     tierRating: '评级',
@@ -156,6 +163,8 @@ export const zhCN: Dictionary = {
       '编程能力用 Arena 的 WebDev 榜衡量。Artificial Analysis 也有编程指数，但免费 API 不提供，所以没有采用。',
     caveatVariants:
       '同一个模型在榜单上常按推理档位分成多个条目，这里取的是 mekiki 实际使用的那一档。',
+    caveatRunCost:
+      '实测花费来自 Artificial Analysis 自己的评测题，对应的是所映射条目的推理档位。换一种任务或调低推理档位，花费会不一样。',
   },
   api: {
     title: 'API',
@@ -173,7 +182,9 @@ export const zhCN: Dictionary = {
     fieldScores: '分数保留一位小数。缺失值是 null，字段不会被省略。',
     fieldTier: 'tier 是稳定的英文 key；label 是英文标签，labels 里有各语言的标签。',
     fieldPrice:
-      '价格单位是美元 / 百万 token；cost.blended 是混合价，已计入假设的缓存命中（见“评分方法”），cost.index 是 0–100 的成本指数。',
+      '价格单位是美元 / 百万 token；cost.blended 是混合价，已计入假设的缓存命中（见“评分方法”），cost.index 是它的 0–100 成本指数。',
+    fieldValue:
+      'value.effective_price 是计算性价比时使用的价格（美元 / 百万 token），value.cost_index 是它的 0–100 成本指数。value.cost_basis 说明这个价格的来源：有 Artificial Analysis 实测花费（value.run_cost，美元）时为 run_cost，否则为 list_price。',
     versionTitle: '版本',
     versionBody: '字段只加不改。有破坏性变更时，version 加一。当前是 version {version}。',
     attributionTitle: '署名',

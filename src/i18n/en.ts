@@ -44,7 +44,7 @@ export const en = {
   home: {
     title: 'Models',
     intro:
-      'Every model gets three ratings. Intelligence comes from public leaderboards; cost and value follow from the price.',
+      'Every model gets three ratings. Intelligence comes from public leaderboards; cost follows from the price list, and value from intelligence and what the model costs to actually run.',
   },
   table: {
     columns: {
@@ -95,7 +95,6 @@ export const en = {
     priceNote:
       'Prices are in USD per 1M tokens. The blended price assumes {hit}% of input tokens are cache hits, then weights input and output {input}:{output}.',
     priceOverride: 'Price entered by hand; the models.dev figure is not used.',
-    costIndex: 'Cost index',
     context: 'Context window',
     tokens: '{n} tokens',
     releaseDate: 'Released',
@@ -106,7 +105,11 @@ export const en = {
     modalityIn: 'In',
     modalityOut: 'Out',
     indexCost: 'Cost to run the AA Intelligence Index',
-    indexCostNote: 'For reference only; not part of the score.',
+    effectivePrice: 'Price counted in value',
+    valueFromRunCost: 'Counted at {price} per 1M tokens, from the measured run cost',
+    valueFromListPrice: 'From the blended price; no run cost measured',
+    runCostNote:
+      'Value uses that run cost, not the price list: divided by {typical} million tokens, the typical use among the models listed here, it gives the price counted in value.',
     links: 'Source data',
     linkModelsdev: 'models.dev',
     linkAa: 'Artificial Analysis model page',
@@ -135,10 +138,13 @@ export const en = {
     costBody:
       'Prices are the official ones from models.dev, in USD per 1M tokens. Assuming {hit}% of input tokens are cache hits, effective input = {hitRate} × cache read + {missRate} × input. A model without a cache-read price pays the full input price, and cache-write surcharges are not counted. Blended price = ({input} × effective input + {output} × output) ÷ {total}. Tiers are set by the absolute blended price.',
     costIndexBody:
-      'The cost index is only used to compute value: the blended price between ${floor} and ${ceil} is mapped to 0–100 on a log scale, and anything at or below ${floor} is 0.',
+      'The cost index puts a price on a 0–100 log scale: ${floor} or less is 0, ${ceil} or more is 100. It is only used to compute value.',
     valueTitle: 'Value',
+    valueRunCostBody:
+      'A low price per token says little if a model burns a lot of tokens, so value looks at what a model costs to run. Artificial Analysis publishes what it paid to run its whole Intelligence Index on each model. Every model gets the same suite, so that cost already reflects how many tokens the model burns, reasoning included. To put it on the per-token price scale it is divided by typical token use: the median, over the models listed here, of run cost ÷ blended price. A model that burns a typical number of tokens ends up at its blended price, a frugal one below it and a wasteful one above. A model without a run cost keeps its blended price.',
+    valueRunCostNow: 'Typical token use is currently {typical} million tokens.',
     valueBody:
-      'Value = intelligence^{a} × max(100 − cost index, {min})^{b}. This is a geometric mean, so neither side can be terrible: smart but very expensive, or cheap but dim, both score low.',
+      'Value = intelligence^{a} × max(100 − cost index of the effective price, {min})^{b}. This is a geometric mean, so neither side can be terrible: smart but very expensive, or cheap but dim, both score low.',
     tiersTitle: 'Tiers',
     tiersCaption: 'Tier conditions for each rating',
     tierRating: 'Rating',
@@ -161,6 +167,8 @@ export const en = {
       "Coding ability is measured by Arena's WebDev board. Artificial Analysis also publishes a Coding Index, but its free API doesn't include it, so it isn't used.",
     caveatVariants:
       'Leaderboards often list one model several times, once per reasoning level. The entry used here is the level mekiki actually uses.',
+    caveatRunCost:
+      "The run cost comes from Artificial Analysis's own evaluation suite, at the reasoning level of the entry mapped there. Another workload or a lower reasoning level costs differently.",
   },
   api: {
     title: 'API',
@@ -181,7 +189,9 @@ export const en = {
     fieldTier:
       'tier is a stable English key. label is the English label, and labels holds the label in every language.',
     fieldPrice:
-      'Prices are in USD per 1M tokens. cost.blended is the blended price, with the assumed cache hits already counted (see Method), and cost.index is the 0–100 cost index.',
+      'Prices are in USD per 1M tokens. cost.blended is the blended price, with the assumed cache hits already counted (see Method), and cost.index is its 0–100 cost index.',
+    fieldValue:
+      'value.effective_price is the price the value score is computed from, in USD per 1M tokens, and value.cost_index is its 0–100 index. value.cost_basis says where that price comes from: run_cost when Artificial Analysis measured what the model costs to run (value.run_cost, in USD), list_price otherwise.',
     versionTitle: 'Versioning',
     versionBody:
       'Fields are only ever added. A breaking change bumps version. The current version is {version}.',

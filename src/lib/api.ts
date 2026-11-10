@@ -6,6 +6,7 @@
  * API_VERSION. Missing values are `null`; fields are never omitted.
  */
 import { useTranslations, tierLabels } from '../i18n';
+import type { ValueCostBasis } from './scoring';
 import {
   METRIC_KEYS,
   type CostTier,
@@ -42,7 +43,17 @@ export interface ApiModel {
     output: number | null;
     cache_read: number | null;
   };
-  value: TierFields<ValueTier> & { score: number | null };
+  value: TierFields<ValueTier> & {
+    score: number | null;
+    /** `run_cost` when the price comes from a measured run cost, `list_price` otherwise. */
+    cost_basis: ValueCostBasis | null;
+    /** USD Artificial Analysis spent running its Intelligence Index on the model. */
+    run_cost: number | null;
+    /** The price the score is computed from, USD per 1M tokens. */
+    effective_price: number | null;
+    /** 0–100 index of `effective_price`. */
+    cost_index: number | null;
+  };
   url: string;
 }
 
@@ -109,6 +120,10 @@ export function toApiModel(model: ModelRecord): ApiModel {
       tier: value.tier,
       label: value.tier ? defaultLabels.value[value.tier] : null,
       labels: value.tier ? tierLabels('value', value.tier) : null,
+      cost_basis: value.cost_basis,
+      run_cost: model.facts.index_cost_usd,
+      effective_price: tidy(value.effective_price),
+      cost_index: value.cost_index,
     },
     url: model.url,
   };

@@ -3,8 +3,15 @@ import { TierMeter } from '../components/TierMeter';
 import { fmt, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import type { ModelRecord } from '../lib/dataset';
-import { formatPercent, formatPrice, formatScore, formatTokens } from '../lib/format';
+import {
+  formatCount,
+  formatPercent,
+  formatPrice,
+  formatScore,
+  formatTokens,
+} from '../lib/format';
 import { METRIC_KEYS, scoringConfig } from '../lib/scoring.config';
+import { getDataset } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
 
 interface Props {
@@ -14,6 +21,8 @@ interface Props {
 
 const { locale, model } = Astro.props;
 const t = useTranslations(locale);
+// What a run cost is divided by to become a price per 1M tokens.
+const typicalTokenUse = (await getDataset()).run_cost.typical_token_use;
 
 const { intelligence, cost, value } = model.rating;
 
@@ -46,6 +55,19 @@ const links = [
   { href: SOURCE_INFO.modelsdev.url, label: t.detail.linkModelsdev },
   { href: `/api/models/${model.id}.json`, label: t.detail.linkJson },
 ].filter((link) => link !== null);
+
+// Footnotes under the price list, one paragraph each.
+const priceNotes = [
+  fmt(t.detail.priceNote, {
+    hit: Math.round(scoringConfig.cost.cacheHitRate * 100),
+    input: scoringConfig.cost.inputWeight,
+    output: scoringConfig.cost.outputWeight,
+  }),
+  model.price_source === 'override' ? t.detail.priceOverride : null,
+  value.cost_basis === 'run_cost' && typicalTokenUse !== null
+    ? fmt(t.detail.runCostNote, { typical: formatCount(typicalTokenUse) })
+    : null,
+].filter((note) => note !== null);
 
 const description = `${model.name} (${model.vendor}): ${t.meta.tagline}`;
 ---
@@ -108,9 +130,11 @@ const description = `${model.name} (${model.vendor}): ${t.meta.tagline}`;
       </dd>
       <dd class="text-muted-foreground mt-1 text-xs">
         {
-          cost.index === null
+          value.effective_price === null
             ? t.empty.noPrice
-            : `${t.detail.costIndex} ${formatScore(cost.index)}`
+            : value.cost_basis === 'run_cost'
+              ? fmt(t.detail.valueFromRunCost, { price: formatPrice(value.effective_price) })
+              : t.detail.valueFromListPrice
         }
       </dd>
     </div>
@@ -211,18 +235,14 @@ const description = `${model.name} (${model.vendor}): ${t.meta.tagline}`;
         <dd class="num">
           {model.facts.index_cost_usd === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : formatPrice(model.facts.index_cost_usd)}
         </dd>
+        <dt>{t.detail.effectivePrice}</dt>
+        <dd class="num">
+          {value.effective_price === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : formatPrice(value.effective_price)}
+        </dd>
       </dl>
-      <p class="text-muted-foreground mt-2 text-xs">
-        {
-          fmt(t.detail.priceNote, {
-            hit: Math.round(scoringConfig.cost.cacheHitRate * 100),
-            input: scoringConfig.cost.inputWeight,
-            output: scoringConfig.cost.outputWeight,
-          })
-        }
-        {model.price_source === 'override' && t.detail.priceOverride}
-        {model.facts.index_cost_usd !== null && t.detail.indexCostNote}
-      </p>
+      <div class="text-muted-foreground mt-2 space-y-1 text-xs">
+        {priceNotes.map((note) => <p>{note}</p>)}
+      </div>
 
       <h2 class="mt-7 mb-2 text-base font-semibold">{t.detail.links}</h2>
       <ul class="space-y-1">

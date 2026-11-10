@@ -8,7 +8,8 @@ Each model gets three ratings:
 - **Intelligence**: public leaderboard scores, fetched automatically and normalised to the
   current leader.
 - **Cost**: derived from the official price, with an assumed share of cache hits.
-- **Value**: derived from intelligence and cost.
+- **Value**: derived from intelligence and what the model costs to actually run, which
+  counts how many tokens it burns and not only its price per token.
 
 mekiki (目利き) is Japanese for a discerning eye. Unlike [models.dev](https://models.dev),
 which catalogues facts about every model, this is a short, curated list with an opinion
@@ -92,6 +93,13 @@ Things to know:
   the current leader on each sync.
 - A model that is missing from a leaderboard is rated on the ones it is on; the weights are
   re-normalised. A model on none of them is shown as "not rated", never as 0.
+- **Value uses the measured run cost when there is one.** Artificial Analysis publishes
+  what it paid to run its Intelligence Index on a model. That cost is divided by typical
+  token use (the median, over the models listed here, of run cost ÷ blended price) to get
+  a price per 1M tokens, and value is computed from that price. A model that burns few
+  tokens for its score comes out cheaper than its price list, a wasteful one dearer. A
+  model without a run cost is rated on its blended price. Because the yardstick is the
+  listed models, adding or removing a model can shift the others' value slightly.
 - The site has no text reviews (no verdict, pros and cons, or long review) and no
   subjective score. Old `subjective` blocks in a model file are ignored.
 - To override the models.dev price, add:
@@ -111,7 +119,8 @@ Things to know:
 Every number of the rating algorithm lives in
 [`src/lib/scoring.config.ts`](src/lib/scoring.config.ts):
 which leaderboard metrics are used with their weight and zero point, the blended-price
-formula and the assumed cache hit rate, the value exponents and the tier thresholds.
+formula and the assumed cache hit rate, how far value trusts the measured run cost
+(`runCostWeight`), the value exponents and the tier thresholds.
 
 1. Edit `src/lib/scoring.config.ts`.
 2. Run `pnpm report` to see the scores and how the models spread across the tiers.
@@ -129,7 +138,7 @@ itself is in [`src/lib/scoring.ts`](src/lib/scoring.ts), as pure functions.
 | Source | Used for | Access |
 | --- | --- | --- |
 | [models.dev](https://models.dev) | Price, context window, release date, open weights, modalities | `https://models.dev/api.json`, no key |
-| [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index, cost of running the index | Free API, key in `AA_API_KEY` |
+| [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index, cost of running the index (the cost side of value) | Free API, key in `AA_API_KEY` |
 | [Arena](https://arena.ai/leaderboard) | Text and WebDev leaderboard ratings | Hugging Face dataset `lmarena-ai/leaderboard-dataset` (CC BY 4.0), no key |
 
 Intelligence is built from three metrics: the AA Intelligence Index (weight 0.5), the Arena
@@ -168,7 +177,8 @@ Static files, regenerated on every build:
 
 Scores have one decimal place, missing values are `null`, and no field is ever omitted.
 `tier` is a stable English key; `label` is the English label and `labels` holds
-every language. Fields are only added; a breaking change bumps `version`. The page at
+every language. `value.effective_price` is the price the value score is computed from,
+and `value.cost_basis` says whether it comes from a measured run cost or the price list. Fields are only added; a breaking change bumps `version`. The page at
 [`/api`](https://mekiki.fog.moe/api) documents the fields and shows a live example.
 
 ## Languages
