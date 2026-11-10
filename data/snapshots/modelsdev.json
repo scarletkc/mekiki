@@ -1,0 +1,200 @@
+{
+  "source": "modelsdev",
+  "fetched_at": "2026-11-10T16:31:32.613Z",
+  "total": 8977,
+  "frontier": {},
+  "models": {
+    "anthropic/claude-haiku-5-5": {
+      "name": "Claude Haiku 5.5",
+      "input": 0.1,
+      "output": 0.5,
+      "cache_read": 0.01,
+      "context": 1000000,
+      "release_date": "2026-10-07",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "anthropic/claude-opus-5": {
+      "name": "Claude Opus 5",
+      "input": 5,
+      "output": 25,
+      "cache_read": 0.5,
+      "context": 1000000,
+      "release_date": "2026-07-24",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "anthropic/claude-opus-5-5": {
+      "name": "Claude Opus 5.5",
+      "input": 4,
+      "output": 20,
+      "cache_read": 0.2,
+      "context": 1000000,
+      "release_date": "2026-09-22",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "anthropic/claude-sonnet-5-5": {
+      "name": "Claude Sonnet 5.5",
+      "input": 2,
+      "output": 10,
+      "cache_read": 0.1,
+      "context": 1000000,
+      "release_date": "2026-09-28",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "deepseek/deepseek-v4-pro": {
+      "name": "DeepSeek V4 Pro",
+      "input": 0.66,
+      "output": 1.98,
+      "cache_read": 0.022,
+      "context": 1048576,
+      "release_date": "2026-08-13",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "google/gemini-3.8-flash": {
+      "name": "Gemini 3.8 Flash",
+      "input": 0.75,
+      "output": 3.75,
+      "cache_read": 0.075,
+      "context": 1048576,
+      "release_date": "2026-09-02",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "google/gemini-4-argon": {
+      "name": "Gemini 4 Argon",
+      "input": 2,
+      "output": 10,
+      "cache_read": 0.1,
+      "context": 1048576,
+      "release_date": "2026-10-13",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-6.1-sol": {
+      "name": "GPT-6.1 Sol",
+      "input": 2,
+      "output": 10,
+      "cache_read": 0.1,
+      "context": 1050000,
+      "release_date": "2026-09-29",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-6.1-terra": {
+      "name": "GPT-6.1 Terra",
+      "input": 1,
+      "output": 5,
+      "cache_read": 0.05,
+      "context": 1050000,
+      "release_date": "2026-10-26",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "xai/grok-4.7": {
+      "name": "Grok 4.7",
+      "input": 2,
+      "output": 6,
+      "cache_read": 0.5,
+      "context": 500000,
+      "release_date": "2026-09-21",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    }
+  }
+}
