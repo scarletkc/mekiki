@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   blendedPrice,
   computeBenchmark,
-  computeIntelligence,
   computeValue,
   costIndex,
   costTier,
@@ -28,8 +27,6 @@ const specConfig: ScoringConfig = {
   ...scoringConfig,
   intelligence: {
     ...scoringConfig.intelligence,
-    benchmarkWeight: 0.6,
-    subjectiveWeight: 0.4,
     metrics: {
       aa_intelligence: {
         source: 'aa',
@@ -74,15 +71,13 @@ interface Fixture {
   name: string;
   input: RatingInput;
   expected: {
-    benchmark: number | null;
-    intelligence: number;
-    intelligenceTier: string;
-    basis: string;
+    intelligence: number | null;
+    intelligenceTier: string | null;
     blended: number;
     costTier: string;
     costIndex: number;
-    value: number;
-    valueTier: string;
+    value: number | null;
+    valueTier: string | null;
   };
 }
 
@@ -93,18 +88,15 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 68, aa_coding: 60, arena_text: 1490 },
       frontier,
-      subjective: 95,
       price: { input: 5, output: 25 },
     },
     expected: {
-      benchmark: 96.9,
-      intelligence: 96.2,
+      intelligence: 96.9,
       intelligenceTier: 'top',
-      basis: 'both',
       blended: 10,
       costTier: 'high',
       costIndex: 80.7,
-      value: 50.5,
+      value: 50.8,
       valueTier: 'mid',
     },
   },
@@ -113,18 +105,15 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 60, aa_coding: 52, arena_text: 1450 },
       frontier,
-      subjective: 85,
       price: { input: 1.25, output: 10 },
     },
     expected: {
-      benchmark: 84.6,
-      intelligence: 84.8,
+      intelligence: 84.6,
       intelligenceTier: 'high',
-      basis: 'both',
       blended: 3.4375,
       costTier: 'mid',
       costIndex: 62.0,
-      value: 61.5,
+      value: 61.4,
       valueTier: 'high',
     },
   },
@@ -133,18 +122,15 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 50, aa_coding: 40, arena_text: 1400 },
       frontier,
-      subjective: 70,
       price: { input: 0.3, output: 2.5 },
     },
     expected: {
-      benchmark: 68.6,
-      intelligence: 69.2,
+      intelligence: 68.6,
       intelligenceTier: 'mid',
-      basis: 'both',
       blended: 0.85,
       costTier: 'low',
       costIndex: 37.5,
-      value: 66.4,
+      value: 66.1,
       valueTier: 'high',
     },
   },
@@ -153,54 +139,45 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 30, aa_coding: 22, arena_text: 1300 },
       frontier,
-      subjective: 40,
       price: { input: 0.05, output: 0.2 },
     },
     expected: {
-      benchmark: 38.5,
-      intelligence: 39.1,
+      intelligence: 38.5,
       intelligenceTier: 'low',
-      basis: 'both',
       blended: 0.0875,
       costTier: 'low',
       costIndex: 0,
-      value: 56.9,
+      value: 56.4,
       valueTier: 'mid',
     },
   },
   {
-    name: 'E subjective only',
+    name: 'E on no leaderboard',
     input: {
       metrics: {},
       frontier,
-      subjective: 80,
       price: { input: 3, output: 15 },
     },
     expected: {
-      benchmark: null,
-      intelligence: 80.0,
-      intelligenceTier: 'high',
-      basis: 'subjective_only',
+      intelligence: null,
+      intelligenceTier: null,
       blended: 6,
       costTier: 'high',
       costIndex: 71.8,
-      value: 52.7,
-      valueTier: 'mid',
+      value: null,
+      valueTier: null,
     },
   },
   {
-    name: 'F no coding index, no subjective score',
+    name: 'F no coding index',
     input: {
       metrics: { aa_intelligence: 56, aa_coding: null, arena_text: 1430 },
       frontier,
-      subjective: null,
       price: { input: 2, output: 8 },
     },
     expected: {
-      benchmark: 78.8,
       intelligence: 78.8,
       intelligenceTier: 'high',
-      basis: 'benchmark_only',
       blended: 3.5,
       costTier: 'mid',
       costIndex: 62.3,
@@ -213,18 +190,15 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 60, aa_coding: 52, arena_text: 1450 },
       frontier,
-      subjective: 85,
       price: { input: 1.25, output: 10, cache_read: 0.125 },
     },
     expected: {
-      benchmark: 84.6,
-      intelligence: 84.8,
+      intelligence: 84.6,
       intelligenceTier: 'high',
-      basis: 'both',
       blended: 3.015625,
       costTier: 'mid',
       costIndex: 59.7,
-      value: 63.0,
+      value: 62.9,
       valueTier: 'high',
     },
   },
@@ -241,18 +215,16 @@ describe('SPEC §6.5 fixtures', () => {
     it(name, () => {
       const rating = rateModel(input, specConfig);
 
-      if (expected.benchmark === null) expect(rating.intelligence.benchmark).toBeNull();
-      else near(rating.intelligence.benchmark, expected.benchmark);
-
-      near(rating.intelligence.score, expected.intelligence);
+      if (expected.intelligence === null) expect(rating.intelligence.score).toBeNull();
+      else near(rating.intelligence.score, expected.intelligence);
       expect(rating.intelligence.tier).toBe(expected.intelligenceTier);
-      expect(rating.intelligence.basis).toBe(expected.basis);
 
       expect(rating.cost.blended).toBeCloseTo(expected.blended, 6);
       expect(rating.cost.tier).toBe(expected.costTier);
       near(rating.cost.index, expected.costIndex);
 
-      near(rating.value.score, expected.value);
+      if (expected.value === null) expect(rating.value.score).toBeNull();
+      else near(rating.value.score, expected.value);
       expect(rating.value.tier).toBe(expected.valueTier);
     });
   }
@@ -337,19 +309,6 @@ describe('computeBenchmark', () => {
   });
 });
 
-describe('computeIntelligence', () => {
-  it('reports how the score was derived', () => {
-    expect(computeIntelligence(80, 90)).toEqual({ score: 84, basis: 'both' });
-    expect(computeIntelligence(80, null)).toEqual({ score: 80, basis: 'benchmark_only' });
-    expect(computeIntelligence(null, 90)).toEqual({ score: 90, basis: 'subjective_only' });
-    expect(computeIntelligence(null, null)).toEqual({ score: null, basis: 'none' });
-  });
-
-  it('treats a subjective score of 0 as a real score', () => {
-    expect(computeIntelligence(null, 0)).toEqual({ score: 0, basis: 'subjective_only' });
-  });
-});
-
 describe('cost', () => {
   it('blends input and output 3:1', () => {
     expect(blendedPrice(5, 25)).toBe(10);
@@ -376,7 +335,6 @@ describe('cost', () => {
     const input: RatingInput = {
       metrics: {},
       frontier,
-      subjective: null,
       price: { input: 5, output: 25, cache_read: 0.5 },
     };
     expect(rateModel(input, noCache).cost).toMatchObject({
@@ -435,10 +393,9 @@ describe('computeValue', () => {
 
 describe('rateModel edge cases', () => {
   it('leaves everything null when there is no data at all', () => {
-    const rating = rateModel({ metrics: {}, frontier: {}, subjective: null, price: null });
+    const rating = rateModel({ metrics: {}, frontier: {}, price: null });
     expect(rating.intelligence.score).toBeNull();
     expect(rating.intelligence.tier).toBeNull();
-    expect(rating.intelligence.basis).toBe('none');
     expect(rating.cost).toEqual({
       tier: null,
       index: null,
@@ -455,7 +412,6 @@ describe('rateModel edge cases', () => {
     const rating = rateModel({
       metrics: {},
       frontier,
-      subjective: null,
       price: { input: 2, output: 10, cache_read: 0.1 },
     });
     expect(rating.cost.tier).toBe('mid');
@@ -464,7 +420,7 @@ describe('rateModel edge cases', () => {
   });
 
   it('rates intelligence without a price, but not cost or value', () => {
-    const rating = rateModel({ metrics: {}, frontier, subjective: 70, price: null });
+    const rating = rateModel({ metrics: { aa_intelligence: 49 }, frontier, price: null });
     expect(rating.intelligence.score).toBe(70);
     expect(rating.cost.tier).toBeNull();
     expect(rating.value.score).toBeNull();
@@ -472,9 +428,8 @@ describe('rateModel edge cases', () => {
 
   it('marks a zero price as free with cost index 0', () => {
     const rating = rateModel({
-      metrics: {},
+      metrics: { aa_intelligence: 42 },
       frontier,
-      subjective: 60,
       price: { input: 0, output: 0 },
     });
     expect(rating.cost.free).toBe(true);
@@ -484,11 +439,10 @@ describe('rateModel edge cases', () => {
   });
 
   it('derives the tier from the rounded score', () => {
-    // 0.6 × 89.9 + 0.4 × 90.1 = 89.98, shown as 90.0, so the tier must be `top`.
+    // 62.97 / 70 = 89.96, shown as 90.0, so the tier must be `top`.
     const rating = rateModel({
-      metrics: { aa_intelligence: 62.93 },
+      metrics: { aa_intelligence: 62.97 },
       frontier: { aa_intelligence: 70 },
-      subjective: 90.1,
       price: null,
     });
     expect(rating.intelligence.score).toBe(90);
@@ -497,17 +451,12 @@ describe('rateModel edge cases', () => {
 
   it('honours a custom config', () => {
     const config = structuredClone(scoringConfig);
-    config.intelligence.benchmarkWeight = 1;
-    config.intelligence.subjectiveWeight = 1;
+    config.intelligence.tiers = { top: 50, high: 40, mid: 30 };
     const rating = rateModel(
-      {
-        metrics: { aa_intelligence: 35 },
-        frontier: { aa_intelligence: 70 },
-        subjective: 100,
-        price: null,
-      },
+      { metrics: { aa_intelligence: 35 }, frontier: { aa_intelligence: 70 }, price: null },
       config,
     );
-    expect(rating.intelligence.score).toBe(75);
+    expect(rating.intelligence.score).toBe(50);
+    expect(rating.intelligence.tier).toBe('top');
   });
 });

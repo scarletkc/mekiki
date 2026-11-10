@@ -38,18 +38,6 @@ const metrics = METRIC_KEYS.map((key) => {
   };
 });
 
-const blend = intelligence.benchmarkWeight + intelligence.subjectiveWeight;
-const shares = {
-  benchmark: formatPercent(intelligence.benchmarkWeight / blend).replace('%', ''),
-  subjective: formatPercent(intelligence.subjectiveWeight / blend).replace('%', ''),
-};
-const basisRows = [
-  { when: m.caseBoth, formula: fmt(m.formulaBoth, shares), basis: 'both' },
-  { when: m.caseBenchmark, formula: m.formulaBenchmark, basis: 'benchmark_only' },
-  { when: m.caseSubjective, formula: m.formulaSubjective, basis: 'subjective_only' },
-  { when: m.caseNone, formula: m.formulaNone, basis: 'none' },
-] as const;
-
 const tierRows = [
   {
     rating: t.rating.intelligence,
@@ -119,32 +107,6 @@ const sources = SOURCE_IDS.map((id) => ({
         </tbody>
       </table>
     </div>
-
-    <h3>{m.basisTitle}</h3>
-    <div class="overflow-x-auto">
-      <table class="data-table">
-        <caption>{m.basisCaption}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{m.basisCase}</th>
-            <th scope="col">{m.basisFormula}</th>
-            <th scope="col"><code>basis</code></th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            basisRows.map((row) => (
-              <tr>
-                <th scope="row">{row.when}</th>
-                <td>{row.formula}</td>
-                <td><code>{row.basis}</code></td>
-              </tr>
-            ))
-          }
-        </tbody>
-      </table>
-    </div>
-    <p>{m.subjectiveBody}</p>
 
     <h2 id="cost">{m.costTitle}</h2>
     <p>
@@ -236,7 +198,6 @@ const sources = SOURCE_IDS.map((id) => ({
     <ul>
       <li>{m.caveatAaCoding}</li>
       <li>{m.caveatVariants}</li>
-      <li>{m.caveatPersonal}</li>
     </ul>
   </article>
 </Base>

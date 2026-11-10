@@ -40,10 +40,6 @@ export type ValueTier = (typeof VALUE_TIERS)[number];
 
 export interface ScoringConfig {
   intelligence: {
-    /** Share of the benchmark score when a subjective score also exists. */
-    benchmarkWeight: number;
-    /** Share of the subjective score when a benchmark score also exists. */
-    subjectiveWeight: number;
     /** Benchmark metrics that feed the intelligence score, keyed by metric. */
     metrics: Record<string, MetricConfig>;
     /** Minimum (rounded) score for each tier, checked top-down; anything lower is `low`. */
@@ -130,8 +126,6 @@ export const METRIC_KEYS = Object.keys(metrics) as MetricKey[];
 
 export const scoringConfig: ScoringConfig = {
   intelligence: {
-    benchmarkWeight: 0.6,
-    subjectiveWeight: 0.4,
     metrics,
     tiers: { top: 90, high: 75, mid: 55 },
   },

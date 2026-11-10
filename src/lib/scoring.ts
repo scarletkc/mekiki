@@ -16,8 +16,6 @@ import {
   type ValueTier,
 } from './scoring.config';
 
-export type Basis = 'both' | 'benchmark_only' | 'subjective_only' | 'none';
-
 export interface Price {
   /** USD per 1M input tokens. */
   input: number;
@@ -32,8 +30,6 @@ export interface RatingInput {
   metrics: Record<string, number | null | undefined>;
   /** Current best raw score of each metric across the whole leaderboard. */
   frontier: Record<string, number | null | undefined>;
-  /** Subjective score, 0–100, or null when not reviewed. */
-  subjective: number | null;
   /** Official price, or null when unknown. */
   price: Price | null;
 }
@@ -48,11 +44,9 @@ export interface MetricBreakdown {
 
 export interface Rating {
   intelligence: {
+    /** Weighted mean of the normalised leaderboard metrics; null when the model is on none. */
     score: number | null;
     tier: IntelligenceTier | null;
-    basis: Basis;
-    benchmark: number | null;
-    subjective: number | null;
     /** One entry per metric in the config, whether or not the model has a score. */
     breakdown: Record<string, MetricBreakdown>;
   };
@@ -130,25 +124,6 @@ export function computeBenchmark(
   }
 
   return { score: totalWeight > 0 ? weighted / totalWeight : null, breakdown };
-}
-
-/** Combine the benchmark score with the subjective score. */
-export function computeIntelligence(
-  benchmark: number | null,
-  subjective: number | null,
-  config: ScoringConfig = scoringConfig,
-): { score: number | null; basis: Basis } {
-  const { benchmarkWeight, subjectiveWeight } = config.intelligence;
-  if (benchmark !== null && subjective !== null) {
-    const total = benchmarkWeight + subjectiveWeight;
-    return {
-      score: (benchmarkWeight * benchmark + subjectiveWeight * subjective) / total,
-      basis: 'both',
-    };
-  }
-  if (benchmark !== null) return { score: benchmark, basis: 'benchmark_only' };
-  if (subjective !== null) return { score: subjective, basis: 'subjective_only' };
-  return { score: null, basis: 'none' };
 }
 
 /**
@@ -232,9 +207,7 @@ export function valueTier(score: number, config: ScoringConfig = scoringConfig):
  * values are null (never 0), so callers can tell "unrated" from "rated 0".
  */
 export function rateModel(input: RatingInput, config: ScoringConfig = scoringConfig): Rating {
-  const subjective = isNumber(input.subjective) ? clamp(input.subjective, 0, 100) : null;
   const benchmark = computeBenchmark(input.metrics, input.frontier, config);
-  const intelligence = computeIntelligence(benchmark.score, subjective, config);
 
   const price =
     input.price && isNumber(input.price.input) && isNumber(input.price.output) ? input.price : null;
@@ -244,8 +217,8 @@ export function rateModel(input: RatingInput, config: ScoringConfig = scoringCon
   const index = blended !== null ? costIndex(blended, config) : null;
 
   const value =
-    intelligence.score !== null && index !== null
-      ? computeValue(intelligence.score, index, config)
+    benchmark.score !== null && index !== null
+      ? computeValue(benchmark.score, index, config)
       : null;
 
   const breakdown: Record<string, MetricBreakdown> = {};
@@ -256,16 +229,13 @@ export function rateModel(input: RatingInput, config: ScoringConfig = scoringCon
     };
   }
 
-  const intelligenceScore = intelligence.score === null ? null : round1(intelligence.score);
+  const intelligenceScore = benchmark.score === null ? null : round1(benchmark.score);
   const valueScore = value === null ? null : round1(value);
 
   return {
     intelligence: {
       score: intelligenceScore,
       tier: intelligenceScore === null ? null : intelligenceTier(intelligenceScore, config),
-      basis: intelligence.basis,
-      benchmark: benchmark.score === null ? null : round1(benchmark.score),
-      subjective,
       breakdown,
     },
     cost: {

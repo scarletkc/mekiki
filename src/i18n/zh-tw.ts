@@ -28,12 +28,6 @@ export const zhTW: Dictionary = {
     cost: { low: '低', mid: '中', high: '高', very_high: '很高' },
     value: { top: '最高', high: '高', mid: '中', low: '低' },
   },
-  basis: {
-    both: '榜單 + 主觀',
-    benchmark_only: '僅榜單',
-    subjective_only: '僅主觀',
-    none: '未評',
-  },
   empty: {
     unrated: '未評',
     noData: '暫無資料',
@@ -46,7 +40,7 @@ export const zhTW: Dictionary = {
   },
   home: {
     title: '模型',
-    intro: '每個模型給三個評級。智慧分由公開榜單和主觀分加權得出，成本和性價比依價格自動計算。',
+    intro: '每個模型給三個評級。智慧分來自公開榜單，成本和性價比依價格自動計算。',
   },
   table: {
     columns: {
@@ -83,15 +77,8 @@ export const zhTW: Dictionary = {
     frontier: '榜首',
     normalized: '正規化',
     weight: '權重',
-    benchmark: '榜單分',
-    subjective: '主觀分',
-    basisLine: '依據：{basis}',
-    basisNote: {
-      both: '榜單分占 {benchmark}%，主觀分占 {subjective}%。',
-      benchmark_only: 'mekiki 還未給出主觀分，智慧分等於榜單分。',
-      subjective_only: '沒有可用的榜單資料，智慧分等於主觀分。',
-      none: '既沒有榜單資料也沒有主觀分，暫不評級。',
-    },
+    scoreNote: '智慧分是上面各榜單正規化分的加權平均。',
+    unratedNote: '這個模型還沒有上任何一個榜單，暫不評級。',
     notMapped: '未填對應',
     notFound: '快照裡沒有這個模型',
     facts: '基本資訊',
@@ -134,26 +121,12 @@ export const zhTW: Dictionary = {
     intelligenceBody:
       '每個榜單指標先正規化到 0–100，100 代表該指標目前的榜首。指數類指標從 0 起算；Elo 類指標只取榜首往下固定的一段，範圍見下表。',
     benchmarkBody:
-      '榜單分是已有指標的加權平均。模型缺哪個指標，那個指標就不列入，其餘權重重新正規化。',
+      '智慧分是已有指標的加權平均。模型缺哪個指標，那個指標就不列入，其餘權重重新正規化；一個榜單都沒上的模型不評級。',
     weightsCaption: '榜單指標與權重',
     source: '來源',
     floor: '零點',
     floorAbsolute: '原始分 {value}',
     floorBelowFrontier: '榜首 − {gap}',
-    basisTitle: '智慧分怎麼合成',
-    basisCaption: '智慧分的四種來源',
-    basisCase: '情況',
-    basisFormula: '智慧分',
-    caseBoth: '榜單分和主觀分都有',
-    caseBenchmark: '只有榜單分',
-    caseSubjective: '只有主觀分',
-    caseNone: '都沒有',
-    formulaBoth: '{benchmark}% × 榜單分 + {subjective}% × 主觀分',
-    formulaBenchmark: '榜單分',
-    formulaSubjective: '主觀分',
-    formulaNone: '不評級，排序時排在最後',
-    subjectiveBody:
-      '主觀分由 mekiki 手動給出，100 代表「mekiki 認為目前最強」，和榜單正規化後的 100 是同一把尺。',
     costTitle: '成本',
     costBody:
       '價格取 models.dev 上的官方價，單位是美元 / 百萬 token。假設 {hit}% 的輸入 token 命中快取：實際輸入價 = {hitRate} × 快取讀取價 + {missRate} × 輸入價。沒有快取讀取價的模型按輸入價全額計算，快取寫入的額外費用不計。混合價 =（{input} × 實際輸入價 + {output} × 輸出價）÷ {total}。級距依混合價的絕對值劃分。',
@@ -183,7 +156,6 @@ export const zhTW: Dictionary = {
       '程式能力用 Arena 的 WebDev 榜衡量。Artificial Analysis 也有程式指數，但免費 API 不提供，所以沒有採用。',
     caveatVariants:
       '同一個模型在榜單上常依推理等級分成多個項目，這裡取的是 mekiki 實際使用的那一級。',
-    caveatPersonal: '主觀分是個人判斷，不是評測結論。',
   },
   api: {
     title: 'API',
@@ -200,8 +172,6 @@ export const zhTW: Dictionary = {
     fieldsTitle: '欄位說明',
     fieldScores: '分數保留一位小數。缺少的值是 null，欄位不會被省略。',
     fieldTier: 'tier 是穩定的英文 key；label 是英文標籤，labels 裡有各語言的標籤。',
-    fieldBasis:
-      'intelligence.basis 說明智慧分的來源：both、benchmark_only、subjective_only 或 none。',
     fieldPrice:
       '價格單位是美元 / 百萬 token；cost.blended 是混合價，已計入假設的快取命中（見「評分方法」），cost.index 是 0–100 的成本指數。',
     versionTitle: '版本',

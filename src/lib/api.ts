@@ -6,7 +6,6 @@
  * API_VERSION. Missing values are `null`; fields are never omitted.
  */
 import { useTranslations, tierLabels } from '../i18n';
-import { round1, type Basis } from './scoring';
 import {
   METRIC_KEYS,
   type CostTier,
@@ -34,9 +33,6 @@ export interface ApiModel {
   status: 'active' | 'legacy';
   intelligence: TierFields<IntelligenceTier> & {
     score: number | null;
-    basis: Basis;
-    benchmark: number | null;
-    subjective: number | null;
     breakdown: Record<MetricKey, { raw: number | null; normalized: number | null; weight: number }>;
   };
   cost: TierFields<CostTier> & {
@@ -96,9 +92,6 @@ export function toApiModel(model: ModelRecord): ApiModel {
       tier: intelligence.tier,
       label: intelligence.tier ? defaultLabels.intelligence[intelligence.tier] : null,
       labels: intelligence.tier ? tierLabels('intelligence', intelligence.tier) : null,
-      basis: intelligence.basis,
-      benchmark: intelligence.benchmark,
-      subjective: intelligence.subjective === null ? null : round1(intelligence.subjective),
       breakdown,
     },
     cost: {

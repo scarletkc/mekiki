@@ -145,10 +145,7 @@ export function buildDataset(
       metrics[key] = metricValue(snapshots, entry, key, config);
     }
 
-    const rating = rateModel(
-      { metrics, frontier, subjective: data.subjective.score ?? null, price },
-      config,
-    );
+    const rating = rateModel({ metrics, frontier, price }, config);
 
     return {
       id: entry.id,

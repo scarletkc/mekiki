@@ -31,12 +31,6 @@ export const en = {
     cost: { low: 'Low', mid: 'Mid', high: 'High', very_high: 'Very high' },
     value: { top: 'Top', high: 'High', mid: 'Mid', low: 'Low' },
   },
-  basis: {
-    both: 'Benchmarks + subjective',
-    benchmark_only: 'Benchmarks only',
-    subjective_only: 'Subjective only',
-    none: 'Not rated',
-  },
   empty: {
     unrated: 'Not rated',
     noData: 'No data',
@@ -50,7 +44,7 @@ export const en = {
   home: {
     title: 'Models',
     intro:
-      'Every model gets three ratings. Intelligence blends public leaderboards with a subjective score; cost and value follow from the price.',
+      'Every model gets three ratings. Intelligence comes from public leaderboards; cost and value follow from the price.',
   },
   table: {
     columns: {
@@ -87,16 +81,8 @@ export const en = {
     frontier: 'Leader',
     normalized: 'Normalised',
     weight: 'Weight',
-    benchmark: 'Benchmark score',
-    subjective: 'Subjective score',
-    basisLine: 'Basis: {basis}',
-    basisNote: {
-      both: 'Benchmarks count for {benchmark}%, the subjective score for {subjective}%.',
-      benchmark_only:
-        "mekiki hasn't scored this model yet, so intelligence equals the benchmark score.",
-      subjective_only: 'There is no benchmark data, so intelligence equals the subjective score.',
-      none: "There is no benchmark data and no subjective score, so it isn't rated.",
-    },
+    scoreNote: 'Intelligence is the weighted mean of the normalised leaderboard scores above.',
+    unratedNote: "This model isn't on any of these leaderboards yet, so it isn't rated.",
     notMapped: 'No mapping set',
     notFound: 'Not in the snapshot',
     facts: 'Facts',
@@ -139,26 +125,12 @@ export const en = {
     intelligenceBody:
       'Each leaderboard metric is first normalised to 0–100, where 100 is the current leader on that metric. Index-style metrics start at 0; Elo-style metrics only use a fixed range below the leader, listed in the table.',
     benchmarkBody:
-      'The benchmark score is the weighted mean of the metrics a model has. A missing metric is left out and the remaining weights are re-normalised.',
+      'The intelligence score is the weighted mean of the metrics a model has. A missing metric is left out and the remaining weights are re-normalised; a model on none of the leaderboards is not rated.',
     weightsCaption: 'Benchmark metrics and weights',
     source: 'Source',
     floor: 'Zero point',
     floorAbsolute: 'Raw score {value}',
     floorBelowFrontier: 'Leader − {gap}',
-    basisTitle: 'How the score is combined',
-    basisCaption: 'The four ways an intelligence score is derived',
-    basisCase: 'Case',
-    basisFormula: 'Intelligence',
-    caseBoth: 'Benchmark score and subjective score',
-    caseBenchmark: 'Benchmark score only',
-    caseSubjective: 'Subjective score only',
-    caseNone: 'Neither',
-    formulaBoth: '{benchmark}% × benchmark + {subjective}% × subjective',
-    formulaBenchmark: 'Benchmark score',
-    formulaSubjective: 'Subjective score',
-    formulaNone: 'Not rated; sorted last',
-    subjectiveBody:
-      'The subjective score is entered by hand. 100 means “the best there is right now, as mekiki sees it”, the same yardstick as a normalised benchmark score of 100.',
     costTitle: 'Cost',
     costBody:
       'Prices are the official ones from models.dev, in USD per 1M tokens. Assuming {hit}% of input tokens are cache hits, effective input = {hitRate} × cache read + {missRate} × input. A model without a cache-read price pays the full input price, and cache-write surcharges are not counted. Blended price = ({input} × effective input + {output} × output) ÷ {total}. Tiers are set by the absolute blended price.',
@@ -189,7 +161,6 @@ export const en = {
       "Coding ability is measured by Arena's WebDev board. Artificial Analysis also publishes a Coding Index, but its free API doesn't include it, so it isn't used.",
     caveatVariants:
       'Leaderboards often list one model several times, once per reasoning level. The entry used here is the level mekiki actually uses.',
-    caveatPersonal: 'The subjective score is personal judgement, not a benchmark result.',
   },
   api: {
     title: 'API',
@@ -209,8 +180,6 @@ export const en = {
       'Scores have one decimal place. Missing values are null; fields are never omitted.',
     fieldTier:
       'tier is a stable English key. label is the English label, and labels holds the label in every language.',
-    fieldBasis:
-      'intelligence.basis says where the intelligence score comes from: both, benchmark_only, subjective_only or none.',
     fieldPrice:
       'Prices are in USD per 1M tokens. cost.blended is the blended price, with the assumed cache hits already counted (see Method), and cost.index is the 0–100 cost index.',
     versionTitle: 'Versioning',

@@ -5,8 +5,8 @@ Opinionated ratings of AI models, published as a static site and a public JSON A
 
 Each model gets three ratings:
 
-- **Intelligence**: public leaderboard scores, fetched automatically. A hand-entered
-  subjective score can be blended in, but is optional.
+- **Intelligence**: public leaderboard scores, fetched automatically and normalised to the
+  current leader.
 - **Cost**: derived from the official price, with an assumed share of cache hits.
 - **Value**: derived from intelligence and cost.
 
@@ -64,8 +64,6 @@ Adding a model means adding one Markdown file. Nothing else needs to change.
      aa: gpt-6-1-sol                       # slug on Artificial Analysis
      arena_text: "GPT-6.1 Sol (Max)"       # exact name on the Arena text leaderboard
      arena_webdev: "GPT-6.1 Sol (Max)"     # exact name on the Arena WebDev leaderboard
-   subjective:
-     score:                # optional, 0-100; leave empty and the leaderboards decide alone
    ---
    ```
 
@@ -89,13 +87,13 @@ Things to know:
   is often listed once per reasoning level. Nothing is matched by guessing; choose the entry
   for the level you actually use. The two Arena boards list different levels, so each has
   its own field.
-- **A model needs no subjective score.** Without one, intelligence is the leaderboard score
-  alone. With one, the two are blended 60/40. Tools never write to `subjective`.
-- A subjective score of 100 means "the best there is right now", the same yardstick as a
-  leaderboard score normalised to the current leader.
+- **Intelligence comes from the leaderboards only.** There is no hand-entered score, so
+  nothing needs revisiting when a new model takes the lead: every score is normalised to
+  the current leader on each sync.
 - A model that is missing from a leaderboard is rated on the ones it is on; the weights are
   re-normalised. A model on none of them is shown as "not rated", never as 0.
-- The site has no text reviews: no verdict, pros and cons, or long review.
+- The site has no text reviews (no verdict, pros and cons, or long review) and no
+  subjective score. Old `subjective` blocks in a model file are ignored.
 - To override the models.dev price, add:
 
   ```yaml
@@ -111,7 +109,7 @@ Things to know:
 ## Change weights and thresholds
 
 Every number of the rating algorithm lives in
-[`src/lib/scoring.config.ts`](src/lib/scoring.config.ts): the benchmark/subjective split,
+[`src/lib/scoring.config.ts`](src/lib/scoring.config.ts):
 which leaderboard metrics are used with their weight and zero point, the blended-price
 formula and the assumed cache hit rate, the value exponents and the tier thresholds.
 

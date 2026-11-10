@@ -51,16 +51,6 @@ export const modelSchema = z.object({
       }),
     )
     .default({}),
-  /** The maintainer's own judgement. Optional, and never filled in by tooling. */
-  subjective: z
-    .preprocess(
-      (value) => value ?? {},
-      z.object({
-        /** 0–100, where 100 means "the best there is right now". */
-        score: z.preprocess(blankToUndefined, z.number().min(0).max(100).optional()),
-      }),
-    )
-    .default({}),
   /** Manual overrides of automatically fetched data. */
   overrides: z
     .preprocess(
