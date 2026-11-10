@@ -53,19 +53,17 @@ const locales = [...LOCALES];
       }
 
       function pick() {
+        var stored = null;
         try {
-          var stored = known(localStorage.getItem('locale'));
-          if (stored) return stored;
+          stored = known(localStorage.getItem('locale'));
         } catch (error) {}
+        if (stored) return stored;
         var tags =
           navigator.languages && navigator.languages.length
             ? navigator.languages
             : [navigator.language];
-        for (var i = 0; i < tags.length; i++) {
-          var locale = fromTag(tags[i]);
-          if (locale) return locale;
-        }
-        return fallback;
+        var matches = tags.map(fromTag).filter(Boolean);
+        return matches[0] || fallback;
       }
 
       window.location.replace('/' + pick() + path + window.location.search + window.location.hash);
