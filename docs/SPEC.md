@@ -386,10 +386,10 @@ Static files generated at build time (Astro static endpoints):
       "vendor": "...",
       "status": "active",
       "intelligence": {
-        "score": 93.2, "tier": "top", "label": "Top",
+        "score": 95.5, "tier": "top", "label": "Top",
         "labels": { "en": "Top", "zh-CN": "最高", "zh-TW": "最高" },
         "breakdown": {
-          "aa_intelligence": { "raw": 59.1, "normalized": 91.5, "weight": 0.5 }
+          "aa_intelligence": { "raw": 59.1, "normalized": 91.5, "weight": 0.1667 }
         }
       },
       "cost": {
@@ -397,7 +397,7 @@ Static files generated at build time (Astro static endpoints):
         "index": 75.3, "blended": 2.94, "input": 4, "output": 20, "cache_read": 0.2
       },
       "value": {
-        "score": 59.6, "tier": "mid", "label": "Mid", "labels": { "...": "..." },
+        "score": 60.5, "tier": "high", "label": "High", "labels": { "...": "..." },
         "cost_basis": "run_cost", "run_cost": 8909.67, "effective_price": 2.113009, "cost_index": 69.6
       },
       "url": "https://mekiki.fog.moe/m/<provider>/<model>"
@@ -407,7 +407,8 @@ Static files generated at build time (Astro static endpoints):
 ```
 
 - Scores have one decimal place. Missing values are `null`; no field is ever omitted.
-- `breakdown` lists every configured metric.
+- `breakdown` lists every configured metric. `weight` is the metric's share of the score
+  for a model that is on every leaderboard; the shares add up to 1.
 - `label` is English and `labels` holds the label in every UI language, keyed by BCP 47
   tag. The API itself is not localised.
 - `cost.index` is the cost index of the blended price. `value.effective_price` is the
