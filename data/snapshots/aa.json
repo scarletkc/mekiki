@@ -1,60 +1,74 @@
 {
   "source": "aa",
-  "fetched_at": "2026-11-10T17:47:25.417Z",
+  "fetched_at": "2026-11-10T18:07:02.762Z",
   "total": 734,
   "frontier": {
     "aa_intelligence": 64.6
+  },
+  "reference": {
+    "index_token_use": 481,
+    "index_token_use_models": 50
   },
   "models": {
     "claude-haiku-5-5": {
       "name": "Claude Haiku 5.5 (Max)",
       "aa_intelligence": 36.5,
-      "index_cost_usd": 339.47
+      "index_cost_usd": 339.47,
+      "index_token_use": 1697
     },
     "claude-opus-5": {
       "name": "Claude Opus 5 (Max)",
       "aa_intelligence": 44.2,
-      "index_cost_usd": 9009.82
+      "index_cost_usd": 9009.82,
+      "index_token_use": 901
     },
     "claude-opus-5-5": {
       "name": "Claude Opus 5.5 (Max, Default Fallback)",
       "aa_intelligence": 59.1,
-      "index_cost_usd": 8909.67
+      "index_cost_usd": 8909.67,
+      "index_token_use": 1114
     },
     "claude-sonnet-5-5": {
       "name": "Claude Sonnet 5.5 (Max, Default Fallback)",
       "aa_intelligence": 54.5,
-      "index_cost_usd": 7980.63
+      "index_cost_usd": 7980.63,
+      "index_token_use": 1995
     },
     "deepseek-v4-pro": {
       "name": "DeepSeek V4 Pro 0813 (Max)",
       "aa_intelligence": 23.1,
-      "index_cost_usd": 1401.88
+      "index_cost_usd": 1401.88,
+      "index_token_use": 708
     },
     "gemini-3-8-flash": {
       "name": "Gemini 3.8 Flash (High)",
       "aa_intelligence": 30.8,
-      "index_cost_usd": 5763.75
+      "index_cost_usd": 5763.75,
+      "index_token_use": 3843
     },
     "gemini-4-argon": {
       "name": "Gemini 4 Argon (High)",
       "aa_intelligence": 50.4,
-      "index_cost_usd": 7620.22
+      "index_cost_usd": 7620.22,
+      "index_token_use": 952.5
     },
     "gpt-6-1-sol": {
       "name": "GPT-6.1 Sol (Max)",
       "aa_intelligence": 54.6,
-      "index_cost_usd": 1123.97
+      "index_cost_usd": 1123.97,
+      "index_token_use": 281
     },
     "gpt-6-1-terra": {
       "name": "GPT-6.1 Terra (Max)",
       "aa_intelligence": 51.3,
-      "index_cost_usd": 972.34
+      "index_cost_usd": 972.34,
+      "index_token_use": 486.2
     },
     "grok-4-7": {
       "name": "Grok 4.7 (Xhigh)",
       "aa_intelligence": 35.5,
-      "index_cost_usd": 5905.5
+      "index_cost_usd": 5905.5,
+      "index_token_use": 1969
     }
   }
 }
