@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import instrumentSansLatinUrl from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url';
 import BookOpen from '@lucide/astro/icons/book-open';
 import Braces from '@lucide/astro/icons/braces';
 import Check from '@lucide/astro/icons/check';
@@ -124,6 +125,13 @@ const attribution = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={instrumentSansLatinUrl}
+      crossorigin
+    />
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
     {noindex && <meta name="robots" content="noindex" />}
