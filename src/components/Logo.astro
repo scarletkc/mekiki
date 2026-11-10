@@ -1,0 +1,18 @@
+---
+/**
+ * The mekiki mark, drawn from src/lib/logo.ts in the theme's colours.
+ * Decorative: the link around it carries the name.
+ */
+import { LOGO_EYE, LOGO_RADIUS, LOGO_VIEWBOX } from '../lib/logo';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = 'size-6' } = Astro.props;
+---
+
+<svg viewBox={LOGO_VIEWBOX} class:list={['shrink-0', className]} aria-hidden="true">
+  <rect width="32" height="32" rx={LOGO_RADIUS} class="fill-expense"></rect>
+  <path d={LOGO_EYE} fill-rule="evenodd" class="fill-background"></path>
+</svg>

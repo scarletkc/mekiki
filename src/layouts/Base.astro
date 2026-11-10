@@ -1,5 +1,18 @@
 ---
 import '../styles/global.css';
+import BookOpen from '@lucide/astro/icons/book-open';
+import Braces from '@lucide/astro/icons/braces';
+import Check from '@lucide/astro/icons/check';
+import ChevronDown from '@lucide/astro/icons/chevron-down';
+import Globe from '@lucide/astro/icons/globe';
+import LayoutList from '@lucide/astro/icons/layout-list';
+import Menu from '@lucide/astro/icons/menu';
+import Moon from '@lucide/astro/icons/moon';
+import ScrollText from '@lucide/astro/icons/scroll-text';
+import Sun from '@lucide/astro/icons/sun';
+import X from '@lucide/astro/icons/x';
+import GithubMark from '../components/GithubMark.astro';
+import Logo from '../components/Logo.astro';
 import {
   DEFAULT_LOCALE,
   LOCALES,
@@ -11,7 +24,6 @@ import {
 import { latestSync, SITE_URL } from '../lib/dataset';
 import { feedPath } from '../lib/feed';
 import { formatDateTime } from '../lib/format';
-import { LOGO_EYE, LOGO_RADIUS, LOGO_VIEWBOX } from '../lib/logo';
 import { OG_HEIGHT, OG_WIDTH, SITE_IMAGE_PATH } from '../lib/share';
 import { getDataset } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
@@ -43,11 +55,24 @@ const canonical = new URL(localePath(locale, path), SITE_URL).href;
 const imageUrl = new URL(image, SITE_URL).href;
 
 const nav = [
-  { href: localePath(locale, '/'), label: t.nav.models, key: '/' },
-  { href: localePath(locale, '/changelog'), label: t.nav.changes, key: '/changelog' },
-  { href: localePath(locale, '/method'), label: t.nav.method, key: '/method' },
-  { href: localePath(locale, '/api'), label: t.nav.api, key: '/api' },
+  { href: localePath(locale, '/'), label: t.nav.models, key: '/', icon: LayoutList },
+  {
+    href: localePath(locale, '/changelog'),
+    label: t.nav.changes,
+    key: '/changelog',
+    icon: ScrollText,
+  },
+  { href: localePath(locale, '/method'), label: t.nav.method, key: '/method', icon: BookOpen },
+  { href: localePath(locale, '/api'), label: t.nav.api, key: '/api', icon: Braces },
 ];
+// Both language lists (desktop menu, mobile panel) need the same attributes:
+// the script at the bottom keeps the query string and remembers the choice.
+const languages = LOCALES.map((item) => ({
+  locale: item,
+  href: localePath(item, path),
+  current: item === locale,
+  ...LOCALE_INFO[item],
+}));
 const section = noindex
   ? null
   : path === '/' || path === '/compare' || path.startsWith('/m/')
@@ -126,36 +151,31 @@ const attribution = [
   <body class="flex min-h-screen flex-col">
     <a
       href="#main"
-      class="bg-background sr-only z-50 rounded px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
+      class="bg-background sr-only z-50 rounded-lg border px-3 py-2 shadow-sm focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
     >
       {t.nav.skip}
     </a>
 
-    <header class="border-b">
-      <div
-        class="mx-auto flex w-full max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6"
-      >
+    <header class="site-header sticky top-0 z-40 border-b">
+      <div class="mx-auto flex h-14 w-full max-w-[1280px] items-center gap-2 px-4 sm:px-6 md:gap-6">
         <a
           href={localePath(locale, '/')}
-          class="flex items-center gap-2.5"
+          class="-ml-1 flex items-center gap-2.5 rounded-lg px-1 py-1"
           aria-label={`mekiki, ${t.meta.tagline}`}
         >
-          <svg viewBox={LOGO_VIEWBOX} class="size-6 shrink-0" aria-hidden="true">
-            <rect width="32" height="32" rx={LOGO_RADIUS} class="fill-expense"></rect>
-            <path d={LOGO_EYE} fill-rule="evenodd" class="fill-background"></path>
-          </svg>
+          <Logo class="size-7" />
           <span class="text-[1.0625rem] leading-none font-semibold tracking-tight">mekiki</span>
         </a>
 
-        <nav aria-label={t.nav.main} class="order-3 w-full sm:order-none sm:w-auto">
-          <ul class="flex items-center gap-5 text-sm">
+        <nav aria-label={t.nav.main} class="hidden md:block">
+          <ul class="flex items-center gap-1 text-sm">
             {
               nav.map((item) => (
                 <li>
                   <a
                     href={item.href}
                     aria-current={item.key === section ? 'page' : undefined}
-                    class="text-muted-foreground hover:text-foreground aria-[current=page]:text-foreground py-1 aria-[current=page]:font-medium"
+                    class="text-muted-foreground hover:text-foreground hover:bg-accent/70 aria-[current=page]:bg-accent aria-[current=page]:text-foreground rounded-lg px-3 py-1.5 transition-colors aria-[current=page]:font-medium"
                   >
                     {item.label}
                   </a>
@@ -165,79 +185,187 @@ const attribution = [
           </ul>
         </nav>
 
-        <div class="ml-auto flex items-center gap-3 text-sm">
-          <ul class="flex items-center gap-0.5" aria-label={t.nav.language}>
-            {
-              LOCALES.map((item) => (
-                <li>
-                  <a
-                    href={localePath(item, path)}
-                    hreflang={LOCALE_INFO[item].tag}
-                    lang={LOCALE_INFO[item].tag}
-                    title={LOCALE_INFO[item].name}
-                    aria-label={LOCALE_INFO[item].name}
-                    aria-current={item === locale ? 'true' : undefined}
-                    data-locale-link={item}
-                    class="text-muted-foreground hover:text-foreground aria-[current=true]:bg-accent aria-[current=true]:text-foreground rounded px-1.5 py-1 leading-none"
-                  >
-                    {LOCALE_INFO[item].short}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
+        <div class="ml-auto flex items-center gap-1">
+          <details class="group relative hidden md:block" data-menu>
+            <summary
+              class="icon-btn text-muted-foreground hover:text-foreground group-open:bg-accent group-open:text-foreground h-8 gap-1.5 px-2.5 text-sm"
+            >
+              <Globe class="size-4" />
+              <span class="sr-only">{t.nav.language}:</span>
+              <span>{LOCALE_INFO[locale].name}</span>
+              <ChevronDown class="size-3.5 opacity-60 transition-transform group-open:rotate-180" />
+            </summary>
+            <ul class="menu-panel absolute top-full right-0 mt-2 w-44 p-1" aria-label={t.nav.language}>
+              {
+                languages.map((item) => (
+                  <li>
+                    <a
+                      href={item.href}
+                      hreflang={item.tag}
+                      lang={item.tag}
+                      aria-current={item.current ? 'true' : undefined}
+                      data-locale-link={item.locale}
+                      class="text-muted-foreground hover:bg-accent hover:text-foreground aria-[current=true]:text-foreground flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-sm aria-[current=true]:font-medium"
+                    >
+                      {item.name}
+                      {item.current && <Check class="text-primary size-4" />}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </details>
+
           <button
             type="button"
             data-theme-toggle
             aria-label={t.theme.toggle}
             title={t.theme.toggle}
-            class="text-muted-foreground hover:text-foreground hover:bg-accent grid size-7 place-items-center rounded"
+            class="icon-btn text-muted-foreground hover:text-foreground size-9 md:size-8"
           >
-            <svg
-              viewBox="0 0 24 24"
-              class="size-4"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9"></circle>
-              <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"></path>
-            </svg>
+            <Sun class="size-[1.125rem] dark:hidden" />
+            <Moon class="hidden size-[1.125rem] dark:block" />
           </button>
-          <a href={REPO_URL} class="text-muted-foreground hover:text-foreground">{t.nav.github}</a>
+
+          <a
+            href={REPO_URL}
+            aria-label={t.nav.github}
+            title={t.nav.github}
+            class="icon-btn text-muted-foreground hover:text-foreground hidden size-8 md:inline-flex"
+          >
+            <GithubMark class="size-[1.125rem]" />
+          </a>
+
+          <details class="group md:hidden" data-menu data-mobile-menu>
+            <summary
+              aria-label={t.nav.menu}
+              title={t.nav.menu}
+              class="icon-btn text-foreground group-open:bg-accent -mr-1.5 size-9"
+            >
+              <Menu class="size-5 group-open:hidden" />
+              <X class="hidden size-5 group-open:block" />
+            </summary>
+            <div
+              class="bg-background absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b shadow-lg"
+            >
+              <nav aria-label={t.nav.main} class="px-2 pt-2 pb-1">
+                <ul>
+                  {
+                    nav.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <li>
+                          <a
+                            href={item.href}
+                            aria-current={item.key === section ? 'page' : undefined}
+                            class="text-muted-foreground hover:bg-accent/70 aria-[current=page]:bg-accent aria-[current=page]:text-foreground flex items-center gap-3 rounded-lg px-3 py-2.5 text-base aria-[current=page]:font-medium"
+                          >
+                            <Icon class="size-[1.125rem] opacity-80" />
+                            {item.label}
+                          </a>
+                        </li>
+                      );
+                    })
+                  }
+                </ul>
+              </nav>
+              <div class="border-t px-4 py-3">
+                <p class="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-medium">
+                  <Globe class="size-3.5" />
+                  {t.nav.language}
+                </p>
+                <ul class="bg-muted grid grid-cols-3 gap-1 rounded-lg p-1" aria-label={t.nav.language}>
+                  {
+                    languages.map((item) => (
+                      <li>
+                        <a
+                          href={item.href}
+                          hreflang={item.tag}
+                          lang={item.tag}
+                          aria-current={item.current ? 'true' : undefined}
+                          data-locale-link={item.locale}
+                          class="text-muted-foreground aria-[current=true]:bg-background aria-[current=true]:text-foreground block rounded-md px-2 py-2 text-center text-sm aria-[current=true]:font-medium aria-[current=true]:shadow-sm"
+                        >
+                          {item.name}
+                        </a>
+                      </li>
+                    ))
+                  }
+                </ul>
+              </div>
+              <div class="border-t px-2 py-2">
+                <a
+                  href={REPO_URL}
+                  class="text-muted-foreground hover:bg-accent/70 flex items-center gap-3 rounded-lg px-3 py-2.5 text-base"
+                >
+                  <GithubMark class="size-[1.125rem]" />
+                  {t.nav.github}
+                </a>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     </header>
 
-    <main id="main" class="mx-auto w-full max-w-[1280px] flex-1 px-4 py-6 sm:px-6 sm:py-8">
+    <main id="main" class="mx-auto w-full max-w-[1280px] flex-1 px-4 py-8 sm:px-6 sm:py-10">
       <slot />
     </main>
 
-    <footer class="text-muted-foreground border-t text-sm">
+    <footer class="text-muted-foreground bg-muted/40 mt-8 border-t text-sm">
       <div
-        class="mx-auto flex w-full max-w-[1280px] flex-col gap-1.5 px-4 py-5 sm:px-6 lg:flex-row lg:items-baseline lg:justify-between lg:gap-8"
+        class="mx-auto flex w-full max-w-[1280px] flex-col gap-5 px-4 py-8 sm:px-6 md:flex-row md:items-center md:justify-between"
       >
-        <p>
-          {t.footer.sources}{
-            attribution.map((source, index) => (
-              <>
-                {index > 0 && t.footer.listSeparator}
-                <a class="hover:text-foreground underline" href={source.url}>{source.name}</a>
-              </>
+        <a href={localePath(locale, '/')} class="text-foreground flex w-fit items-center gap-2.5">
+          <Logo class="size-6" />
+          <span class="font-semibold tracking-tight">mekiki</span>
+          <span class="text-muted-foreground border-l pl-2.5">{t.meta.tagline}</span>
+        </a>
+        <ul class="flex flex-wrap items-center gap-x-5 gap-y-2">
+          {
+            nav.map((item) => (
+              <li>
+                <a href={item.href} class="hover:text-foreground transition-colors">
+                  {item.label}
+                </a>
+              </li>
             ))
-          }{t.footer.fullStop}<a
-            class="hover:text-foreground underline"
-            href="https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset">{t.footer.arenaLicense}</a
-          >{t.footer.fullStop}
-        </p>
-        <p class="lg:text-end">
-          {t.footer.synced}
-          <span class="num">{synced ? formatDateTime(synced) : t.footer.never}</span>
-          <span class="mx-1.5" aria-hidden="true">/</span>
-          <a class="hover:text-foreground underline" href={REPO_URL}>{t.footer.repo}</a>
-        </p>
+          }
+          <li>
+            <a
+              href={REPO_URL}
+              class="hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+            >
+              <GithubMark class="size-3.5" />
+              {t.nav.github}
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="border-t">
+        <div
+          class="mx-auto flex w-full max-w-[1280px] flex-col gap-1.5 px-4 py-5 text-xs leading-relaxed sm:px-6 lg:flex-row lg:items-baseline lg:justify-between lg:gap-8"
+        >
+          <p>
+            {t.footer.sources}{
+              attribution.map((source, index) => (
+                <>
+                  {index > 0 && t.footer.listSeparator}
+                  <a class="hover:text-foreground underline" href={source.url}>{source.name}</a>
+                </>
+              ))
+            }{t.footer.fullStop}<a
+              class="hover:text-foreground underline"
+              href="https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset">{t.footer.arenaLicense}</a
+            >{t.footer.fullStop}
+          </p>
+          <p class="shrink-0 lg:text-end">
+            {t.footer.synced}
+            <span class="num">{synced ? formatDateTime(synced) : t.footer.never}</span>
+            <span class="mx-1.5" aria-hidden="true">·</span>
+            <a class="hover:text-foreground underline" href={REPO_URL}>{t.footer.repo}</a>
+          </p>
+        </div>
       </div>
     </footer>
 
@@ -271,6 +399,38 @@ const attribution = [
               localStorage.setItem('locale', link.getAttribute('data-locale-link'));
             } catch (_error) {}
           });
+        });
+        // The language menu and the mobile menu are <details>, so they open
+        // without JavaScript. This adds what a menu is expected to do: one
+        // open at a time, closing on Escape or on a click elsewhere.
+        var menus = Array.prototype.slice.call(document.querySelectorAll('details[data-menu]'));
+        menus.forEach(function (menu) {
+          menu.addEventListener('toggle', function () {
+            if (!menu.open) return;
+            menus.forEach(function (other) {
+              if (other !== menu) other.open = false;
+            });
+          });
+        });
+        document.addEventListener('click', function (event) {
+          menus.forEach(function (menu) {
+            if (menu.open && !menu.contains(event.target)) menu.open = false;
+          });
+        });
+        document.addEventListener('keydown', function (event) {
+          if (event.key !== 'Escape') return;
+          menus.forEach(function (menu) {
+            if (!menu.open) return;
+            var hadFocus = menu.contains(document.activeElement);
+            menu.open = false;
+            var summary = menu.querySelector('summary');
+            if (summary && hadFocus) summary.focus();
+          });
+        });
+        // The mobile menu has no place on a wide screen.
+        var mobile = document.querySelector('[data-mobile-menu]');
+        window.matchMedia('(min-width: 48rem)').addEventListener('change', function (event) {
+          if (event.matches && mobile) mobile.open = false;
         });
       })();
     </script>

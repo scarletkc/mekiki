@@ -16,6 +16,7 @@ export const zhCN: Dictionary = {
     language: '语言',
     main: '主导航',
     skip: '跳到正文',
+    menu: '菜单',
   },
   theme: {
     toggle: '切换深色或浅色',

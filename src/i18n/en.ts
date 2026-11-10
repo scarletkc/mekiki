@@ -18,6 +18,7 @@ export const en = {
     language: 'Language',
     main: 'Main',
     skip: 'Skip to content',
+    menu: 'Menu',
   },
   theme: {
     toggle: 'Switch between dark and light',

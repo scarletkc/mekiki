@@ -16,6 +16,7 @@ export const zhTW: Dictionary = {
     language: '語言',
     main: '主選單',
     skip: '跳至主要內容',
+    menu: '選單',
   },
   theme: {
     toggle: '切換深色或淺色',
