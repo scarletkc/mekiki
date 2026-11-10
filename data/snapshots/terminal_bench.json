@@ -1,0 +1,53 @@
+{
+  "source": "terminal_bench",
+  "fetched_at": "2026-11-10T18:44:40.584Z",
+  "total": 35,
+  "edition": "Terminal-Bench 4.1",
+  "frontier": {
+    "terminal_bench": 65.76
+  },
+  "models": {
+    "Claude Code / Opus 5 / max": {
+      "terminal_bench": 52.12,
+      "agent": "Claude Code",
+      "model": "Opus 5",
+      "effort": "max",
+      "date": "2026-07-24"
+    },
+    "Claude Code / Opus 5.5 / max": {
+      "terminal_bench": 65.76,
+      "agent": "Claude Code",
+      "model": "Opus 5.5",
+      "effort": "max",
+      "date": "2026-09-22"
+    },
+    "Claude Code / Sonnet 5.5 / max": {
+      "terminal_bench": 63.94,
+      "agent": "Claude Code",
+      "model": "Sonnet 5.5",
+      "effort": "max",
+      "date": "2026-09-28"
+    },
+    "Codex / GPT-6.1 Sol / max": {
+      "terminal_bench": 60.91,
+      "agent": "Codex",
+      "model": "GPT-6.1 Sol",
+      "effort": "max",
+      "date": "2026-09-29"
+    },
+    "Grok Build / Grok 4.7 / xhigh": {
+      "terminal_bench": 38.79,
+      "agent": "Grok Build",
+      "model": "Grok 4.7",
+      "effort": "xhigh",
+      "date": "2026-09-21"
+    },
+    "mini-SWE-agent / Gemini 3.8 Flash / high": {
+      "terminal_bench": 18.18,
+      "agent": "mini-SWE-agent",
+      "model": "Gemini 3.8 Flash",
+      "effort": "high",
+      "date": "2026-09-02"
+    }
+  }
+}

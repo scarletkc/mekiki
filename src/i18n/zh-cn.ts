@@ -115,8 +115,15 @@ export const zhCN: Dictionary = {
   },
   metric: {
     aa_intelligence: 'AA 智能指数',
+    livebench: 'LiveBench 总分',
     arena_text: 'Arena 文本榜',
     arena_webdev: 'Arena WebDev 榜',
+    terminal_bench: 'Terminal-Bench',
+  },
+  group: {
+    general: '综合能力',
+    preference: '人类偏好',
+    coding: '编程',
   },
   method: {
     title: '评分方法',
@@ -126,9 +133,10 @@ export const zhCN: Dictionary = {
     intelligenceBody:
       '每个榜单指标先归一化到 0–100，100 表示该指标当前的榜首。指数类指标从 0 起算；Elo 类指标只取榜首往下固定的一段，范围见下表。',
     benchmarkBody:
-      '智能分是已有指标的加权平均。模型缺哪个指标，那个指标就不计入，其余权重重新归一；一个榜单都没上的模型不评级。',
+      '指标按衡量的内容分组，每组占比相同，不管组里有几个榜单。先在组内对模型有分数的指标取平均，再对有分数的组取平均。模型缺某个榜时按同组其余榜单计算，整组都没有分数时这一组不计入；一个榜单都没上的模型不评级。',
     weightsCaption: '榜单指标与权重',
     source: '来源',
+    group: '类别',
     floor: '零点',
     floorAbsolute: '原始分 {value}',
     floorBelowFrontier: '榜首 − {gap}',
@@ -158,14 +166,19 @@ export const zhCN: Dictionary = {
     useModelsdev: '价格、上下文长度、发布日期、是否开源权重、模态',
     useAa: '智能指数、评测总花费',
     useArena: '文本榜和 WebDev 榜的分数',
+    useTerminalBench: '终端任务通过率',
+    useLivebench: '各项测试的总分',
     licenseAa: '按其条款署名',
+    licenseNone: '未声明许可，注明来源',
     caveatsTitle: '注意',
     caveatAaCoding:
-      '编程能力用 Arena 的 WebDev 榜衡量。Artificial Analysis 也有编程指数，但免费 API 不提供，所以没有采用。',
+      '编程能力用 Arena 的 WebDev 榜和 Terminal-Bench 衡量。Artificial Analysis 也有编程指数，但免费 API 不提供，所以没有采用。',
     caveatVariants:
       '同一个模型在榜单上常按推理档位分成多个条目，这里取的是 mekiki 实际使用的那一档。',
     caveatRunCost:
       '实测花费来自 Artificial Analysis 自己的评测题，对应的是所映射条目的推理档位。换一种任务或调低推理档位，花费会不一样。',
+    caveatAgents:
+      'Terminal-Bench 测的是“模型 + agent 工具”的组合，多数厂商的模型只在自家工具里上榜，所以这项分数有一部分来自工具。',
   },
   api: {
     title: 'API',
@@ -190,7 +203,7 @@ export const zhCN: Dictionary = {
     versionBody: '字段只加不改。有破坏性变更时，version 加一。当前是 version {version}。',
     attributionTitle: '署名',
     attributionBody:
-      '榜单数据来自 Artificial Analysis 和 Arena，价格来自 models.dev。转载这些数字时请同样注明来源。',
+      '榜单数据来自 Artificial Analysis、Arena、LiveBench 和 Terminal-Bench，价格来自 models.dev。转载这些数字时请同样注明来源。',
   },
   footer: {
     sources: '数据来源：',

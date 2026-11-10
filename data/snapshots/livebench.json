@@ -1,0 +1,35 @@
+{
+  "source": "livebench",
+  "fetched_at": "2026-11-10T18:44:41.061Z",
+  "total": 33,
+  "edition": "2026-11-06",
+  "frontier": {
+    "livebench": 84.88
+  },
+  "models": {
+    "claude-haiku-5.5": {
+      "livebench": 68.94
+    },
+    "claude-opus-5.5": {
+      "livebench": 83.44
+    },
+    "claude-sonnet-5.5": {
+      "livebench": 76.99
+    },
+    "gemini-3.8-flash": {
+      "livebench": 55.99
+    },
+    "gemini-4-argon": {
+      "livebench": 77.69
+    },
+    "gpt-6.1-sol": {
+      "livebench": 81.37
+    },
+    "gpt-6.1-terra": {
+      "livebench": 78.77
+    },
+    "grok-4.7": {
+      "livebench": 67.91
+    }
+  }
+}

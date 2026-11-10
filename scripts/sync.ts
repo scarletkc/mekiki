@@ -72,8 +72,16 @@ function serialize<T extends { models: Record<string, unknown> }>(snapshot: T): 
  * out on purpose: a source gaining a model nobody tracks (models.dev does
  * so almost daily) is not a change worth a commit.
  */
-function comparable(snapshot: { frontier: unknown; models: Record<string, unknown> }): string {
-  return serialize({ frontier: snapshot.frontier, models: snapshot.models });
+function comparable(snapshot: {
+  edition?: string;
+  frontier: unknown;
+  models: Record<string, unknown>;
+}): string {
+  return serialize({
+    edition: snapshot.edition,
+    frontier: snapshot.frontier,
+    models: snapshot.models,
+  });
 }
 
 function describeError(error: unknown): string {
@@ -138,6 +146,7 @@ async function syncSource<S extends SourceId>(
           source: snapshot.source,
           fetched_at: new Date().toISOString(),
           total: snapshot.total,
+          edition: snapshot.edition,
           frontier: snapshot.frontier,
           models: snapshot.models,
         }),

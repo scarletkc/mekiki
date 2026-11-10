@@ -7,4 +7,6 @@ sources:
   aa: gemini-4-argon
   arena_text: "Gemini 4 Argon (High)"
   arena_webdev: "Gemini 4 Argon (High)"
+  terminal_bench:
+  livebench: gemini-4-argon
 ---

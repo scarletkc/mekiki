@@ -6,10 +6,10 @@
  */
 
 /** Snapshot file (data/snapshots/<source>.json) a metric is read from. */
-export type BenchmarkSource = 'aa' | 'arena';
+export type BenchmarkSource = 'aa' | 'arena' | 'terminal_bench' | 'livebench';
 
 /** The field under `sources` in a model file that names the model for a metric. */
-export type MappingField = 'aa' | 'arena_text' | 'arena_webdev';
+export type MappingField = 'aa' | 'arena_text' | 'arena_webdev' | 'terminal_bench' | 'livebench';
 
 /**
  * How the 0 point of a metric is chosen when normalising to 0–100.
@@ -24,8 +24,19 @@ export type FloorRule =
 export interface MetricConfig {
   source: BenchmarkSource;
   mapping: MappingField;
-  /** Relative weight inside the benchmark score. Re-normalised over the metrics a model actually has. */
+  /**
+   * Relative weight inside its group, re-normalised over the metrics of the
+   * group a model actually has. For a metric without a group it is the
+   * weight inside the benchmark score.
+   */
   weight: number;
+  /**
+   * What the metric measures. Metrics of one group are averaged first and
+   * the groups are averaged after, so a subject with many leaderboards
+   * does not outweigh one with few. A metric without a group counts as a
+   * group of its own.
+   */
+  group?: string;
   floor: FloorRule;
   /** Public page of the leaderboard, linked from the model page. */
   url?: string;
@@ -40,6 +51,8 @@ export type ValueTier = (typeof VALUE_TIERS)[number];
 
 export interface ScoringConfig {
   intelligence: {
+    /** Relative weight of each metric group inside the benchmark score. */
+    groups?: Record<string, { weight: number }>;
     /** Benchmark metrics that feed the intelligence score, keyed by metric. */
     metrics: Record<string, MetricConfig>;
     /** Minimum (rounded) score for each tier, checked top-down; anything lower is `low`. */
@@ -85,24 +98,50 @@ export interface ScoringConfig {
 }
 
 /**
+ * What the leaderboards measure. The groups count the same, and so do the
+ * metrics inside a group: general ability (broad test suites), preference
+ * (which answer people pick in blind votes) and coding.
+ */
+const groups = {
+  general: { weight: 1 },
+  preference: { weight: 1 },
+  coding: { weight: 1 },
+} satisfies Record<string, { weight: number }>;
+
+export type MetricGroup = keyof typeof groups;
+export const METRIC_GROUPS = Object.keys(groups) as MetricGroup[];
+
+/**
  * The leaderboard metrics in use. To add one: add it here, make its source's
  * adapter write it to the snapshot (scripts/sources/), and add its label to
  * the dictionaries in src/i18n/.
  *
- * Coding ability is measured by Arena's WebDev board. Artificial Analysis
- * also has a Coding Index, but its free API does not return it.
+ * Coding ability is measured by Arena's WebDev board and Terminal-Bench.
+ * Artificial Analysis also has a Coding Index, but its free API does not
+ * return it.
  */
 const metrics = {
   aa_intelligence: {
     source: 'aa',
     mapping: 'aa',
-    weight: 0.5,
+    group: 'general',
+    weight: 1,
     floor: { type: 'absolute', value: 0 },
+  },
+  // LiveBench's overall score: the weighted mean of its suites.
+  livebench: {
+    source: 'livebench',
+    mapping: 'livebench',
+    group: 'general',
+    weight: 1,
+    floor: { type: 'absolute', value: 0 },
+    url: 'https://livebench.ai/',
   },
   arena_text: {
     source: 'arena',
     mapping: 'arena_text',
-    weight: 0.3,
+    group: 'preference',
+    weight: 1,
     floor: { type: 'below_frontier', gap: 300 },
     url: 'https://arena.ai/leaderboard/text',
   },
@@ -112,17 +151,30 @@ const metrics = {
   arena_webdev: {
     source: 'arena',
     mapping: 'arena_webdev',
-    weight: 0.2,
+    group: 'coding',
+    weight: 1,
     floor: { type: 'below_frontier', gap: 450 },
     url: 'https://arena.ai/leaderboard/webdev',
   },
-} satisfies Record<string, MetricConfig>;
+  // Share of terminal tasks resolved. A row is a model inside an agent tool.
+  terminal_bench: {
+    source: 'terminal_bench',
+    mapping: 'terminal_bench',
+    group: 'coding',
+    weight: 1,
+    floor: { type: 'absolute', value: 0 },
+    url: 'https://www.tbench.ai/',
+  },
+} satisfies Record<string, MetricConfig & { group: MetricGroup }>;
 
 export type MetricKey = keyof typeof metrics;
 export const METRIC_KEYS = Object.keys(metrics) as MetricKey[];
+/** The group of a metric in use. */
+export const metricGroup = (key: MetricKey): MetricGroup => metrics[key].group;
 
 export const scoringConfig: ScoringConfig = {
   intelligence: {
+    groups,
     metrics,
     tiers: { top: 90, high: 75, mid: 55 },
   },

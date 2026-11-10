@@ -162,7 +162,7 @@ console.log(
   ),
 );
 
-const unmapped = models.filter((m) => !m.matched.modelsdev || !m.matched.aa || !m.matched.arena);
+const unmapped = models.filter((m) => SOURCE_IDS.some((id) => !m.matched[id]));
 if (unmapped.length > 0) {
   console.log('\nMissing source data (run `pnpm sync` to see candidate names)');
   for (const model of unmapped) {

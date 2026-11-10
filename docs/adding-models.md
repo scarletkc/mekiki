@@ -17,6 +17,8 @@ Adding a model means adding one Markdown file. Nothing else needs to change.
      aa: gpt-6-1-sol                       # slug on Artificial Analysis
      arena_text: "GPT-6.1 Sol (Max)"       # exact name on the Arena text leaderboard
      arena_webdev: "GPT-6.1 Sol (Max)"     # exact name on the Arena WebDev leaderboard
+     terminal_bench: "Codex / GPT-6.1 Sol / max"   # Terminal-Bench row: agent / model / effort
+     livebench: gpt-6.1-sol                # model ID on LiveBench
    ---
    ```
 
@@ -43,8 +45,13 @@ Adding a model means adding one Markdown file. Nothing else needs to change.
 - On Artificial Analysis, the base slug without a suffix (`gpt-6-1-sol`, not
   `gpt-6-1-sol-high`) is usually the model's top reasoning level. Pick a suffixed slug to
   rate a different level.
-- Leave out a source the model isn't on. It is rated on the leaderboards it is on, with
-  the weights re-normalised; a model on none of them is shown as "not rated", never as 0.
+- A Terminal-Bench row is an agent tool, a model and a reasoning effort, and most vendors
+  are listed only inside their own tool. The mapping names all three, exactly as
+  `pnpm sync` prints them.
+- LiveBench lists a model once, at its highest effort unless the ID says otherwise.
+- Leave out a source the model isn't on. Leaderboards are grouped by what they measure
+  ([design §5.1](SPEC.md#51-intelligence)); a model missing from one is rated on the rest
+  of that group, and a model on none of them is shown as "not rated", never as 0.
 
 ## Good to know
 

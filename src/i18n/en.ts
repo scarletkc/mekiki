@@ -117,8 +117,15 @@ export const en = {
   },
   metric: {
     aa_intelligence: 'AA Intelligence Index',
+    livebench: 'LiveBench',
     arena_text: 'Arena text',
     arena_webdev: 'Arena WebDev',
+    terminal_bench: 'Terminal-Bench',
+  },
+  group: {
+    general: 'General ability',
+    preference: 'Human preference',
+    coding: 'Coding',
   },
   method: {
     title: 'Method',
@@ -128,9 +135,10 @@ export const en = {
     intelligenceBody:
       'Each leaderboard metric is first normalised to 0–100, where 100 is the current leader on that metric. Index-style metrics start at 0; Elo-style metrics only use a fixed range below the leader, listed in the table.',
     benchmarkBody:
-      'The intelligence score is the weighted mean of the metrics a model has. A missing metric is left out and the remaining weights are re-normalised; a model on none of the leaderboards is not rated.',
+      'Metrics are grouped by what they measure, and every group counts the same however many leaderboards it has. Inside a group the metrics a model has are averaged; then the groups that have a score are averaged. A model missing from a leaderboard is scored on the rest of its group, a group with no score is left out, and a model on none of the leaderboards is not rated.',
     weightsCaption: 'Benchmark metrics and weights',
     source: 'Source',
+    group: 'Group',
     floor: 'Zero point',
     floorAbsolute: 'Raw score {value}',
     floorBelowFrontier: 'Leader − {gap}',
@@ -161,14 +169,19 @@ export const en = {
     useModelsdev: 'Price, context window, release date, open weights, modalities',
     useAa: 'Intelligence Index, cost to run the index',
     useArena: 'Text and WebDev leaderboard ratings',
+    useTerminalBench: 'Share of terminal tasks resolved',
+    useLivebench: 'Overall score across its suites',
     licenseAa: 'Attribution per its terms',
+    licenseNone: 'None stated; credited to the source',
     caveatsTitle: 'Caveats',
     caveatAaCoding:
-      "Coding ability is measured by Arena's WebDev board. Artificial Analysis also publishes a Coding Index, but its free API doesn't include it, so it isn't used.",
+      "Coding ability is measured by Arena's WebDev board and Terminal-Bench. Artificial Analysis also publishes a Coding Index, but its free API doesn't include it, so it isn't used.",
     caveatVariants:
       'Leaderboards often list one model several times, once per reasoning level. The entry used here is the level mekiki actually uses.',
     caveatRunCost:
       "The run cost comes from Artificial Analysis's own evaluation suite, at the reasoning level of the entry mapped there. Another workload or a lower reasoning level costs differently.",
+    caveatAgents:
+      'Terminal-Bench scores a model inside an agent tool, and most vendors are only listed with their own tool, so part of that score is the tool.',
   },
   api: {
     title: 'API',
@@ -197,7 +210,7 @@ export const en = {
       'Fields are only ever added. A breaking change bumps version. The current version is {version}.',
     attributionTitle: 'Attribution',
     attributionBody:
-      'Leaderboard data comes from Artificial Analysis and Arena; prices come from models.dev. Credit them too if you republish these numbers.',
+      'Leaderboard data comes from Artificial Analysis, Arena, LiveBench and Terminal-Bench; prices come from models.dev. Credit them too if you republish these numbers.',
   },
   footer: {
     sources: 'Data from ',

@@ -40,7 +40,7 @@ pnpm exec playwright install --only-shell chromium
 
 ## Sync data locally
 
-`pnpm sync` fetches models.dev and Arena without a key. To include Artificial Analysis,
+`pnpm sync` fetches models.dev, Arena, Terminal-Bench and LiveBench without a key. To include Artificial Analysis,
 copy `.env.example` to `.env` and set `AA_API_KEY`; without it that source is skipped.
 The key is read only by `pnpm sync` and must never be committed.
 
@@ -90,7 +90,7 @@ src/
   views/                                 page bodies, shared by all languages
   pages/                                 routes and JSON endpoints
   components/                            table island, tier meter, shadcn/ui components
-data/snapshots/                          modelsdev.json, aa.json, arena.json
+data/snapshots/                          one JSON file per data source
 scripts/sync.ts, scripts/report.ts       pnpm sync, pnpm report
 scripts/sources/                         one adapter per data source
 tests/                                   unit tests

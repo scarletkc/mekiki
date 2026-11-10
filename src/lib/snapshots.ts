@@ -11,7 +11,7 @@ import { z } from 'astro/zod';
 
 export const SNAPSHOT_DIR = 'data/snapshots';
 
-export const SOURCE_IDS = ['modelsdev', 'aa', 'arena'] as const;
+export const SOURCE_IDS = ['modelsdev', 'aa', 'arena', 'terminal_bench', 'livebench'] as const;
 export type SourceId = (typeof SOURCE_IDS)[number];
 
 /** Static facts about each source, used for attribution and links. */
@@ -20,6 +20,8 @@ export const SOURCE_INFO: Record<SourceId, { name: string; url: string; license:
     modelsdev: { name: 'models.dev', url: 'https://models.dev/', license: 'MIT' },
     aa: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', license: null },
     arena: { name: 'Arena', url: 'https://arena.ai/leaderboard', license: 'CC BY 4.0' },
+    terminal_bench: { name: 'Terminal-Bench', url: 'https://www.tbench.ai/', license: null },
+    livebench: { name: 'LiveBench', url: 'https://livebench.ai/', license: null },
   };
 
 const frontier = z.record(z.string(), z.number().nullable());
@@ -32,6 +34,8 @@ function snapshotOf<S extends string, M extends z.ZodType>(source: S, model: M) 
     fetched_at: z.string(),
     /** How many models the full source listed; used to spot a broken sync. */
     total: z.number().int().nonnegative().optional(),
+    /** Which release of the leaderboard the data is from, when the source has releases. */
+    edition: z.string().optional(),
     /** Best raw score of each metric across the source's full leaderboard. */
     frontier,
     /** Tracked models only, keyed by the model's ID in that source. */
@@ -70,23 +74,48 @@ export const arenaModelSchema = z.object({
   published: z.string().nullable(),
 });
 
+// One entry per leaderboard row. A row is an agent tool, a model and a
+// reasoning effort; the key is "<agent> / <model> / <effort>".
+export const terminalBenchModelSchema = z.object({
+  /** Share of tasks resolved, in percent. */
+  terminal_bench: nullableNumber,
+  agent: z.string().nullable(),
+  model: z.string().nullable(),
+  effort: z.string().nullable(),
+  /** Date of the submission. */
+  date: z.string().nullable(),
+});
+
+export const livebenchModelSchema = z.object({
+  /** Overall score, 0–100: the weighted mean of the suites, as the site computes it. */
+  livebench: nullableNumber,
+});
+
 export const snapshotSchemas = {
   modelsdev: snapshotOf('modelsdev', modelsdevModelSchema),
   aa: snapshotOf('aa', aaModelSchema),
   arena: snapshotOf('arena', arenaModelSchema),
+  terminal_bench: snapshotOf('terminal_bench', terminalBenchModelSchema),
+  livebench: snapshotOf('livebench', livebenchModelSchema),
 };
 
 export type ModelsdevSnapshot = z.infer<typeof snapshotSchemas.modelsdev>;
 export type AaSnapshot = z.infer<typeof snapshotSchemas.aa>;
 export type ArenaSnapshot = z.infer<typeof snapshotSchemas.arena>;
+export type TerminalBenchSnapshot = z.infer<typeof snapshotSchemas.terminal_bench>;
+export type LivebenchSnapshot = z.infer<typeof snapshotSchemas.livebench>;
 export type ModelsdevModel = z.infer<typeof modelsdevModelSchema>;
 export type AaModel = z.infer<typeof aaModelSchema>;
 export type ArenaModel = z.infer<typeof arenaModelSchema>;
+export type TerminalBenchModel = z.infer<typeof terminalBenchModelSchema>;
+export type LivebenchModel = z.infer<typeof livebenchModelSchema>;
 
 export interface Snapshots {
   modelsdev: ModelsdevSnapshot | null;
   aa: AaSnapshot | null;
   arena: ArenaSnapshot | null;
+  terminal_bench: TerminalBenchSnapshot | null;
+  livebench: LivebenchSnapshot | null;
 }
 
 export type SnapshotOf<S extends SourceId> = NonNullable<Snapshots[S]>;
@@ -124,5 +153,7 @@ export function loadSnapshots(root: string = process.cwd()): Snapshots {
     modelsdev: readSnapshot('modelsdev', root),
     aa: readSnapshot('aa', root),
     arena: readSnapshot('arena', root),
+    terminal_bench: readSnapshot('terminal_bench', root),
+    livebench: readSnapshot('livebench', root),
   };
 }

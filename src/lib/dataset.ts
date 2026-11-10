@@ -24,6 +24,8 @@ export interface SourceStatus {
   license: string | null;
   /** Null when the snapshot file is missing or invalid. */
   fetched_at: string | null;
+  /** Release of the leaderboard the data is from; null when the source has none. */
+  edition: string | null;
 }
 
 export interface ModelRecord {
@@ -78,6 +80,14 @@ export interface BuildOptions {
 
 const asNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+/** Whether any of the mapped IDs is an entry of the snapshot. */
+function found(
+  snapshot: { models: Record<string, unknown> } | null,
+  ...ids: (string | undefined)[]
+): boolean {
+  return ids.some((id) => id !== undefined && snapshot?.models[id] !== undefined);
+}
 
 function median(values: number[]): number | null {
   if (values.length === 0) return null;
@@ -185,9 +195,6 @@ export function buildDataset(
     const { entry, modelsdevId, facts, aa, price, priceSource, runCost } = item;
     const { data } = entry;
     const { sources } = data;
-    const arena = [sources.arena_text, sources.arena_webdev].some(
-      (id) => id !== undefined && snapshots.arena?.models[id] !== undefined,
-    );
 
     const metrics: Record<string, number | null> = {};
     for (const key of Object.keys(config.intelligence.metrics)) {
@@ -221,8 +228,16 @@ export function buildDataset(
         aa: sources.aa ?? null,
         arena_text: sources.arena_text ?? null,
         arena_webdev: sources.arena_webdev ?? null,
+        terminal_bench: sources.terminal_bench ?? null,
+        livebench: sources.livebench ?? null,
       },
-      matched: { modelsdev: facts !== null, aa: aa !== null, arena },
+      matched: {
+        modelsdev: facts !== null,
+        aa: aa !== null,
+        arena: found(snapshots.arena, sources.arena_text, sources.arena_webdev),
+        terminal_bench: found(snapshots.terminal_bench, sources.terminal_bench),
+        livebench: found(snapshots.livebench, sources.livebench),
+      },
       url: `${SITE_URL}/m/${entry.id}`,
     };
   });
@@ -231,7 +246,11 @@ export function buildDataset(
 
   const sources = {} as Record<SourceId, SourceStatus>;
   for (const id of SOURCE_IDS) {
-    sources[id] = { ...SOURCE_INFO[id], fetched_at: snapshots[id]?.fetched_at ?? null };
+    sources[id] = {
+      ...SOURCE_INFO[id],
+      fetched_at: snapshots[id]?.fetched_at ?? null,
+      edition: snapshots[id]?.edition ?? null,
+    };
   }
 
   const liveFrontier = {} as Record<MetricKey, number | null>;

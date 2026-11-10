@@ -115,8 +115,15 @@ export const zhTW: Dictionary = {
   },
   metric: {
     aa_intelligence: 'AA 智慧指數',
+    livebench: 'LiveBench 總分',
     arena_text: 'Arena 文字榜',
     arena_webdev: 'Arena WebDev 榜',
+    terminal_bench: 'Terminal-Bench',
+  },
+  group: {
+    general: '綜合能力',
+    preference: '人類偏好',
+    coding: '程式設計',
   },
   method: {
     title: '評分方法',
@@ -126,9 +133,10 @@ export const zhTW: Dictionary = {
     intelligenceBody:
       '每個榜單指標先正規化到 0–100，100 代表該指標目前的榜首。指數類指標從 0 起算；Elo 類指標只取榜首往下固定的一段，範圍見下表。',
     benchmarkBody:
-      '智慧分是已有指標的加權平均。模型缺哪個指標，那個指標就不列入，其餘權重重新正規化；一個榜單都沒上的模型不評級。',
+      '指標依衡量的內容分組，每組占比相同，不論組裡有幾個榜單。先在組內對模型有分數的指標取平均，再對有分數的組取平均。模型缺某個榜時依同組其餘榜單計算，整組都沒有分數時這一組不列入；一個榜單都沒上的模型不評級。',
     weightsCaption: '榜單指標與權重',
     source: '來源',
+    group: '類別',
     floor: '零點',
     floorAbsolute: '原始分 {value}',
     floorBelowFrontier: '榜首 − {gap}',
@@ -158,14 +166,19 @@ export const zhTW: Dictionary = {
     useModelsdev: '價格、上下文長度、發布日期、是否開放權重、模態',
     useAa: '智慧指數、評測總花費',
     useArena: '文字榜和 WebDev 榜的分數',
+    useTerminalBench: '終端機任務通過率',
+    useLivebench: '各項測試的總分',
     licenseAa: '依其條款標示來源',
+    licenseNone: '未聲明授權，標示來源',
     caveatsTitle: '注意',
     caveatAaCoding:
-      '程式能力用 Arena 的 WebDev 榜衡量。Artificial Analysis 也有程式指數，但免費 API 不提供，所以沒有採用。',
+      '程式能力用 Arena 的 WebDev 榜和 Terminal-Bench 衡量。Artificial Analysis 也有程式指數，但免費 API 不提供，所以沒有採用。',
     caveatVariants:
       '同一個模型在榜單上常依推理等級分成多個項目，這裡取的是 mekiki 實際使用的那一級。',
     caveatRunCost:
       '實測花費來自 Artificial Analysis 自己的評測題，對應的是所對應條目的推理等級。換一種任務或調低推理等級，花費會不一樣。',
+    caveatAgents:
+      'Terminal-Bench 測的是「模型 + agent 工具」的組合，多數廠商的模型只在自家工具裡上榜，所以這項分數有一部分來自工具。',
   },
   api: {
     title: 'API',
@@ -190,7 +203,7 @@ export const zhTW: Dictionary = {
     versionBody: '欄位只增不改。有破壞性變更時，version 加一。目前是 version {version}。',
     attributionTitle: '標示來源',
     attributionBody:
-      '榜單資料來自 Artificial Analysis 和 Arena，價格來自 models.dev。轉載這些數字時請同樣標示來源。',
+      '榜單資料來自 Artificial Analysis、Arena、LiveBench 和 Terminal-Bench，價格來自 models.dev。轉載這些數字時請同樣標示來源。',
   },
   footer: {
     sources: '資料來源：',

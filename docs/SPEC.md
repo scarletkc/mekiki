@@ -104,6 +104,8 @@ sources:                     # the model's ID in each source; omit what doesn't 
   aa: gpt-6-1-sol                  # Artificial Analysis slug
   arena_text: "GPT-6.1 Sol (Max)"  # exact name on the Arena text board
   arena_webdev: "GPT-6.1 Sol (Max)" # exact name on the Arena WebDev board
+  terminal_bench: "Codex / GPT-6.1 Sol / max"  # Terminal-Bench row: agent / model / effort
+  livebench: gpt-6.1-sol           # model ID on LiveBench
 overrides:                   # optional
   price: { input: 5, output: 25 }  # USD per 1M tokens; cache_read optional
 ---
@@ -115,6 +117,8 @@ overrides:                   # optional
 - Artificial Analysis and Arena often list one model once per reasoning level. A mapping
   points at the level the maintainer actually uses. The two Arena boards list different
   levels, so each has its own field.
+- A Terminal-Bench row is an agent tool, a model and a reasoning effort, so the mapping
+  names all three.
 - A price override replaces the models.dev input and output prices. Without
   `cache_read`, the models.dev cache price is kept.
 - Invalid frontmatter fails `pnpm test` and `pnpm build` with the file and the field.
@@ -126,6 +130,8 @@ overrides:                   # optional
 | [models.dev](https://models.dev) | Price (input, output, cache read), context window, release date, open weights, modalities | `GET https://models.dev/api.json`, no key | MIT. Data is grouped by provider and prices follow the provider, so `sources.modelsdev` carries the provider prefix |
 | [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index; what it cost to run the index | Free API, key in the `x-api-key` header | Attribution required on every tier; the key never reaches the front end |
 | [Arena](https://arena.ai/leaderboard) | Text and WebDev board ratings | Hugging Face dataset `lmarena-ai/leaderboard-dataset`, configs `text` and `webdev`, split `latest`, no key | CC BY 4.0, attributed per the licence |
+| [LiveBench](https://livebench.ai/) | Overall score across its suites | `data/<release>/table.csv` and `categories.json` on the site, no key | No licence stated for the scores (the code is Apache-2.0); attributed (§9) |
+| [Terminal-Bench](https://www.tbench.ai/) | Share of terminal tasks resolved | The board embedded in the home page, no key | No licence stated for the scores (code and tasks are Apache-2.0); attributed (§9) |
 
 - Artificial Analysis is read from `GET /api/v2/language/models/free?page=N`, the only
   model list the free tier can reach (100 requests per 24 hours).
@@ -135,7 +141,17 @@ overrides:                   # optional
   returns 500 or times out, and `/rows` needs more than 100 pages for the `latest`
   split. Each board's auto-converted Parquet file is one request (about 0.6 MB for
   text), parsed with `hyparquet`; only rows with `category = overall` are used.
-- Every page's footer attributes Artificial Analysis, Arena and models.dev. Keep it.
+- **LiveBench has no overall column.** The adapter computes it the way the site does: the
+  weighted mean of the categories a model has a score for, with the weights in
+  `categories.json`. Release IDs are only listed in the site's script, so a fetch reads
+  the page, the script, then the two files of the newest release.
+- **Terminal-Bench has no data file.** The board is read from the JSON the home page
+  streams to the browser. The page always shows the newest board, and scores of different
+  boards do not compare, so the snapshot records the board's title as its `edition`.
+  A row pairs a model with an agent tool, and most vendors are listed only with their
+  own tool, so part of the score is the tool.
+- Every page's footer attributes Artificial Analysis, Arena, LiveBench, Terminal-Bench
+  and models.dev. Keep it.
 
 Each source has one adapter in `scripts/sources/` with the same contract
 (`scripts/sources/types.ts`): fetch, validate with Zod, trim, return a snapshot. Adding a
@@ -162,8 +178,12 @@ One file per source, for example `data/snapshots/aa.json`:
   and nobody else's full dataset is copied into the repository.
 - `arena.json` holds both boards, keyed by model name; each entry has `arena_text` and
   `arena_webdev`, `null` when the model is not on that board.
+- `terminal_bench.json` is keyed by row (`<agent> / <model> / <effort>`) and
+  `livebench.json` by model ID.
+- `edition` names the release of a leaderboard that has releases: Terminal-Bench's board
+  title, LiveBench's release date.
 - `total` is how many models the source listed, used to spot a broken sync.
-- `fetched_at` changes only when `frontier` or `models` change, so a quiet day produces
+- `fetched_at` changes only when `edition`, `frontier` or `models` change, so a quiet day produces
   no commit. A change in `total` alone doesn't count: models.dev gains models almost
   daily.
 
@@ -194,17 +214,26 @@ n_s = clamp(100 × (x − floor_s) / (frontier_s − floor_s), 0, 100)
 
 - `frontier_s` is the current leader's score on that metric.
 - `floor_s` is a fixed raw score for index-style metrics (`absolute`, 0 for the AA
-  Intelligence Index). Elo-style metrics have no meaningful zero, so their floor is
+  Intelligence Index, LiveBench and Terminal-Bench). Elo-style metrics have no meaningful zero, so their floor is
   `frontier_s − gap_s` (`below_frontier`). The WebDev board is spread wider than the
   text board, so it gets a wider gap; each gap leaves about 70% of its board above zero.
 
-The intelligence score is the weighted mean over the metrics a model has:
+Metrics are grouped by what they measure. The score averages the metrics inside each
+group, then the groups:
 
 ```text
-intelligence = Σ(w_s × n_s) / Σ(w_s)
+group_g      = Σ(w_s × n_s) / Σ(w_s)        over the metrics of group g the model has
+intelligence = Σ(W_g × group_g) / Σ(W_g)    over the groups that have a score
 ```
 
-- A missing metric is left out and the remaining weights are re-normalised.
+- The groups are general ability (AA Intelligence Index, LiveBench), human preference
+  (Arena text) and coding (Arena WebDev, Terminal-Bench). Groups count the same, and so
+  do the metrics inside a group, so a subject with many leaderboards does not outweigh
+  one with few (§9).
+- A missing metric is left out of its group, and the rest of the group stands in for it.
+  A group with no score is left out of the mean.
+- A metric without a group is a group of its own, weighted by its own weight. A config
+  without groups is then a plain weighted mean, which is what the fixtures in §5.5 use.
 - A model on none of the leaderboards is not rated (`null`) and sorts last.
 - Every sync re-normalises to the current leader, so when a new model takes the lead,
   every other score drops without anyone editing a file.
@@ -444,7 +473,8 @@ modalities; how value was priced; links to the source data and the model's JSON.
   headline.
 - Dark and light, following the system by default, with a manual switch.
 - Usable at 380 px wide: the table scrolls sideways with the first column pinned.
-- The footer carries the source attribution (Artificial Analysis, Arena, models.dev),
+- The footer carries the source attribution (Artificial Analysis, Arena, LiveBench,
+  Terminal-Bench, models.dev),
   the last sync time and a link to the repository.
 
 ## 8. Sync and deployment
@@ -492,6 +522,21 @@ A `subjective` block left in a model file is ignored. The API dropped
 `intelligence.basis`, `intelligence.subjective` and `intelligence.benchmark` (which had
 become identical to `score`). Like the text-review fields before them, they were removed
 without bumping `version`.
+
+**Leaderboards are weighted by subject.** Intelligence started with three leaderboards
+weighted 0.5, 0.3 and 0.2. When LiveBench and Terminal-Bench were added, the leaderboards
+were grouped into general ability, human preference and coding, with equal groups and
+equal leaderboards inside a group. Giving every leaderboard the same weight was rejected:
+a subject that happens to have several leaderboards, or one source with several boards
+of the same kind, would outweigh the rest. The two Arena boards are both votes from one
+source and would have made up two thirds of three equal leaderboards.
+
+**LiveBench and Terminal-Bench state no licence for their scores.** Their code is
+Apache-2.0, but neither site says how the scores may be reused (checked 2026-11-11). They
+are republished with attribution. Check their terms again before the site goes public.
+Two other leaderboards were looked at and left out: CursorBench, because Cursor's terms
+of service forbid scraping the site, and DeepSWE, which listed 3 of the 10 tracked models
+and was last generated on 2026-09-22.
 
 Not built yet: share images per model, score history, an RSS feed or changelog, and more
 UI languages.

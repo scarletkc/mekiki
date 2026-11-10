@@ -47,6 +47,10 @@ export function getJson(url: string, headers: Record<string, string> = {}): Prom
   return get(url, 'application/json', headers, (response) => response.json());
 }
 
+export function getText(url: string, headers: Record<string, string> = {}): Promise<string> {
+  return get(url, 'text/html, text/plain, */*', headers, (response) => response.text());
+}
+
 export function getBytes(url: string, headers: Record<string, string> = {}): Promise<ArrayBuffer> {
   return get(url, 'application/octet-stream', headers, (response) => response.arrayBuffer());
 }
