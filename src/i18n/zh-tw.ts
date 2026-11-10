@@ -4,7 +4,8 @@ import type { Dictionary } from './en';
 export const zhTW: Dictionary = {
   meta: {
     tagline: 'AI 模型評級',
-    description: 'AI 模型的個人評級：智慧、成本、性價比，並提供公開的 JSON API。',
+    description:
+      'AI 模型的智慧、成本與性價比評級，資料來自公開榜單與官方價格，並提供免費的 JSON API。',
   },
   nav: {
     models: '模型',

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Opinionated ratings of AI models: a static site plus a public JSON API.",
+  "description": "AI models rated on intelligence, cost and value from public leaderboards and official prices: a static site plus a free JSON API.",
   "license": "MIT",
   "homepage": "https://mekiki.fog.moe",
   "repository": "github:scarletkc/mekiki",

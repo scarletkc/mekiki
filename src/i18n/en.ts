@@ -7,7 +7,7 @@ export const en = {
   meta: {
     tagline: 'AI model ratings',
     description:
-      'Personal ratings of AI models: intelligence, cost and value, with a public JSON API.',
+      'AI models rated on intelligence, cost and value from public leaderboards and official prices, with a free JSON API.',
   },
   nav: {
     models: 'Models',
@@ -63,7 +63,7 @@ export const en = {
     all: 'All',
     open: 'Open',
     closed: 'Closed',
-    showLegacy: 'Show {n} legacy models',
+    showLegacy: 'Show legacy models ({n})',
     hideLegacy: 'Hide legacy models',
     reset: 'Clear filters',
     count: '{shown} of {total} models',
