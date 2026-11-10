@@ -17,7 +17,6 @@ import {
   SOURCE_INFO,
   readSnapshot,
   snapshotPath,
-  type SnapshotOf,
   type SourceId,
 } from '../src/lib/snapshots';
 import { readModelEntries } from './lib/content';
@@ -58,7 +57,7 @@ function parseArgs(argv: string[]) {
 }
 
 /** Stable JSON: model keys sorted so diffs only show real changes. */
-function serialize(snapshot: { models: Record<string, unknown> }): string {
+function serialize<T extends { models: Record<string, unknown> }>(snapshot: T): string {
   const models = Object.fromEntries(
     Object.entries(snapshot.models).sort(([a], [b]) => a.localeCompare(b, 'en')),
   );
