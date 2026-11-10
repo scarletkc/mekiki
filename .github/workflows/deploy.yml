@@ -61,9 +61,8 @@ jobs:
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
-      # Formatting is not checked yet; only lint errors fail the job.
-      - name: Lint
-        run: pnpm exec biome ci --formatter-enabled=false .
+      - name: Lint and check formatting
+        run: pnpm exec biome ci .
 
       - name: Type check
         run: pnpm check

@@ -422,7 +422,7 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
 
   return (
     <div>
-      <div role="search" aria-label={t.filters} className="mb-3 flex flex-wrap items-center gap-2">
+      <search aria-label={t.filters} className="mb-3 flex flex-wrap items-center gap-2">
         <Input
           type="search"
           value={filters.q}
@@ -481,7 +481,7 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
         <p className="text-muted-foreground num ml-auto text-sm" aria-live="polite">
           {fmt(t.count, { shown: rows.length, total: data.length })}
         </p>
-      </div>
+      </search>
 
       <div className="-mx-4 border-y sm:mx-0 sm:rounded-md sm:border-x">
         <Table className="text-sm">

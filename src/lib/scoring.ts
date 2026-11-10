@@ -196,10 +196,7 @@ export function computeValue(
 ): number {
   const { intelligenceExponent, affordabilityExponent, minAffordability } = config.value;
   const affordability = Math.max(100 - index, minAffordability);
-  return (
-    Math.pow(Math.max(intelligence, 0), intelligenceExponent) *
-    Math.pow(affordability, affordabilityExponent)
-  );
+  return Math.max(intelligence, 0) ** intelligenceExponent * affordability ** affordabilityExponent;
 }
 
 export function intelligenceTier(

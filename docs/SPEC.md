@@ -298,7 +298,7 @@ A–F 没有缓存价，按输入价全额计算；G 和 B 只差一个缓存价
 | `pnpm report` | 打印所有模型的各项分数和档位分布，用于校准阈值 |
 | `pnpm test` | 单元测试 |
 | `pnpm check` | 类型检查（`astro check`） |
-| `pnpm lint` | Biome lint |
+| `pnpm lint` | Biome lint 和格式检查，与 CI 一致 |
 | `pnpm format` | Biome 格式化，不碰 Markdown |
 | `pnpm smoke` | 用 Playwright 对构建产物做浏览器冒烟测试，先跑 `pnpm build` |
 | `pnpm build` | 构建，不联网 |
@@ -309,7 +309,7 @@ A–F 没有缓存价，按输入价全额计算；G 和 B 只差一个缓存价
 
 1. checkout，装依赖
 2. 仅定时和手动触发时：跑 `pnpm sync`（注入 `AA_API_KEY`），快照有变化就提交并推送
-3. lint（`biome ci`）、类型检查（`pnpm check`）、`pnpm test`
+3. lint 和格式检查（`biome ci`）、类型检查（`pnpm check`）、`pnpm test`
 4. `pnpm build`，上传产物，部署到 GitHub Pages
 5. 另起一个 `smoke` job，下载同一份产物跑 `pnpm smoke`。它是可选的：和部署并行，不阻塞部署，失败只把这个 job 标红
 

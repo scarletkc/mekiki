@@ -16,7 +16,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "lint": "biome lint .",
+    "lint": "biome check .",
     "format": "biome format --write .",
     "test": "vitest run",
     "smoke": "playwright test",

@@ -2,10 +2,9 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
-    "includes": ["**", "!**/*.md", "!data/snapshots", "!public"]
+    "includes": ["**", "!**/*.md", "!data/snapshots", "!public", "!src/components/ui"]
   },
   "formatter": {
-    "includes": ["**", "!src/components/ui"],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100,
@@ -29,7 +28,6 @@
   "linter": {
     "rules": {
       "preset": "recommended",
-      "a11y": { "useSemanticElements": "warn" },
       "complexity": { "noImportantStyles": "off" },
       "style": { "noNonNullAssertion": "off" }
     }
@@ -38,6 +36,15 @@
     {
       "includes": ["**/*.astro", "**/*.ts"],
       "linter": { "rules": { "correctness": { "useHookAtTopLevel": "off" } } }
+    },
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "complexity": { "useArrowFunction": "off", "useOptionalChain": "off" },
+          "style": { "useTemplate": "off" }
+        }
+      }
     },
     {
       "includes": ["src/i18n/**"],

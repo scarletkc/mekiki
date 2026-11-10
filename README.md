@@ -37,7 +37,7 @@ The dev server runs at <http://localhost:4321>.
 | `pnpm preview` | Serve the built site. |
 | `pnpm test` | Run the unit tests. |
 | `pnpm check` | Type-check the project (`astro check`). |
-| `pnpm lint` | Lint with [Biome](https://biomejs.dev). |
+| `pnpm lint` | Lint and check formatting with [Biome](https://biomejs.dev), as CI does. |
 | `pnpm format` | Format with Biome. Markdown files are left alone. |
 | `pnpm smoke` | Browser smoke test of the built site (Playwright). Run `pnpm build` first. |
 | `pnpm sync` | Fetch the data sources and update `data/snapshots/`. |

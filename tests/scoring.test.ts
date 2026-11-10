@@ -422,7 +422,7 @@ describe('tiers', () => {
 
 describe('computeValue', () => {
   it('never lets affordability drop below the configured minimum', () => {
-    expect(computeValue(100, 100)).toBeCloseTo(Math.pow(100, 0.6) * Math.pow(5, 0.4), 9);
+    expect(computeValue(100, 100)).toBeCloseTo(100 ** 0.6 * 5 ** 0.4, 9);
     expect(computeValue(100, 99)).toBeCloseTo(computeValue(100, 100), 9);
   });
 
@@ -478,7 +478,7 @@ describe('rateModel edge cases', () => {
     expect(rating.cost.free).toBe(true);
     expect(rating.cost.index).toBe(0);
     expect(rating.cost.tier).toBe('low');
-    expect(rating.value.score).toBeCloseTo(Math.pow(60, 0.6) * Math.pow(100, 0.4), 1);
+    expect(rating.value.score).toBeCloseTo(60 ** 0.6 * 100 ** 0.4, 1);
   });
 
   it('derives the tier from the rounded score', () => {

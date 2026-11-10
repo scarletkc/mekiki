@@ -86,7 +86,7 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
         var stored = null;
         try {
           stored = localStorage.getItem('theme');
-        } catch (error) {}
+        } catch (_error) {}
         var dark =
           stored === 'dark' ||
           (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -225,7 +225,7 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
             root.classList.toggle('dark', dark);
             try {
               localStorage.setItem('theme', dark ? 'dark' : 'light');
-            } catch (error) {}
+            } catch (_error) {}
           });
         }
         // Follow the system while the visitor has not chosen a theme.
@@ -233,7 +233,7 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
           var stored = null;
           try {
             stored = localStorage.getItem('theme');
-          } catch (error) {}
+          } catch (_error) {}
           if (!stored) root.classList.toggle('dark', event.matches);
         });
         // Keep the current filters and sort when switching language, and
@@ -243,7 +243,7 @@ const attribution = [SOURCE_INFO.aa, SOURCE_INFO.arena, SOURCE_INFO.modelsdev];
             link.setAttribute('href', link.pathname + window.location.search + window.location.hash);
             try {
               localStorage.setItem('locale', link.getAttribute('data-locale-link'));
-            } catch (error) {}
+            } catch (_error) {}
           });
         });
       })();
