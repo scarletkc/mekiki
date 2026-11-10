@@ -103,6 +103,9 @@ Things to know:
     price: { input: 5, output: 25 }   # USD per 1M tokens; cache_read is optional
   ```
 
+  Without `cache_read` the models.dev cache price is kept, and it counts toward the
+  blended price.
+
 - Invalid frontmatter fails `pnpm test` and `pnpm build` with the file name and the field.
 
 ## Change weights and thresholds
