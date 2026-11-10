@@ -13,6 +13,8 @@ is generated from that file.
 ## 1. Scope
 
 mekiki is a static site and a public JSON API that rate a curated list of AI models.
+The site, `package.json`, the README and the GitHub repository all describe it in one
+sentence: "AI models rated on intelligence, cost and value from public leaderboards and official prices, with a free JSON API." The Chinese dictionaries carry a translation of it.
 Each model gets three ratings:
 
 - **Intelligence**: public leaderboard scores, normalised to the current leader and

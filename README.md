@@ -4,7 +4,7 @@
 
 # mekiki
 
-**AI models rated on intelligence, cost and value, refreshed daily from public leaderboards, with a free JSON API**
+**AI models rated on intelligence, cost and value from public leaderboards and official prices, with a free JSON API.**
 
 [Website](https://mekiki.fog.moe) | [Method](https://mekiki.fog.moe/method) | [API](https://mekiki.fog.moe/api)
 

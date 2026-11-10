@@ -297,10 +297,10 @@ export function siteCard(): Promise<Uint8Array<ArrayBuffer>> {
         </div>
         <div
           style={{
-            fontSize: 38,
+            fontSize: 36,
             color: BRAND.muted,
             marginTop: 28,
-            maxWidth: 980,
+            maxWidth: 1056,
             lineHeight: 1.3,
           }}
         >
