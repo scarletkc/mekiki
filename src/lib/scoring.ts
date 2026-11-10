@@ -34,7 +34,7 @@ export interface RatingInput {
   metrics: Partial<Record<MetricKey, number | null>>;
   /** Current best raw score of each metric across the whole leaderboard. */
   frontier: Partial<Record<MetricKey, number | null>>;
-  /** KC's subjective score, 0–100, or null when not reviewed. */
+  /** Subjective score, 0–100, or null when not reviewed. */
   subjective: number | null;
   /** Official price, or null when unknown. */
   price: Price | null;
@@ -134,7 +134,7 @@ export function computeBenchmark(
   return { score: totalWeight > 0 ? weighted / totalWeight : null, breakdown };
 }
 
-/** Combine the benchmark score with KC's subjective score. */
+/** Combine the benchmark score with the subjective score. */
 export function computeIntelligence(
   benchmark: number | null,
   subjective: number | null,

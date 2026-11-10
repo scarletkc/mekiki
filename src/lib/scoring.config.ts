@@ -40,7 +40,7 @@ export interface ScoringConfig {
   intelligence: {
     /** Share of the benchmark score when a subjective score also exists. */
     benchmarkWeight: number;
-    /** Share of KC's subjective score when a benchmark score also exists. */
+    /** Share of the subjective score when a benchmark score also exists. */
     subjectiveWeight: number;
     metrics: Record<MetricKey, MetricConfig>;
     /** Minimum (rounded) score for each tier, checked top-down; anything lower is `low`. */

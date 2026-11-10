@@ -1,9 +1,7 @@
-/**
- * 简体中文 (default locale). This file defines the dictionary shape: the
- * other locales are type-checked against it, so a missing key fails the
- * build. `{name}` placeholders are filled by `fmt()` from ./index.
- */
-export const zhCN = {
+/** 简体中文. Shape is checked against the English dictionary. */
+import type { Dictionary } from './en';
+
+export const zhCN: Dictionary = {
   meta: {
     tagline: 'AI 模型评级',
     description: 'AI 模型的个人评级：智能、成本、性价比，并提供公开的 JSON API。',
@@ -229,5 +227,3 @@ export const zhCN = {
     home: '回到模型总表',
   },
 };
-
-export type Dictionary = typeof zhCN;

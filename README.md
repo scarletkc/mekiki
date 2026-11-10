@@ -1,11 +1,11 @@
 # mekiki
 
-KC's personal ratings of AI models, published as a static site and a public JSON API at
+Opinionated ratings of AI models, published as a static site and a public JSON API at
 <https://mekiki.fog.moe>.
 
 Each model gets three ratings:
 
-- **Intelligence**: public leaderboard scores (fetched automatically) blended with KC's own
+- **Intelligence**: public leaderboard scores (fetched automatically) blended with a subjective
   score (entered by hand).
 - **Cost**: derived from the official price.
 - **Value**: derived from intelligence and cost.
@@ -87,7 +87,7 @@ Things to know:
 - **Mappings are always explicit.** Names differ between leaderboards, and the same model
   is often listed once per reasoning level. Nothing is matched by guessing; choose the entry
   for the level you actually use.
-- **The `subjective` block is KC's.** Tools never write to it. Empty fields are shown as
+- **The `subjective` block is written by hand.** Tools never write to it. Empty fields are shown as
   "not rated", never as 0.
 - A subjective score of 100 means "the best there is right now", the same yardstick as a
   leaderboard score normalised to the current leader.
@@ -167,7 +167,7 @@ every language. Fields are only added; a breaking change bumps `version`. The pa
 
 ## Languages
 
-UI strings live in `src/i18n/` as one dictionary per language. `zh-cn.ts` defines the shape
+UI strings live in `src/i18n/` as one dictionary per language. `en.ts` defines the shape
 and the others are type-checked against it, so a missing string fails `pnpm check`.
 
 - Every language has its own prefix: `/en/`, `/zh-cn/` and `/zh-tw/`.
@@ -175,7 +175,7 @@ and the others are type-checked against it, so a missing string fails `pnpm chec
   English page and keep the query string. GitHub Pages cannot send HTTP redirects, so they
   redirect in the browser. The API's `url` field uses the unprefixed form as a
   language-neutral link.
-- KC's own text (verdict, strengths, weaknesses, review) is shown as written in every
+- Hand-written text (verdict, strengths, weaknesses, review) is shown as written in every
   language. It is not translated or converted.
 - The JSON API is not localised; it carries tier labels for every language instead.
 

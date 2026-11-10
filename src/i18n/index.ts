@@ -1,6 +1,6 @@
-import { en } from './en';
+import { en, type Dictionary } from './en';
 import { LOCALES, LOCALE_INFO, type Locale } from './locales';
-import { zhCN, type Dictionary } from './zh-cn';
+import { zhCN } from './zh-cn';
 import { zhTW } from './zh-tw';
 
 export * from './locales';

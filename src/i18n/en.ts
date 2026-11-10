@@ -1,7 +1,9 @@
-/** English. Shape is checked against the zh-CN dictionary. */
-import type { Dictionary } from './zh-cn';
-
-export const en: Dictionary = {
+/**
+ * English, the default locale. This file defines the dictionary shape: the
+ * other locales are type-checked against it, so a missing key fails
+ * `pnpm check`. `{name}` placeholders are filled by `fmt()` from ./fmt.
+ */
+export const en = {
   meta: {
     tagline: 'AI model ratings',
     description:
@@ -241,3 +243,5 @@ export const en: Dictionary = {
     home: 'Back to all models',
   },
 };
+
+export type Dictionary = typeof en;

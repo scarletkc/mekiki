@@ -61,7 +61,7 @@ export const modelSchema = z.object({
       }),
     )
     .default({}),
-  /** KC's own judgement. Never filled in by tooling. */
+  /** The maintainer's own judgement. Never filled in by tooling. */
   subjective: z
     .preprocess(
       (value) => value ?? {},
