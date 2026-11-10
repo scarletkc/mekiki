@@ -73,6 +73,8 @@ export const en = {
     sortBy: 'Sort by {column}',
     sortedAsc: 'ascending',
     sortedDesc: 'descending',
+    sort: 'Sort',
+    reverse: 'Reverse the order',
     caption: 'AI model ratings',
   },
   detail: {

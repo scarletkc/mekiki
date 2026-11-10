@@ -71,6 +71,8 @@ export const zhCN: Dictionary = {
     sortBy: '按{column}排序',
     sortedAsc: '升序',
     sortedDesc: '降序',
+    sort: '排序',
+    reverse: '反转顺序',
     caption: 'AI 模型评级总表',
   },
   detail: {

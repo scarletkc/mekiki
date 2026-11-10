@@ -11,6 +11,18 @@ import {
   type ColumnFiltersState,
   type SortingState,
 } from '@tanstack/react-table';
+import {
+  ArrowDown,
+  ArrowDownWideNarrow,
+  ArrowUp,
+  ArrowUpNarrowWide,
+  ChevronsUpDown,
+  GitCompareArrows,
+  History,
+  RotateCcw,
+  Search,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -42,7 +54,7 @@ import {
 } from '@/lib/scoring.config';
 import { COMPARE_MAX } from '@/lib/share';
 import { cn } from '@/lib/utils';
-import { TierMeter } from './TierMeter';
+import { TierMeter, type RatingKind } from './TierMeter';
 
 /** What the table needs to know about a model; a slimmed-down ModelRecord. */
 export interface ModelRow {
@@ -169,10 +181,15 @@ function PickBox({
   id,
   name,
   strings,
+  inputId,
+  className,
 }: {
   id: string;
   name: string;
   strings: ModelTableStrings['compare'];
+  /** For a label that widens the hit area. */
+  inputId?: string;
+  className?: string;
 }) {
   const { picked, toggle } = useContext(PickContext);
   const isPicked = picked.includes(id);
@@ -180,26 +197,98 @@ function PickBox({
   return (
     <input
       type="checkbox"
+      id={inputId}
       checked={isPicked}
       disabled={full}
       onChange={() => toggle(id)}
       aria-label={fmt(strings.select, { name })}
       title={full ? fmt(strings.limit, { n: COMPARE_MAX }) : fmt(strings.select, { name })}
-      className="accent-primary size-3.5 shrink-0 cursor-pointer disabled:cursor-not-allowed"
+      className={cn(
+        'accent-primary size-4 shrink-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40',
+        className,
+      )}
     />
   );
 }
 
 function SortArrow({ direction }: { direction: 'asc' | 'desc' | false }) {
+  const Icon = direction === 'asc' ? ArrowUp : direction === 'desc' ? ArrowDown : ChevronsUpDown;
   return (
-    <svg
-      viewBox="0 0 8 12"
+    <Icon
       aria-hidden="true"
-      className={cn('h-3 w-2 shrink-0', direction ? 'text-foreground' : 'text-pip')}
-    >
-      <path d="M4 1 7 5H1z" fill="currentColor" opacity={direction === 'desc' ? 0.25 : 1} />
-      <path d="M4 11 1 7h6z" fill="currentColor" opacity={direction === 'asc' ? 0.25 : 1} />
-    </svg>
+      className={cn(
+        'size-3.5 shrink-0',
+        direction
+          ? 'text-foreground'
+          : 'text-muted-foreground/50 group-hover/sort:text-muted-foreground',
+      )}
+    />
+  );
+}
+
+/** Props for the three rating meters of a model; shared by the table and the cards. */
+function meterProps(model: ModelRow, { tier, empty }: Pick<ModelTableStrings, 'tier' | 'empty'>) {
+  const { intelligence, cost, value } = model;
+  return {
+    intelligence: {
+      kind: 'intelligence' as RatingKind,
+      tier: intelligence.tier,
+      label: intelligence.tier ? tier.intelligence[intelligence.tier] : empty.unrated,
+      figure: intelligence.score === null ? null : formatScore(intelligence.score),
+    },
+    cost: {
+      kind: 'cost' as RatingKind,
+      tier: cost.tier,
+      label: cost.tier ? tier.cost[cost.tier] : empty.noPrice,
+      figure: cost.free ? empty.free : cost.blended === null ? null : formatPrice(cost.blended),
+    },
+    value: {
+      kind: 'value' as RatingKind,
+      tier: value.tier,
+      label: value.tier ? tier.value[value.tier] : empty.unrated,
+      figure: value.score === null ? null : formatScore(value.score),
+    },
+  };
+}
+
+function ModelBadges({
+  model,
+  badge,
+  className,
+}: {
+  model: ModelRow;
+  badge: ModelTableStrings['badge'];
+  className?: string;
+}) {
+  if (!model.legacy && model.openWeights !== true) return null;
+  return (
+    <span className={cn('flex flex-wrap gap-1', className)}>
+      {model.legacy && (
+        <Badge variant="outline" className="text-muted-foreground font-normal">
+          {badge.legacy}
+        </Badge>
+      )}
+      {model.openWeights === true && (
+        <Badge variant="outline" className="text-muted-foreground font-normal">
+          {badge.openWeights}
+        </Badge>
+      )}
+    </span>
+  );
+}
+
+function Price({ model, empty }: { model: ModelRow; empty: ModelTableStrings['empty'] }) {
+  const { input, output, free } = model.cost;
+  if (input === null || output === null) {
+    return <span className="text-muted-foreground">{empty.noPrice}</span>;
+  }
+  if (free) return <span>{empty.free}</span>;
+  return (
+    <span className="num">
+      {formatPrice(input)}
+      <span className="text-muted-foreground"> / </span>
+      {formatPrice(output)}
+    </span>
   );
 }
 
@@ -214,7 +303,8 @@ function FilterSelect({
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
-  allLabel: string;
+  /** Label of the "no filter" choice; leave out for a select without one. */
+  allLabel?: string;
 }) {
   // When the menu closes, focus goes back to the trigger so keyboard users
   // can carry on from there. Browsers then draw the focus ring even if the
@@ -222,11 +312,14 @@ function FilterSelect({
   // the ring is hidden after pointer use and comes back with the keyboard.
   const [open, setOpen] = useState(false);
   const [byPointer, setByPointer] = useState(false);
+  // Radix only knows the selected item's text after hydration; passing it in
+  // keeps the prerendered trigger from showing up empty and then jumping.
+  const selected =
+    value === ALL ? allLabel : options.find((option) => option.value === value)?.label;
 
   return (
     <Select value={value} onValueChange={onChange} open={open} onOpenChange={setOpen}>
       <SelectTrigger
-        size="sm"
         aria-label={label}
         data-pointer={byPointer ? '' : undefined}
         onPointerDown={() => setByPointer(true)}
@@ -236,15 +329,17 @@ function FilterSelect({
           // real departure resets the state.
           if (!open) setByPointer(false);
         }}
-        className="min-w-0 gap-1 data-[pointer]:focus-visible:border-input data-[pointer]:focus-visible:ring-0"
+        className="w-full min-w-0 gap-1 data-[size=default]:h-9 data-[pointer]:focus-visible:border-input data-[pointer]:focus-visible:ring-0 sm:w-fit sm:data-[size=default]:h-8"
       >
-        <span className="text-muted-foreground">{label}</span>
-        <SelectValue />
+        <span className="flex min-w-0 items-center gap-1">
+          <span className="text-muted-foreground shrink-0">{label}</span>
+          <SelectValue className="truncate">{selected}</SelectValue>
+        </span>
       </SelectTrigger>
       {/* Drop down below the trigger. The default ("item-aligned") lays the
           list over the trigger, which hides the filter's label. */}
       <SelectContent position="popper" align="start">
-        <SelectItem value={ALL}>{allLabel}</SelectItem>
+        {allLabel !== undefined && <SelectItem value={ALL}>{allLabel}</SelectItem>}
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             {option.label}
@@ -354,27 +449,18 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
           return (
             // The checkbox stays beside the first line of the name; only the
             // name and badges wrap on narrow screens.
-            <span className="flex items-start gap-2">
+            <span className="flex items-start gap-2.5">
               <span className="flex h-[1.5em] items-center">
                 <PickBox id={model.id} name={model.name} strings={compare} />
               </span>
-              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 sm:flex-nowrap">
+              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 lg:flex-nowrap">
                 <a
                   href={model.href}
-                  className="font-medium underline decoration-transparent underline-offset-4 hover:decoration-current"
+                  className="font-medium underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
                 >
                   {model.name}
                 </a>
-                {model.legacy && (
-                  <span className="text-muted-foreground rounded border px-1 text-xs leading-[1.4] whitespace-nowrap">
-                    {badge.legacy}
-                  </span>
-                )}
-                {model.openWeights === true && (
-                  <span className="text-muted-foreground rounded border px-1 text-xs leading-[1.4] whitespace-nowrap">
-                    {badge.openWeights}
-                  </span>
-                )}
+                <ModelBadges model={model} badge={badge} className="lg:flex-nowrap" />
               </span>
             </span>
           );
@@ -392,70 +478,29 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
         header: t.columns.intelligence,
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.intelligence.tier === wanted,
-        cell: ({ row }) => {
-          const { score, tier: key } = row.original.intelligence;
-          return (
-            <TierMeter
-              kind="intelligence"
-              tier={key}
-              label={key ? tier.intelligence[key] : empty.unrated}
-              figure={score === null ? null : formatScore(score)}
-            />
-          );
-        },
+        cell: ({ row }) => (
+          <TierMeter {...meterProps(row.original, { tier, empty }).intelligence} />
+        ),
       }),
       helper.accessor((row) => row.cost.blended ?? undefined, {
         id: 'cost',
         header: t.columns.cost,
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.cost.tier === wanted,
-        cell: ({ row }) => {
-          const { tier: key, blended, free } = row.original.cost;
-          return (
-            <TierMeter
-              kind="cost"
-              tier={key}
-              label={key ? tier.cost[key] : empty.noPrice}
-              figure={free ? empty.free : blended === null ? null : formatPrice(blended)}
-            />
-          );
-        },
+        cell: ({ row }) => <TierMeter {...meterProps(row.original, { tier, empty }).cost} />,
       }),
       helper.accessor((row) => row.value.score ?? undefined, {
         id: 'value',
         header: t.columns.value,
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.value.tier === wanted,
-        cell: ({ row }) => {
-          const { score, tier: key } = row.original.value;
-          return (
-            <TierMeter
-              kind="value"
-              tier={key}
-              label={key ? tier.value[key] : empty.unrated}
-              figure={score === null ? null : formatScore(score)}
-            />
-          );
-        },
+        cell: ({ row }) => <TierMeter {...meterProps(row.original, { tier, empty }).value} />,
       }),
       helper.accessor((row) => row.cost.input ?? undefined, {
         id: 'price',
         header: t.columns.price,
         ...figure,
-        cell: ({ row }) => {
-          const { input, output, free } = row.original.cost;
-          if (input === null || output === null) {
-            return <span className="text-muted-foreground">{empty.noPrice}</span>;
-          }
-          if (free) return <span>{empty.free}</span>;
-          return (
-            <span className="num">
-              {formatPrice(input)}
-              <span className="text-muted-foreground"> / </span>
-              {formatPrice(output)}
-            </span>
-          );
-        },
+        cell: ({ row }) => <Price model={row.original} empty={empty} />,
       }),
     ]);
   }, [t, tier, empty, badge, compare, lang]);
@@ -483,72 +528,170 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
   const tierOptions = <T extends string>(keys: readonly T[], labels: Record<T, string>) =>
     keys.map((key) => ({ value: key, label: labels[key] }));
 
+  // Narrow screens get cards instead of the table, so sorting needs its own
+  // control there. It drives the same state as the column headers.
+  const sort = sorting[0] ?? DEFAULT_SORT[0]!;
+  const sortOptions = COLUMN_IDS.map((id) => ({ value: id, label: t.columns[id] }));
+  const SortIcon = sort.desc ? ArrowDownWideNarrow : ArrowUpNarrowWide;
+
   return (
     // Room at the bottom so the compare bar never covers the last controls.
-    <div className={cn(picked.length > 0 && 'pb-16')}>
-      <search aria-label={t.filters} className="mb-3 flex flex-wrap items-center gap-2">
-        <Input
-          type="search"
-          value={filters.q}
-          onChange={(event) => setFilter('q', event.target.value)}
-          placeholder={t.search}
-          aria-label={t.search}
-          className="h-7 w-full sm:w-56"
-        />
-        <FilterSelect
-          label={t.vendor}
-          value={filters.vendor}
-          onChange={(value) => setFilter('vendor', value)}
-          options={vendors.map((vendor) => ({ value: vendor, label: vendor }))}
-          allLabel={t.all}
-        />
-        <FilterSelect
-          label={t.columns.intelligence}
-          value={filters.int}
-          onChange={(value) => setFilter('int', value)}
-          options={tierOptions(INTELLIGENCE_TIERS, tier.intelligence)}
-          allLabel={t.all}
-        />
-        <FilterSelect
-          label={t.columns.cost}
-          value={filters.cost}
-          onChange={(value) => setFilter('cost', value)}
-          options={tierOptions(COST_TIERS, tier.cost)}
-          allLabel={t.all}
-        />
-        <FilterSelect
-          label={t.columns.value}
-          value={filters.val}
-          onChange={(value) => setFilter('val', value)}
-          options={tierOptions(VALUE_TIERS, tier.value)}
-          allLabel={t.all}
-        />
-        <FilterSelect
-          label={t.weights}
-          value={filters.open}
-          onChange={(value) => setFilter('open', value)}
-          options={[
-            { value: 'open', label: t.open },
-            { value: 'closed', label: t.closed },
-          ]}
-          allLabel={t.all}
-        />
-        {filtersActive && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setFilters({ ...NO_FILTERS, legacy: filters.legacy })}
-          >
-            {t.reset}
-          </Button>
-        )}
-        <p className="text-muted-foreground num ml-auto text-sm" aria-live="polite">
-          {fmt(t.count, { shown: rows.length, total: data.length })}
-        </p>
+    <div className={cn(picked.length > 0 && 'pb-20')}>
+      <search
+        aria-label={t.filters}
+        className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
+      >
+        <div className="relative sm:w-60">
+          <Search
+            aria-hidden="true"
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
+          />
+          <Input
+            type="search"
+            value={filters.q}
+            onChange={(event) => setFilter('q', event.target.value)}
+            placeholder={t.search}
+            aria-label={t.search}
+            className="h-9 pl-8 sm:h-8"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+          <FilterSelect
+            label={t.vendor}
+            value={filters.vendor}
+            onChange={(value) => setFilter('vendor', value)}
+            options={vendors.map((vendor) => ({ value: vendor, label: vendor }))}
+            allLabel={t.all}
+          />
+          <FilterSelect
+            label={t.columns.intelligence}
+            value={filters.int}
+            onChange={(value) => setFilter('int', value)}
+            options={tierOptions(INTELLIGENCE_TIERS, tier.intelligence)}
+            allLabel={t.all}
+          />
+          <FilterSelect
+            label={t.columns.cost}
+            value={filters.cost}
+            onChange={(value) => setFilter('cost', value)}
+            options={tierOptions(COST_TIERS, tier.cost)}
+            allLabel={t.all}
+          />
+          <FilterSelect
+            label={t.columns.value}
+            value={filters.val}
+            onChange={(value) => setFilter('val', value)}
+            options={tierOptions(VALUE_TIERS, tier.value)}
+            allLabel={t.all}
+          />
+          <FilterSelect
+            label={t.weights}
+            value={filters.open}
+            onChange={(value) => setFilter('open', value)}
+            options={[
+              { value: 'open', label: t.open },
+              { value: 'closed', label: t.closed },
+            ]}
+            allLabel={t.all}
+          />
+          {filtersActive && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground h-9 sm:h-8"
+              onClick={() => setFilters({ ...NO_FILTERS, legacy: filters.legacy })}
+            >
+              <RotateCcw aria-hidden="true" />
+              {t.reset}
+            </Button>
+          )}
+        </div>
       </search>
 
-      <div className="-mx-4 border-y sm:mx-0 sm:rounded-md sm:border-x">
-        <PickContext.Provider value={pickValue}>
+      <div className="mb-3 flex min-h-9 items-center justify-between gap-3">
+        <p className="text-muted-foreground num text-sm" aria-live="polite">
+          {fmt(t.count, { shown: rows.length, total: data.length })}
+        </p>
+        <div className="flex items-center gap-1 md:hidden">
+          <FilterSelect
+            label={t.sort}
+            value={sort.id}
+            onChange={(id) =>
+              setSorting([{ id, desc: id !== 'model' && id !== 'vendor' }] satisfies SortingState)
+            }
+            options={sortOptions}
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-9 shrink-0"
+            title={t.reverse}
+            aria-label={`${t.reverse} (${sort.desc ? t.sortedDesc : t.sortedAsc})`}
+            onClick={() => setSorting([{ id: sort.id, desc: !sort.desc }])}
+          >
+            <SortIcon aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+
+      <PickContext.Provider value={pickValue}>
+        {/* Cards, below the md breakpoint. */}
+        <ul className="bg-card divide-y overflow-hidden rounded-xl border md:hidden">
+          {rows.map((row) => {
+            const model = row.original;
+            const meters = meterProps(model, { tier, empty });
+            return (
+              <li key={row.id} className="hover:bg-muted/50 relative px-4 py-3.5 transition-colors">
+                <div className="flex items-start gap-3">
+                  {/* A wider hit area than the box, and above the card's link. */}
+                  <label
+                    htmlFor={`pick-card-${model.id}`}
+                    className="relative z-10 -m-2.5 flex h-[calc(1.5em+1.25rem)] items-center p-2.5"
+                  >
+                    <PickBox
+                      id={model.id}
+                      name={model.name}
+                      strings={compare}
+                      inputId={`pick-card-${model.id}`}
+                    />
+                  </label>
+                  <div className="min-w-0 flex-1">
+                    <a
+                      href={model.href}
+                      className="font-medium outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring"
+                    >
+                      {model.name}
+                    </a>
+                    <p className="text-muted-foreground text-xs">{model.vendor}</p>
+                  </div>
+                  <ModelBadges model={model} badge={badge} className="mt-0.5 justify-end" />
+                </div>
+                <dl className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                  {(['intelligence', 'cost', 'value'] as const).map((kind) => (
+                    <div key={kind} className="min-w-0">
+                      <dt className="text-muted-foreground mb-1 text-xs">{t.columns[kind]}</dt>
+                      <dd>
+                        <TierMeter {...meters[kind]} stacked />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="text-muted-foreground mt-3 flex items-baseline justify-between gap-3 border-t border-dashed pt-2.5 text-xs">
+                  <span>{t.columns.price}</span>
+                  <span className="text-foreground">
+                    <Price model={model} empty={empty} />
+                  </span>
+                </p>
+              </li>
+            );
+          })}
+          {rows.length === 0 && (
+            <li className="text-muted-foreground px-4 py-10 text-center text-sm">{t.noResults}</li>
+          )}
+        </ul>
+
+        {/* The table, from the md breakpoint up. */}
+        <div className="bg-card hidden overflow-hidden rounded-xl border md:block">
           <Table className="text-sm">
             <caption className="sr-only">{t.caption}</caption>
             <TableHeader>
@@ -564,19 +707,16 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
                         aria-sort={
                           sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'
                         }
-                        className={cn(
-                          'bg-muted/60 h-9 px-0',
-                          index === 0 && 'bg-muted sticky left-0 z-10',
-                        )}
+                        className={cn('bg-muted h-10 px-0', index === 0 && 'sticky left-0 z-10')}
                       >
                         <button
                           type="button"
                           onClick={header.column.getToggleSortingHandler()}
                           title={fmt(t.sortBy, { column: label })}
                           className={cn(
-                            'hover:text-foreground flex h-9 w-full items-center gap-1.5 px-3 text-xs font-medium whitespace-nowrap',
+                            'group/sort hover:text-foreground flex h-10 w-full items-center gap-1.5 px-3 text-xs font-medium whitespace-nowrap transition-colors',
                             sorted ? 'text-foreground' : 'text-muted-foreground',
-                            index === 0 && 'pl-4 sm:pl-3',
+                            index === 0 && 'pl-4',
                           )}
                         >
                           {label}
@@ -600,9 +740,9 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
                     <TableCell
                       key={cell.id}
                       className={cn(
-                        'px-3 py-2 align-middle',
+                        'px-3 py-2.5 align-middle',
                         index === 0 &&
-                          'bg-background group-hover:bg-muted sticky left-0 z-10 max-w-[12rem] min-w-[10rem] pl-4 whitespace-normal sm:max-w-none sm:pl-3 sm:whitespace-nowrap',
+                          'bg-card sticky left-0 z-10 max-w-[13rem] min-w-[10rem] pl-4 whitespace-normal transition-colors group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))] lg:max-w-none lg:whitespace-nowrap',
                       )}
                     >
                       <table.FlexRender cell={cell} />
@@ -614,7 +754,7 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
                 <TableRow className="hover:bg-transparent">
                   <TableCell
                     colSpan={COLUMN_IDS.length}
-                    className="text-muted-foreground px-4 py-8"
+                    className="text-muted-foreground px-4 py-10 text-center"
                   >
                     {t.noResults}
                   </TableCell>
@@ -622,22 +762,30 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
               )}
             </TableBody>
           </Table>
-        </PickContext.Provider>
-      </div>
+        </div>
+      </PickContext.Provider>
 
       {picked.length > 0 && (
         <section
           aria-label={compare.action}
-          className="bg-popover text-popover-foreground fixed inset-x-4 bottom-4 z-30 mx-auto flex max-w-md items-center gap-3 rounded-lg border py-2 pr-2 pl-4 text-sm shadow-lg"
+          className="bg-popover text-popover-foreground fixed inset-x-4 bottom-4 z-30 mx-auto flex max-w-md items-center gap-2 rounded-xl border py-2 pr-2 pl-4 text-sm shadow-lg"
         >
           <span className="num" aria-live="polite">
             {fmt(compare.selected, { n: picked.length })}
           </span>
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setPicked([])}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground ml-auto h-9 sm:h-8"
+            onClick={() => setPicked([])}
+          >
             {compare.clear}
           </Button>
-          <Button asChild size="sm">
-            <a href={`${compareHref}${compareQuery(picked)}`}>{compare.action}</a>
+          <Button asChild size="sm" className="h-9 sm:h-8">
+            <a href={`${compareHref}${compareQuery(picked)}`}>
+              <GitCompareArrows aria-hidden="true" />
+              {compare.action}
+            </a>
           </Button>
         </section>
       )}
@@ -648,9 +796,11 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
           <Button
             variant="outline"
             size="sm"
+            className="h-9 sm:h-7"
             aria-pressed={filters.legacy}
             onClick={() => setFilter('legacy', !filters.legacy)}
           >
+            <History aria-hidden="true" />
             {filters.legacy ? t.hideLegacy : fmt(t.showLegacy, { n: legacyCount })}
           </Button>
         )}

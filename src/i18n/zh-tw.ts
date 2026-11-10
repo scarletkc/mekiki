@@ -71,6 +71,8 @@ export const zhTW: Dictionary = {
     sortBy: '依{column}排序',
     sortedAsc: '遞增',
     sortedDesc: '遞減',
+    sort: '排序',
+    reverse: '反轉順序',
     caption: 'AI 模型評級總表',
   },
   detail: {
