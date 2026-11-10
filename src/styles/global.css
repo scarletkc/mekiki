@@ -138,12 +138,13 @@
         background: color-mix(in oklch, var(--primary) 22%, transparent);
     }
 
-    summary {
+    /* The header menus draw their own trigger; other <details> keep the marker. */
+    details[data-menu] > summary {
         list-style: none;
         cursor: pointer;
     }
 
-    summary::-webkit-details-marker {
+    details[data-menu] > summary::-webkit-details-marker {
         display: none;
     }
 }

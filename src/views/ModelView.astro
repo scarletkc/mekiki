@@ -1,5 +1,6 @@
 ---
 import ArrowLeft from '@lucide/astro/icons/arrow-left';
+import ArrowRight from '@lucide/astro/icons/arrow-right';
 import Braces from '@lucide/astro/icons/braces';
 import Columns2 from '@lucide/astro/icons/columns-2';
 import ExternalLink from '@lucide/astro/icons/external-link';
@@ -257,7 +258,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       </section>
 
       <section aria-labelledby="history" class="mt-10">
-        <h2 id="history" class="mb-2 text-base font-semibold">{t.detail.history}</h2>
+        <h2 id="history" class="mb-3 text-lg font-semibold tracking-tight">{t.detail.history}</h2>
         {
           series.length < 2 ? (
             <p class="text-muted-foreground max-w-[68ch] text-sm">{fmt(t.detail.historyStart, { date: historyStart })}</p>
@@ -282,7 +283,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
               <p class="text-muted-foreground mt-2 max-w-[68ch] text-xs">{t.detail.historyNote}</p>
               <details class="mt-2 text-sm">
                 <summary class="text-muted-foreground hover:text-foreground cursor-pointer text-xs">{t.detail.historyData}</summary>
-                <div class="mt-1 overflow-x-auto">
+                <div class="table-wrap mt-2 mb-0">
                   <table class="data-table">
                     <caption>{t.detail.historyData}</caption>
                     <thead>
@@ -295,7 +296,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
                     <tbody>
                       {[...series].reverse().map((point) => (
                         <tr>
-                          <th scope="row" class="num font-normal">{point.date}</th>
+                          <th scope="row" class="num text-start font-normal">{point.date}</th>
                           <td class="num">{point.intelligence === null ? <span class="text-muted-foreground">{t.empty.unrated}</span> : formatScore(point.intelligence)}</td>
                           <td class="num">{point.value === null ? <span class="text-muted-foreground">{t.empty.unrated}</span> : formatScore(point.value)}</td>
                         </tr>
@@ -308,7 +309,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           )
         }
 
-        <h3 class="mt-6 mb-2 text-sm font-semibold">{t.detail.changes}</h3>
+        <h3 class="mt-8 mb-2 text-base font-semibold">{t.detail.changes}</h3>
         {
           modelChanges.length === 0 ? (
             <p class="text-muted-foreground text-sm">{fmt(t.detail.noChanges, { date: changelog.start ?? historyStart })}</p>
@@ -323,8 +324,14 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
             </ul>
           )
         }
-        <p class="mt-2 text-sm">
-          <a href={localePath(locale, '/changelog')} class="text-primary underline">{t.detail.allChanges}</a>
+        <p class="mt-3 text-sm">
+          <a
+            href={localePath(locale, '/changelog')}
+            class="text-primary inline-flex items-center gap-1.5 underline-offset-4 hover:underline"
+          >
+            {t.detail.allChanges}
+            <ArrowRight class="size-4" />
+          </a>
         </p>
       </section>
     </div>
