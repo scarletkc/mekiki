@@ -141,29 +141,31 @@ export function computeBenchmark(
 }
 
 /**
- * Input price after prompt caching: a share `cacheHitRate` of input tokens
- * is billed at the cache-read price. Without a known cache-read price the
- * full input price applies. Cache-write surcharges are not counted.
+ * Price of a cached input token. Without a known cache-read price the input
+ * price applies, and a cache price above the input price is capped at it
+ * (an overridden input price can end up below the cache price from models.dev).
  */
-export function effectiveInputPrice(
-  input: number,
-  cacheRead: number | null | undefined,
-  config: ScoringConfig = scoringConfig,
-): number {
-  if (!isNumber(cacheRead)) return input;
-  const hit = clamp(config.cost.cacheHitRate, 0, 1);
-  // An overridden input price can end up below the cache price from models.dev.
-  return hit * Math.min(cacheRead, input) + (1 - hit) * input;
+export function cacheReadPrice(input: number, cacheRead: number | null | undefined): number {
+  return isNumber(cacheRead) ? Math.min(cacheRead, input) : input;
 }
 
-/** Blended price in USD per 1M tokens, weighting input over output. Pass the effective input price. */
-export function blendedPrice(
-  input: number,
-  output: number,
-  config: ScoringConfig = scoringConfig,
-): number {
-  const { inputWeight, outputWeight } = config.cost;
-  return (inputWeight * input + outputWeight * output) / (inputWeight + outputWeight);
+/** Share of input tokens the blend counts as cache hits, as a whole percentage. */
+export function cacheHitPercent(cost: ScoringConfig['cost'] = scoringConfig.cost): number {
+  const inputTokens = cost.cacheReadWeight + cost.inputWeight;
+  return inputTokens > 0 ? Math.round((100 * cost.cacheReadWeight) / inputTokens) : 0;
+}
+
+/**
+ * Blended price in USD per 1M tokens: cache reads, input and output mixed by
+ * the configured weights. Cache-write surcharges are not counted.
+ */
+export function blendedPrice(price: Price, config: ScoringConfig = scoringConfig): number {
+  const { cacheReadWeight, inputWeight, outputWeight } = config.cost;
+  const cached = cacheReadPrice(price.input, price.cache_read);
+  return (
+    (cacheReadWeight * cached + inputWeight * price.input + outputWeight * price.output) /
+    (cacheReadWeight + inputWeight + outputWeight)
+  );
 }
 
 /**
@@ -185,17 +187,13 @@ export function effectivePrice(
   return { price: blended ** (1 - weight) * measured ** weight, basis: 'run_cost' };
 }
 
-/** Blended list price of a model, with the assumed cache hits counted. Null without a usable price. */
+/** Blended list price of a model (cache reads, input and output). Null without a usable price. */
 export function listPrice(
   price: Price | null | undefined,
   config: ScoringConfig = scoringConfig,
 ): number | null {
   if (!price || !isNumber(price.input) || !isNumber(price.output)) return null;
-  return blendedPrice(
-    effectiveInputPrice(price.input, price.cache_read, config),
-    price.output,
-    config,
-  );
+  return blendedPrice(price, config);
 }
 
 /** Log-scaled cost index, 0 (cheapest) to 100 (most expensive). */

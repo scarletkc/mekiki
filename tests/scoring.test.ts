@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   blendedPrice,
+  cacheHitPercent,
+  cacheReadPrice,
   computeBenchmark,
   computeValue,
   costIndex,
   costTier,
-  effectiveInputPrice,
   effectivePrice,
   intelligenceTier,
   normalizeMetric,
@@ -51,12 +52,12 @@ const specConfig: ScoringConfig = {
     tiers: { top: 90, high: 75, mid: 55 },
   },
   cost: {
-    cacheHitRate: 0.5,
-    inputWeight: 3,
+    cacheReadWeight: 7,
+    inputWeight: 2,
     outputWeight: 1,
-    indexFloorPrice: 0.1,
-    indexCeilPrice: 30,
-    tiers: { low: 1, mid: 5, high: 15 },
+    indexFloorPrice: 0.04,
+    indexCeilPrice: 12,
+    tiers: { low: 0.4, mid: 2, high: 6 },
   },
   value: {
     intelligenceExponent: 0.6,
@@ -88,15 +89,15 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 68, aa_coding: 60, arena_text: 1490 },
       frontier,
-      price: { input: 5, output: 25 },
+      price: { input: 5, output: 25, cache_read: 0.5 },
     },
     expected: {
       intelligence: 96.9,
       intelligenceTier: 'top',
-      blended: 10,
+      blended: 3.85,
       costTier: 'high',
-      costIndex: 80.7,
-      value: 50.8,
+      costIndex: 80.1,
+      value: 51.5,
       valueTier: 'mid',
     },
   },
@@ -105,15 +106,15 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 60, aa_coding: 52, arena_text: 1450 },
       frontier,
-      price: { input: 1.25, output: 10 },
+      price: { input: 1.25, output: 10, cache_read: 0.125 },
     },
     expected: {
       intelligence: 84.6,
       intelligenceTier: 'high',
-      blended: 3.4375,
+      blended: 1.3375,
       costTier: 'mid',
-      costIndex: 62.0,
-      value: 61.4,
+      costIndex: 61.5,
+      value: 61.7,
       valueTier: 'high',
     },
   },
@@ -122,15 +123,15 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 50, aa_coding: 40, arena_text: 1400 },
       frontier,
-      price: { input: 0.3, output: 2.5 },
+      price: { input: 0.3, output: 2.5, cache_read: 0.03 },
     },
     expected: {
       intelligence: 68.6,
       intelligenceTier: 'mid',
-      blended: 0.85,
+      blended: 0.331,
       costTier: 'low',
-      costIndex: 37.5,
-      value: 66.1,
+      costIndex: 37.0,
+      value: 66.3,
       valueTier: 'high',
     },
   },
@@ -139,12 +140,12 @@ const fixtures: Fixture[] = [
     input: {
       metrics: { aa_intelligence: 30, aa_coding: 22, arena_text: 1300 },
       frontier,
-      price: { input: 0.05, output: 0.2 },
+      price: { input: 0.05, output: 0.2, cache_read: 0.005 },
     },
     expected: {
       intelligence: 38.5,
       intelligenceTier: 'low',
-      blended: 0.0875,
+      blended: 0.0335,
       costTier: 'low',
       costIndex: 0,
       value: 56.4,
@@ -156,20 +157,20 @@ const fixtures: Fixture[] = [
     input: {
       metrics: {},
       frontier,
-      price: { input: 3, output: 15 },
+      price: { input: 3, output: 15, cache_read: 0.3 },
     },
     expected: {
       intelligence: null,
       intelligenceTier: null,
-      blended: 6,
+      blended: 2.31,
       costTier: 'high',
-      costIndex: 71.8,
+      costIndex: 71.1,
       value: null,
       valueTier: null,
     },
   },
   {
-    name: 'F no coding index',
+    name: 'F no coding index, no cache price',
     input: {
       metrics: { aa_intelligence: 56, aa_coding: null, arena_text: 1430 },
       frontier,
@@ -178,28 +179,11 @@ const fixtures: Fixture[] = [
     expected: {
       intelligence: 78.8,
       intelligenceTier: 'high',
-      blended: 3.5,
-      costTier: 'mid',
-      costIndex: 62.3,
-      value: 58.6,
+      blended: 2.6,
+      costTier: 'high',
+      costIndex: 73.2,
+      value: 51.2,
       valueTier: 'mid',
-    },
-  },
-  {
-    name: 'G balanced, with a cache price',
-    input: {
-      metrics: { aa_intelligence: 60, aa_coding: 52, arena_text: 1450 },
-      frontier,
-      price: { input: 1.25, output: 10, cache_read: 0.125 },
-    },
-    expected: {
-      intelligence: 84.6,
-      intelligenceTier: 'high',
-      blended: 3.015625,
-      costTier: 'mid',
-      costIndex: 59.7,
-      value: 62.9,
-      valueTier: 'high',
     },
   },
 ];
@@ -310,56 +294,54 @@ describe('computeBenchmark', () => {
 });
 
 describe('cost', () => {
-  it('blends input and output 3:1', () => {
-    expect(blendedPrice(5, 25)).toBe(10);
-    expect(blendedPrice(0, 0)).toBe(0);
+  it('blends cache reads, input and output 7:2:1', () => {
+    expect(blendedPrice({ input: 5, output: 25, cache_read: 0.5 }, specConfig)).toBeCloseTo(
+      3.85,
+      9,
+    );
+    expect(blendedPrice({ input: 0, output: 0 }, specConfig)).toBe(0);
   });
 
-  it('bills the assumed cache hits at the cache-read price', () => {
-    expect(effectiveInputPrice(5, 0.5, specConfig)).toBe(2.75);
-    // A cache price of 0 is a real price, not a missing one.
-    expect(effectiveInputPrice(5, 0, specConfig)).toBe(2.5);
+  it('equals a 9:1 input:output blend with 7 in 9 input tokens cached', () => {
+    const hit = 7 / 9;
+    const effectiveInput = hit * 0.2 + (1 - hit) * 2;
+    expect(blendedPrice({ input: 2, output: 10, cache_read: 0.2 }, specConfig)).toBeCloseTo(
+      (9 * effectiveInput + 10) / 10,
+      9,
+    );
+    expect(cacheHitPercent(specConfig.cost)).toBe(78);
   });
 
-  it('charges the full input price when the cache price is unknown', () => {
-    expect(effectiveInputPrice(5, null, specConfig)).toBe(5);
-    expect(effectiveInputPrice(5, undefined, specConfig)).toBe(5);
+  it('treats a cache price of 0 as a real price', () => {
+    expect(blendedPrice({ input: 5, output: 25, cache_read: 0 }, specConfig)).toBeCloseTo(3.5, 9);
+  });
+
+  it('charges the input price for cached tokens when the cache price is unknown', () => {
+    expect(cacheReadPrice(5, null)).toBe(5);
+    expect(cacheReadPrice(5, undefined)).toBe(5);
+    expect(blendedPrice({ input: 2, output: 8 }, specConfig)).toBeCloseTo(2.6, 9);
   });
 
   it('never lets a cache price above the input price raise the cost', () => {
-    expect(effectiveInputPrice(1, 2, specConfig)).toBe(1);
-  });
-
-  it('reproduces the cache-free price at a hit rate of 0', () => {
-    const noCache: ScoringConfig = { ...specConfig, cost: { ...specConfig.cost, cacheHitRate: 0 } };
-    const input: RatingInput = {
-      metrics: {},
-      frontier,
-      price: { input: 5, output: 25, cache_read: 0.5 },
-    };
-    expect(rateModel(input, noCache).cost).toMatchObject({
-      blended: 10,
-      index: 80.7,
-      tier: 'high',
-    });
+    expect(cacheReadPrice(1, 2)).toBe(1);
   });
 
   it('maps the blended price to a log-scaled index', () => {
-    expect(costIndex(0)).toBe(0);
-    expect(costIndex(0.1)).toBe(0);
-    expect(costIndex(30)).toBeCloseTo(100, 9);
-    expect(costIndex(300)).toBe(100);
-    expect(costIndex(Math.sqrt(3))).toBeCloseTo(50, 9);
+    expect(costIndex(0, specConfig)).toBe(0);
+    expect(costIndex(0.04, specConfig)).toBe(0);
+    expect(costIndex(12, specConfig)).toBeCloseTo(100, 9);
+    expect(costIndex(120, specConfig)).toBe(100);
+    expect(costIndex(Math.sqrt(0.04 * 12), specConfig)).toBeCloseTo(50, 9);
   });
 
   it('assigns tiers by absolute blended price', () => {
-    expect(costTier(0)).toBe('low');
-    expect(costTier(0.99)).toBe('low');
-    expect(costTier(1)).toBe('mid');
-    expect(costTier(4.99)).toBe('mid');
-    expect(costTier(5)).toBe('high');
-    expect(costTier(14.99)).toBe('high');
-    expect(costTier(15)).toBe('very_high');
+    expect(costTier(0, specConfig)).toBe('low');
+    expect(costTier(0.39, specConfig)).toBe('low');
+    expect(costTier(0.4, specConfig)).toBe('mid');
+    expect(costTier(1.99, specConfig)).toBe('mid');
+    expect(costTier(2, specConfig)).toBe('high');
+    expect(costTier(5.99, specConfig)).toBe('high');
+    expect(costTier(6, specConfig)).toBe('very_high');
   });
 });
 
@@ -420,18 +402,18 @@ describe('effectivePrice', () => {
       price: { input: 2, output: 8 },
     };
     const listed = rateModel(input, specConfig);
-    const measured = rateModel({ ...input, measuredPrice: 0.35 }, specConfig);
+    const measured = rateModel({ ...input, measuredPrice: 0.26 }, specConfig);
     expect(measured.cost).toEqual(listed.cost);
     expect(listed.value).toMatchObject({
       cost_basis: 'list_price',
-      effective_price: 3.5,
-      cost_index: 62.3,
+      effective_price: 2.6,
+      cost_index: 73.2,
     });
     // A tenth of the price is 100 ÷ log10(300) = 40.4 index points lower.
     expect(measured.value).toMatchObject({
       cost_basis: 'run_cost',
-      effective_price: 0.35,
-      cost_index: 22,
+      effective_price: 0.26,
+      cost_index: 32.8,
     });
     expect(measured.value.score).toBeGreaterThan(listed.value.score as number);
   });

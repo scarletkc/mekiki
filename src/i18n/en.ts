@@ -93,7 +93,7 @@ export const en = {
     blended: 'Blended',
     blendedUnit: 'Blended, USD per 1M tokens',
     priceNote:
-      'Prices are in USD per 1M tokens. The blended price assumes {hit}% of input tokens are cache hits, then weights input and output {input}:{output}.',
+      'Prices are in USD per 1M tokens. The blended price mixes cache reads, input and output {cache}:{input}:{output}, so about {hit}% of input tokens count as cache hits.',
     priceOverride: 'Price entered by hand; the models.dev figure is not used.',
     context: 'Context window',
     tokens: '{n} tokens',
@@ -136,7 +136,7 @@ export const en = {
     floorBelowFrontier: 'Leader − {gap}',
     costTitle: 'Cost',
     costBody:
-      'Prices are the official ones from models.dev, in USD per 1M tokens. Assuming {hit}% of input tokens are cache hits, effective input = {hitRate} × cache read + {missRate} × input. A model without a cache-read price pays the full input price, and cache-write surcharges are not counted. Blended price = ({input} × effective input + {output} × output) ÷ {total}. Tiers are set by the absolute blended price.',
+      'Prices are the official ones from models.dev, in USD per 1M tokens. Blended price = ({cache} × cache read + {input} × input + {output} × output) ÷ {total}. That counts about {hit}% of input tokens as cache hits, because agents and long chats resend their context. A model without a cache-read price pays the input price for those tokens too, and cache-write surcharges are not counted. Tiers are set by the absolute blended price.',
     costIndexBody:
       'The cost index puts a price on a 0–100 log scale: ${floor} or less is 0, ${ceil} or more is 100. It is only used to compute value.',
     valueTitle: 'Value',
@@ -189,7 +189,7 @@ export const en = {
     fieldTier:
       'tier is a stable English key. label is the English label, and labels holds the label in every language.',
     fieldPrice:
-      'Prices are in USD per 1M tokens. cost.blended is the blended price, with the assumed cache hits already counted (see Method), and cost.index is its 0–100 cost index.',
+      'Prices are in USD per 1M tokens. cost.blended is the blended price of cache reads, input and output (weights on the Method page), and cost.index is its 0–100 cost index.',
     fieldValue:
       'value.effective_price is the price the value score is computed from, in USD per 1M tokens, and value.cost_index is its 0–100 index. value.cost_basis says where that price comes from: run_cost when Artificial Analysis measured what the model costs to run (value.run_cost, in USD), list_price otherwise.',
     versionTitle: 'Versioning',

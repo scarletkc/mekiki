@@ -157,15 +157,17 @@ benchmark = Σ(w_s × n_s) / Σ(w_s)      权重：aa_intelligence 0.5, arena_te
 价格取 `sources.modelsdev` 对应条目的官方价（单位：美元 / 百万 token），有 `overrides.price` 时用覆盖值。
 
 ```
-input_eff  = 0.5 × min(cache_read, input) + 0.5 × input                        // 没有 cache_read 时 input_eff = input
-blended    = (3 × input_eff + 1 × output) / 4
-cost_index = clamp( 100 × log10(blended / 0.1) / log10(30 / 0.1), 0, 100 )    // blended ≤ 0.1 时为 0
+cached     = min(cache_read, input)                                            // 没有 cache_read 时 cached = input
+blended    = (7 × cached + 2 × input + 1 × output) / 10
+cost_index = clamp( 100 × log10(blended / 0.04) / log10(12 / 0.04), 0, 100 )   // blended ≤ 0.04 时为 0
 ```
 
-- 缓存：假设 50% 的输入 token 命中缓存（`cost.cacheHitRate`），这部分按 `cache_read` 计价。实际用法里长上下文会反复重发，不算缓存会高估输入成本。
-  - 没有 `cache_read` 的模型按 `input` 全额计算，不猜折扣。
+- 权重 7 : 2 : 1（缓存读取 : 输入 : 输出）沿用 Artificial Analysis 混合价的默认比例（[方法说明](https://artificialanalysis.ai/methodology)，2026-11-11 查）。它相当于约 78% 的输入 token 命中缓存、输入和输出 9 : 1。
+  - 理由：实际用量以 Agent 和长对话为主，上下文会反复重发。OpenRouter 上 Agent 流量 2026 年 9 月的缓存占比接近 90%，人类对话里输出只占约 12% 的 token。旧的 3 : 1（不算缓存）会高估输入成本、高估输出的分量。
+  - 没有 `cache_read` 的模型，缓存那部分也按 `input` 计价，不猜折扣。
   - `cache_read` 高于 `input` 时按 `input` 算（手动覆盖了输入价、缓存价仍来自 models.dev 时可能出现）。
   - 缓存写入的额外费用（如按输入价加价收取的写入费）不计。
+- `cost_index` 的上下限和成本档位是随混合方式一起换算的：常见定价（输出是输入的 5 倍、缓存读取是输入的 10%）下，7 : 2 : 1 的混合价约是 3 : 1 的 0.385 倍，原来的 0.1 / 30 和 $1 / $5 / $15 按这个系数换算后取整。
 - 档位按 `blended` 的绝对值划分（见 §6.4），`cost_index` 只用于算性价比。
 - 价格为 0：`cost_index` 为 0，页面显示「免费」。
 - 查不到价格：成本和性价比都为空，页面显示「暂无价格」。
@@ -197,7 +199,7 @@ API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
 | 评级 | 档位（key / 标签 / 条件） |
 |---|---|
 | 智能 | `top` 最高 ≥ 90　`high` 高 ≥ 75　`mid` 中 ≥ 55　`low` 低 < 55 |
-| 成本（按 blended） | `low` 低 < $1　`mid` 中 < $5　`high` 高 < $15　`very_high` 很高 ≥ $15 |
+| 成本（按 blended） | `low` 低 < $0.4　`mid` 中 < $2　`high` 高 < $6　`very_high` 很高 ≥ $6 |
 | 性价比 | `top` 最高 ≥ 70　`high` 高 ≥ 60　`mid` 中 ≥ 50　`low` 低 < 50 |
 
 这些阈值是起点。真实数据接入后跑一次 `pnpm report`（§9），把全部模型的分数分布打成表给维护者，由维护者定最终阈值。
@@ -208,17 +210,16 @@ API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
 
 这张表固定的是算法本身，所以用的是一组参考指标（两个指数类 0.5 / 0.2，一个 Elo 类 0.3，gap 300），与现行配置里用哪些榜单无关。测试里以 `specConfig` 传入。
 
-A–F 没有缓存价，按输入价全额计算；G 和 B 只差一个缓存价，用来固定缓存的算法（命中率 50%）。
+F 没有缓存价，缓存那部分按输入价计算，用来固定这个回退。
 
-| 用例 | AA 智能 / 编程 / Arena | 价格 入/出（/缓存） | intelligence | blended | cost_index | value |
+| 用例 | AA 智能 / 编程 / Arena | 价格 入 / 出 / 缓存 | intelligence | blended | cost_index | value |
 |---|---|---|---|---|---|---|
-| A 旗舰 | 68 / 60 / 1490 | 5 / 25 | 96.9 最高 | 10.00 高 | 80.7 | 50.8 中 |
-| B 均衡 | 60 / 52 / 1450 | 1.25 / 10 | 84.6 高 | 3.4375 中 | 62.0 | 61.4 高 |
-| C 便宜好用 | 50 / 40 / 1400 | 0.3 / 2.5 | 68.6 中 | 0.85 低 | 37.5 | 66.1 高 |
-| D 超便宜 | 30 / 22 / 1300 | 0.05 / 0.2 | 38.5 低 | 0.0875 低 | 0 | 56.4 中 |
-| E 不在任何榜单 | 无 | 3 / 15 | 空 | 6.00 高 | 71.8 | 空 |
-| F 缺编程指数 | 56 / 无 / 1430 | 2 / 8 | 78.8 高 | 3.50 中 | 62.3 | 58.6 中 |
-| G 均衡 + 缓存 | 60 / 52 / 1450 | 1.25 / 10 / 0.125 | 84.6 高 | 3.015625 中 | 59.7 | 62.9 高 |
+| A 旗舰 | 68 / 60 / 1490 | 5 / 25 / 0.5 | 96.9 最高 | 3.85 高 | 80.1 | 51.5 中 |
+| B 均衡 | 60 / 52 / 1450 | 1.25 / 10 / 0.125 | 84.6 高 | 1.3375 中 | 61.5 | 61.7 高 |
+| C 便宜好用 | 50 / 40 / 1400 | 0.3 / 2.5 / 0.03 | 68.6 中 | 0.331 低 | 37.0 | 66.3 高 |
+| D 超便宜 | 30 / 22 / 1300 | 0.05 / 0.2 / 0.005 | 38.5 低 | 0.0335 低 | 0 | 56.4 中 |
+| E 不在任何榜单 | 无 | 3 / 15 / 0.3 | 空 | 2.31 高 | 71.1 | 空 |
+| F 缺编程指数、无缓存价 | 56 / 无 / 1430 | 2 / 8 / 无 | 78.8 高 | 2.60 高 | 73.2 | 51.2 中 |
 
 ## 7. JSON API
 
@@ -250,12 +251,12 @@ A–F 没有缓存价，按输入价全额计算；G 和 B 只差一个缓存价
         "breakdown": { "aa_intelligence": { "raw": 68, "normalized": 97.1 } }
       },
       "cost": {
-        "tier": "high", "label": "High", "index": 77.5,
-        "blended": 8.3125, "input": 5, "output": 25, "cache_read": 0.5
+        "tier": "high", "label": "High", "index": 80.1,
+        "blended": 3.85, "input": 5, "output": 25, "cache_read": 0.5
       },
       "value": {
-        "score": 54.0, "tier": "mid", "label": "Mid",
-        "cost_basis": "run_cost", "run_cost": 123.4, "effective_price": 8.3125, "cost_index": 77.5
+        "score": 51.5, "tier": "mid", "label": "Mid",
+        "cost_basis": "run_cost", "run_cost": 123.4, "effective_price": 3.85, "cost_index": 80.1
       },
       "url": "https://mekiki.fog.moe/m/<provider>/<model>"
     }

@@ -7,7 +7,7 @@ Each model gets three ratings:
 
 - **Intelligence**: public leaderboard scores, fetched automatically and normalised to the
   current leader.
-- **Cost**: derived from the official price, with an assumed share of cache hits.
+- **Cost**: a blend of the official cache-read, input and output prices.
 - **Value**: derived from intelligence and what the model costs to actually run, which
   counts how many tokens it burns and not only its price per token.
 
@@ -119,7 +119,7 @@ Things to know:
 Every number of the rating algorithm lives in
 [`src/lib/scoring.config.ts`](src/lib/scoring.config.ts):
 which leaderboard metrics are used with their weight and zero point, the blended-price
-formula and the assumed cache hit rate, how far value trusts the measured run cost
+weights (cache read, input, output), how far value trusts the measured run cost
 (`runCostWeight`), the value exponents and the tier thresholds.
 
 1. Edit `src/lib/scoring.config.ts`.

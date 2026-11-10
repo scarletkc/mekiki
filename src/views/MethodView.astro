@@ -9,6 +9,7 @@ import {
   VALUE_TIERS,
   scoringConfig,
 } from '../lib/scoring.config';
+import { cacheHitPercent } from '../lib/scoring';
 import { getDataset } from '../lib/site-data';
 import { SOURCE_IDS, SOURCE_INFO } from '../lib/snapshots';
 
@@ -123,12 +124,11 @@ const sources = SOURCE_IDS.map((id) => ({
     <p>
       {
         fmt(m.costBody, {
-          hit: Math.round(cost.cacheHitRate * 100),
-          hitRate: cost.cacheHitRate,
-          missRate: Number((1 - cost.cacheHitRate).toFixed(2)),
+          cache: cost.cacheReadWeight,
           input: cost.inputWeight,
           output: cost.outputWeight,
-          total: cost.inputWeight + cost.outputWeight,
+          total: cost.cacheReadWeight + cost.inputWeight + cost.outputWeight,
+          hit: cacheHitPercent(cost),
         })
       }
     </p>

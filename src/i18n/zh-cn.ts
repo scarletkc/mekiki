@@ -90,7 +90,7 @@ export const zhCN: Dictionary = {
     blended: '混合价',
     blendedUnit: '混合价，美元 / 百万 token',
     priceNote:
-      '价格单位是美元 / 百万 token。混合价假设 {hit}% 的输入命中缓存，再按输入 {input}、输出 {output} 的比例加权。',
+      '价格单位是美元 / 百万 token。混合价按缓存读取 {cache}、输入 {input}、输出 {output} 的比例加权，相当于约 {hit}% 的输入命中缓存。',
     priceOverride: '价格为手动填写，未采用 models.dev 的数据。',
     context: '上下文长度',
     tokens: '{n} token',
@@ -133,7 +133,7 @@ export const zhCN: Dictionary = {
     floorBelowFrontier: '榜首 − {gap}',
     costTitle: '成本',
     costBody:
-      '价格取 models.dev 上的官方价，单位是美元 / 百万 token。假设 {hit}% 的输入 token 命中缓存：实际输入价 = {hitRate} × 缓存读取价 + {missRate} × 输入价。没有缓存读取价的模型按输入价全额计算，缓存写入的额外费用不计。混合价 =（{input} × 实际输入价 + {output} × 输出价）÷ {total}。档位按混合价的绝对值划分。',
+      '价格取 models.dev 上的官方价，单位是美元 / 百万 token。混合价 =（{cache} × 缓存读取价 + {input} × 输入价 + {output} × 输出价）÷ {total}，相当于约 {hit}% 的输入 token 命中缓存，因为 Agent 和长对话会反复重发上下文。没有缓存读取价的模型，这部分也按输入价计算；缓存写入的额外费用不计。档位按混合价的绝对值划分。',
     costIndexBody:
       '成本指数把价格按对数刻度映射到 0–100：不高于 ${floor} 记 0，不低于 ${ceil} 记 100。它只用来算性价比。',
     valueTitle: '性价比',
@@ -182,7 +182,7 @@ export const zhCN: Dictionary = {
     fieldScores: '分数保留一位小数。缺失值是 null，字段不会被省略。',
     fieldTier: 'tier 是稳定的英文 key；label 是英文标签，labels 里有各语言的标签。',
     fieldPrice:
-      '价格单位是美元 / 百万 token；cost.blended 是混合价，已计入假设的缓存命中（见“评分方法”），cost.index 是它的 0–100 成本指数。',
+      '价格单位是美元 / 百万 token；cost.blended 是缓存读取、输入、输出三者的混合价（权重见“评分方法”），cost.index 是它的 0–100 成本指数。',
     fieldValue:
       'value.effective_price 是计算性价比时使用的价格（美元 / 百万 token），value.cost_index 是它的 0–100 成本指数。value.cost_basis 说明这个价格的来源：有 Artificial Analysis 实测花费（value.run_cost，美元）时为 run_cost，否则为 list_price。',
     versionTitle: '版本',

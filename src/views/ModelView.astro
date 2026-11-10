@@ -11,6 +11,7 @@ import {
   formatTokens,
 } from '../lib/format';
 import { METRIC_KEYS, scoringConfig } from '../lib/scoring.config';
+import { cacheHitPercent } from '../lib/scoring';
 import { getDataset } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
 
@@ -59,9 +60,10 @@ const links = [
 // Footnotes under the price list, one paragraph each.
 const priceNotes = [
   fmt(t.detail.priceNote, {
-    hit: Math.round(scoringConfig.cost.cacheHitRate * 100),
+    cache: scoringConfig.cost.cacheReadWeight,
     input: scoringConfig.cost.inputWeight,
     output: scoringConfig.cost.outputWeight,
+    hit: cacheHitPercent(scoringConfig.cost),
   }),
   model.price_source === 'override' ? t.detail.priceOverride : null,
   value.cost_basis === 'run_cost' && typicalTokenUse !== null

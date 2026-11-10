@@ -37,12 +37,12 @@ const config: ScoringConfig = {
     tiers: { top: 90, high: 75, mid: 55 },
   },
   cost: {
-    cacheHitRate: 0.5,
-    inputWeight: 3,
+    cacheReadWeight: 7,
+    inputWeight: 2,
     outputWeight: 1,
-    indexFloorPrice: 0.1,
-    indexCeilPrice: 30,
-    tiers: { low: 1, mid: 5, high: 15 },
+    indexFloorPrice: 0.04,
+    indexCeilPrice: 12,
+    tiers: { low: 0.4, mid: 2, high: 6 },
   },
   value: {
     intelligenceExponent: 0.6,
@@ -196,22 +196,22 @@ describe('buildDataset', () => {
       arena_text: { raw: 1490, normalized: 96.7, weight: 0.3, frontier: 1500 },
       arena_webdev: { raw: 1790, normalized: 96.7, weight: 0.2, frontier: 1800 },
     });
-    // Half the input at the $0.5 cache price: (3 × 2.75 + 25) / 4 = 8.3125
+    // (7 × 0.5 + 2 × 5 + 1 × 25) / 10 = 3.85
     expect(first?.rating.cost).toMatchObject({
-      blended: 8.3125,
+      blended: 3.85,
       tier: 'high',
-      index: 77.5,
+      index: 80.1,
       cache_read: 0.5,
     });
     // The only model with a run cost is its own yardstick, so its measured
     // price is its blended price.
     expect(first?.rating.value).toMatchObject({
-      score: 54,
+      score: 51.5,
       tier: 'mid',
       cost_basis: 'run_cost',
-      cost_index: 77.5,
+      cost_index: 80.1,
     });
-    expect(first?.rating.value.effective_price).toBeCloseTo(8.3125, 9);
+    expect(first?.rating.value.effective_price).toBeCloseTo(3.85, 9);
     expect(first?.facts).toMatchObject({
       context: 1000000,
       open_weights: false,
@@ -260,13 +260,13 @@ describe('buildDataset', () => {
 
     // Token use is run cost ÷ blended price; typical token use is the median of the two.
     expect(built.run_cost.models).toBe(2);
-    expect(built.run_cost.typical_token_use).toBeCloseTo((123.4 + 12.34) / 2 / 8.3125, 9);
+    expect(built.run_cost.typical_token_use).toBeCloseTo((123.4 + 12.34) / 2 / 3.85, 9);
     expect(cheap.rating.cost).toEqual(costly.rating.cost);
     // Effective price = run cost ÷ typical token use: blended × 2 ÷ 11 and × 20 ÷ 11.
-    expect(cheap.rating.value.effective_price).toBeCloseTo((8.3125 * 2) / 11, 9);
-    expect(costly.rating.value.effective_price).toBeCloseTo((8.3125 * 20) / 11, 9);
-    expect(cheap.rating.value).toMatchObject({ cost_basis: 'run_cost', cost_index: 47.6 });
-    expect(costly.rating.value).toMatchObject({ cost_basis: 'run_cost', cost_index: 88 });
+    expect(cheap.rating.value.effective_price).toBeCloseTo((3.85 * 2) / 11, 9);
+    expect(costly.rating.value.effective_price).toBeCloseTo((3.85 * 20) / 11, 9);
+    expect(cheap.rating.value).toMatchObject({ cost_basis: 'run_cost', cost_index: 50.2 });
+    expect(costly.rating.value).toMatchObject({ cost_basis: 'run_cost', cost_index: 90.6 });
     expect(cheap.rating.value.score).toBeGreaterThan(costly.rating.value.score as number);
   });
 
@@ -279,8 +279,8 @@ describe('buildDataset', () => {
     expect(built.run_cost).toEqual({ typical_token_use: null, models: 0 });
     expect(built.models[0]?.rating.value).toMatchObject({
       cost_basis: 'list_price',
-      effective_price: 8.3125,
-      cost_index: 77.5,
+      effective_price: 3.85,
+      cost_index: 80.1,
     });
   });
 
@@ -320,11 +320,11 @@ describe('buildDataset', () => {
       'name: Flagship\nvendor: Acme\noverrides:\n  price: { input: 1, output: 2 }',
     );
     const [model] = buildDataset([overridden], snapshots, { now: NOW, config }).models;
-    // The models.dev cache price still applies: (3 × 0.75 + 2) / 4 = 1.0625
+    // The models.dev cache price still applies: (7 × 0.5 + 2 × 1 + 1 × 2) / 10 = 0.75
     expect(model?.rating.cost).toMatchObject({
       input: 1,
       output: 2,
-      blended: 1.0625,
+      blended: 0.75,
       cache_read: 0.5,
     });
     expect(model?.price_source).toBe('override');
@@ -416,21 +416,21 @@ describe('JSON API', () => {
         tier: 'high',
         label: 'High',
         labels: { 'zh-CN': '高', 'zh-TW': '高', en: 'High' },
-        index: 77.5,
-        blended: 8.3125,
+        index: 80.1,
+        blended: 3.85,
         input: 5,
         output: 25,
         cache_read: 0.5,
       },
       value: {
-        score: 54,
+        score: 51.5,
         tier: 'mid',
         label: 'Mid',
         labels: { 'zh-CN': '中', 'zh-TW': '中', en: 'Mid' },
         cost_basis: 'run_cost',
         run_cost: 123.4,
-        effective_price: 8.3125,
-        cost_index: 77.5,
+        effective_price: 3.85,
+        cost_index: 80.1,
       },
       url: 'https://mekiki.fog.moe/m/acme/flagship',
     });

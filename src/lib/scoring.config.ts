@@ -47,12 +47,13 @@ export interface ScoringConfig {
   };
   cost: {
     /**
-     * Share of input tokens assumed to be served from the prompt cache (0–1):
-     * effective input = cacheHitRate × cache_read + (1 − cacheHitRate) × input.
-     * A model without a cache-read price pays the full input price.
+     * Token mix of the blended price, as relative weights:
+     *   blended = (cacheReadWeight × cache_read + inputWeight × input + outputWeight × output)
+     *             ÷ (cacheReadWeight + inputWeight + outputWeight)
+     * A model without a cache-read price pays the input price for cached
+     * tokens too. Cache-write surcharges are not counted.
      */
-    cacheHitRate: number;
-    /** blended = (inputWeight × effective input + outputWeight × output) / (inputWeight + outputWeight) */
+    cacheReadWeight: number;
     inputWeight: number;
     outputWeight: number;
     /** Blended price (USD per 1M tokens) that maps to cost index 0. */
@@ -126,14 +127,21 @@ export const scoringConfig: ScoringConfig = {
     tiers: { top: 90, high: 75, mid: 55 },
   },
   cost: {
-    // Agents and chats that resend a long context hit the cache far more
-    // often than one-off calls do; half is a middle ground between the two.
-    cacheHitRate: 0.5,
-    inputWeight: 3,
+    // 7 : 2 : 1 is Artificial Analysis's default blend (artificialanalysis.ai/
+    // methodology, checked 2026-11-11): about 78% of input tokens are cache
+    // hits and input outweighs output 9 to 1. Real use is mostly agents and
+    // long chats that resend their context; on OpenRouter, agent traffic ran
+    // just under 90% cached in September 2026.
+    cacheReadWeight: 7,
+    inputWeight: 2,
     outputWeight: 1,
-    indexFloorPrice: 0.1,
-    indexCeilPrice: 30,
-    tiers: { low: 1, mid: 5, high: 15 },
+    // A typical price list (output 5× input, cache reads 10% of input) blends
+    // to about 0.385× what a plain 3:1 input:output blend gives. The index
+    // bounds and tiers were scaled by that factor when the blend changed, so
+    // they mean what they meant before.
+    indexFloorPrice: 0.04,
+    indexCeilPrice: 12,
+    tiers: { low: 0.4, mid: 2, high: 6 },
   },
   value: {
     intelligenceExponent: 0.6,
