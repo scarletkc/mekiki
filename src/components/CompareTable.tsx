@@ -255,7 +255,7 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
         </p>
       ) : (
         <>
-          <div className="bg-card overflow-x-auto rounded-xl border">
+          <div className="bg-card relative overflow-x-auto rounded-xl border">
             <table className="w-full border-collapse text-sm">
               <caption className="sr-only">{s.compare.title}</caption>
               <thead>

@@ -283,6 +283,8 @@
 
     /* Data tables on the static pages, in a bordered, scrollable frame. */
     .table-wrap {
+        /* Positioned, so screen-reader-only text inside stays clipped. */
+        position: relative;
         overflow-x: auto;
         border: 1px solid var(--border);
         border-radius: var(--radius-xl);
