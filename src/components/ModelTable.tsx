@@ -352,24 +352,30 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
         cell: ({ row }) => {
           const model = row.original;
           return (
-            <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 sm:flex-nowrap">
-              <PickBox id={model.id} name={model.name} strings={compare} />
-              <a
-                href={model.href}
-                className="font-medium underline decoration-transparent underline-offset-4 hover:decoration-current"
-              >
-                {model.name}
-              </a>
-              {model.legacy && (
-                <span className="text-muted-foreground rounded border px-1 text-xs leading-[1.4] whitespace-nowrap">
-                  {badge.legacy}
-                </span>
-              )}
-              {model.openWeights === true && (
-                <span className="text-muted-foreground rounded border px-1 text-xs leading-[1.4] whitespace-nowrap">
-                  {badge.openWeights}
-                </span>
-              )}
+            // The checkbox stays beside the first line of the name; only the
+            // name and badges wrap on narrow screens.
+            <span className="flex items-start gap-2">
+              <span className="flex h-[1.5em] items-center">
+                <PickBox id={model.id} name={model.name} strings={compare} />
+              </span>
+              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 sm:flex-nowrap">
+                <a
+                  href={model.href}
+                  className="font-medium underline decoration-transparent underline-offset-4 hover:decoration-current"
+                >
+                  {model.name}
+                </a>
+                {model.legacy && (
+                  <span className="text-muted-foreground rounded border px-1 text-xs leading-[1.4] whitespace-nowrap">
+                    {badge.legacy}
+                  </span>
+                )}
+                {model.openWeights === true && (
+                  <span className="text-muted-foreground rounded border px-1 text-xs leading-[1.4] whitespace-nowrap">
+                    {badge.openWeights}
+                  </span>
+                )}
+              </span>
             </span>
           );
         },
@@ -596,7 +602,7 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
                       className={cn(
                         'px-3 py-2 align-middle',
                         index === 0 &&
-                          'bg-background group-hover:bg-muted sticky left-0 z-10 max-w-[10.5rem] min-w-[8.5rem] pl-4 whitespace-normal sm:max-w-none sm:pl-3 sm:whitespace-nowrap',
+                          'bg-background group-hover:bg-muted sticky left-0 z-10 max-w-[12rem] min-w-[10rem] pl-4 whitespace-normal sm:max-w-none sm:pl-3 sm:whitespace-nowrap',
                       )}
                     >
                       <table.FlexRender cell={cell} />

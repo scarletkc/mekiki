@@ -292,7 +292,7 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
                 <tbody key={group.label}>
                   <tr>
                     <th
-                      scope="colgroup"
+                      scope="rowgroup"
                       colSpan={selected.length + 1}
                       className="text-muted-foreground px-3 pt-4 pb-1 text-start text-xs font-medium sm:pl-3"
                     >
