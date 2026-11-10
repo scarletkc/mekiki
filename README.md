@@ -46,8 +46,10 @@ official prices, and refresh every day.
   every model.
 - **Method page**: every formula, weight and threshold, generated from the same config the
   scores are computed with.
-- **JSON API**: the full dataset, a model list and one file per model.
+- **JSON API**: the full dataset, a model list, one file per model, and the history.
 - **Daily updates**: prices and leaderboard scores are fetched again every day.
+- **Changelog and RSS**: what changed in the ratings, day by day, with a feed per
+  language. Each model page charts its intelligence and value over time.
 - **Languages**: English, Simplified Chinese and Traditional Chinese, in dark or light,
   on a desktop or a phone.
 
@@ -74,8 +76,9 @@ weights and thresholds.
 ## Use the API
 
 Everything on the site is also JSON. `/api.json` holds every rating, `/api/models.json`
-lists the models, and `/api/models/<provider>/<model>.json` returns one model. Any site
-can call it from the browser.
+lists the models, `/api/models/<provider>/<model>.json` returns one model, and
+`/api/history.json` has the ratings as recorded each day. Any site can call it from the
+browser.
 
 ```bash
 curl -s https://mekiki.fog.moe/api.json | jq '.models[] | {name, intelligence: .intelligence.score, value: .value.tier}'

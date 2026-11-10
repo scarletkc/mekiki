@@ -1,8 +1,8 @@
 # Deployment
 
 mekiki is deployed to GitHub Pages by `.github/workflows/deploy.yml`, on every push to
-`main`, once a day, and on manual dispatch. Daily and manual runs sync the snapshots first
-and commit any change; every run then lints, type-checks, tests, builds and deploys. A
+`main`, once a day, and on manual dispatch. Daily and manual runs sync the snapshots and
+record the day's ratings first, and commit any change; every run then lints, type-checks, tests, builds and deploys. A
 separate `smoke` job runs the browser smoke test against the built site; it never blocks
 the deploy, and a failure only marks that job red. Why the workflow is shaped this way is
 in [design §8](SPEC.md#8-sync-and-deployment).
@@ -28,6 +28,6 @@ Done once by the repository owner:
 
 ## Protected `main`
 
-The sync step pushes snapshot changes to `main` with the workflow's own token. If `main`
-is protected, allow GitHub Actions to push to it, or the daily sync cannot save its
-snapshots.
+The sync step pushes snapshot and history changes to `main` with the workflow's own
+token. If `main` is protected, allow GitHub Actions to push to it, or the daily sync
+cannot save its snapshots or its history.

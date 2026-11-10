@@ -1,0 +1,64 @@
+---
+import ChangeText from '../components/ChangeText.astro';
+import { fmt, useTranslations, type Locale } from '../i18n';
+import Base from '../layouts/Base.astro';
+import { changeCount } from '../lib/change-text';
+import { feedPath } from '../lib/feed';
+import { changelogConfig } from '../lib/scoring.config';
+import { getDataset, getHistory } from '../lib/site-data';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const c = t.changelog;
+const dataset = await getDataset();
+const { changelog } = getHistory();
+const linkable = new Set(dataset.models.map((model) => model.id));
+---
+
+<Base locale={locale} path="/changelog" title={c.title} description={fmt(c.intro, { delta: changelogConfig.scoreDelta })}>
+  <div class="max-w-[68ch]">
+    <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+      <h1 class="text-xl font-semibold tracking-tight">{c.title}</h1>
+      <a href={feedPath(locale)} class="text-primary text-sm underline">{c.feed}</a>
+    </div>
+    <p class="text-muted-foreground mt-1 text-sm">
+      {fmt(c.intro, { delta: changelogConfig.scoreDelta })}
+    </p>
+
+    {
+      changelog.start === null ? (
+        <p class="text-muted-foreground mt-6">{c.empty}</p>
+      ) : (
+        <>
+          {changelog.days.length === 0 && <p class="text-muted-foreground mt-6">{c.none}</p>}
+          <ol class="mt-6 space-y-6">
+            {changelog.days.map((day) => (
+              <li>
+                <section aria-labelledby={`d-${day.date}`} id={day.date} class="scroll-mt-16">
+                  <h2 id={`d-${day.date}`} class="flex items-baseline gap-3 border-b pb-1.5">
+                    <time datetime={day.date} class="num text-base font-semibold">{day.date}</time>
+                    <span class="text-muted-foreground text-xs">{changeCount(day.changes.length, t)}</span>
+                  </h2>
+                  <ul class="mt-2 space-y-1 text-sm">
+                    {day.changes.map((change) => (
+                      <li>
+                        <ChangeText locale={locale} change={change} linkable={linkable} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </li>
+            ))}
+          </ol>
+          <p class="text-muted-foreground mt-6 border-t pt-3 text-sm">
+            {fmt(c.start, { date: changelog.start })}
+          </p>
+        </>
+      )
+    }
+  </div>
+</Base>

@@ -15,6 +15,7 @@ import {
   type ValueTier,
 } from './scoring.config';
 import type { Dataset, ModelRecord } from './dataset';
+import type { HistoryEntry } from './history';
 import { SOURCE_IDS, type SourceId } from './snapshots';
 
 export const API_VERSION = 1;
@@ -145,6 +146,20 @@ export function toApiFull(dataset: Dataset): ApiFull {
     sources,
     models: dataset.models.map(toApiModel),
   };
+}
+
+export interface ApiHistory {
+  version: number;
+  generated_at: string;
+  /**
+   * One entry per recorded day, oldest first. A day is only recorded when
+   * something changed, so each entry holds until the next one.
+   */
+  entries: HistoryEntry[];
+}
+
+export function toApiHistory(dataset: Dataset, entries: HistoryEntry[]): ApiHistory {
+  return { version: API_VERSION, generated_at: dataset.generated_at, entries };
 }
 
 /** A JSON response for a static endpoint. */

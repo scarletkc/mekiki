@@ -1,0 +1,6 @@
+---
+import { DEFAULT_LOCALE, useTranslations } from '../i18n';
+import Redirect from '../layouts/Redirect.astro';
+---
+
+<Redirect path="/changelog" title={useTranslations(DEFAULT_LOCALE).changelog.title} />

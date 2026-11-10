@@ -13,6 +13,7 @@ export const GET: APIRoute = async () => {
   const paths = [
     '/',
     '/compare',
+    '/changelog',
     '/method',
     '/api',
     ...dataset.models.map((model) => `/m/${model.id}`),

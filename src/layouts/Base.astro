@@ -9,6 +9,7 @@ import {
   type Locale,
 } from '../i18n';
 import { latestSync, SITE_URL } from '../lib/dataset';
+import { feedPath } from '../lib/feed';
 import { formatDateTime } from '../lib/format';
 import { LOGO_EYE, LOGO_RADIUS, LOGO_VIEWBOX } from '../lib/logo';
 import { OG_HEIGHT, OG_WIDTH, SITE_IMAGE_PATH } from '../lib/share';
@@ -43,6 +44,7 @@ const imageUrl = new URL(image, SITE_URL).href;
 
 const nav = [
   { href: localePath(locale, '/'), label: t.nav.models, key: '/' },
+  { href: localePath(locale, '/changelog'), label: t.nav.changes, key: '/changelog' },
   { href: localePath(locale, '/method'), label: t.nav.method, key: '/method' },
   { href: localePath(locale, '/api'), label: t.nav.api, key: '/api' },
 ];
@@ -92,6 +94,7 @@ const attribution = [
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="alternate" type="application/json" href="/api.json" title="mekiki API" />
+    <link rel="alternate" type="application/rss+xml" href={feedPath(locale)} title={t.changelog.feedTitle} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDescription} />
     <meta property="og:type" content="website" />

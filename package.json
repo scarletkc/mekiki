@@ -21,7 +21,8 @@
     "test": "vitest run",
     "smoke": "playwright test",
     "sync": "tsx scripts/sync.ts",
-    "report": "tsx scripts/report.ts"
+    "report": "tsx scripts/report.ts",
+    "history": "tsx scripts/history.ts"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.5",

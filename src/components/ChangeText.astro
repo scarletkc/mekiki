@@ -1,0 +1,28 @@
+---
+/** One changelog entry as text, with the model names linked to their pages. */
+import { localePath, useTranslations, type Locale } from '../i18n';
+import { describeChange } from '../lib/change-text';
+import type { Change } from '../lib/changelog';
+
+interface Props {
+  locale: Locale;
+  change: Change;
+  /** IDs of the models that still have a page; others are not linked. */
+  linkable: Set<string>;
+}
+
+const { locale, change, linkable } = Astro.props;
+const segments = describeChange(change, useTranslations(locale));
+---
+
+{
+  segments.map((segment) =>
+    typeof segment === 'string' ? (
+      segment
+    ) : linkable.has(segment.id) ? (
+      <a href={localePath(locale, `/m/${segment.id}`)} class="text-primary underline">{segment.name}</a>
+    ) : (
+      <span class="font-medium">{segment.name}</span>
+    ),
+  )
+}

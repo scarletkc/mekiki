@@ -5,6 +5,10 @@
  *   pnpm sync --only=arena    one source (repeatable, comma-separated)
  *   pnpm sync --dry-run       fetch and report, write nothing
  *
+ * After the snapshots, today's ratings are recorded in data/history.jsonl
+ * (see scripts/lib/history.ts), which the changelog, the RSS feeds and the
+ * trend charts are built from.
+ *
  * A source that fails, returns invalid data or returns suspiciously few
  * models keeps its old snapshot. The command still exits 0 so a broken
  * source can never block a deploy; the reason goes to the console and to
@@ -20,6 +24,7 @@ import {
   type SourceId,
 } from '../src/lib/snapshots';
 import { readModelEntries } from './lib/content';
+import { recordHistory } from './lib/history';
 import { adapters, trackedModels } from './sources';
 import { SourceDataError, type Unmatched } from './sources/types';
 
@@ -207,7 +212,7 @@ function printConsole(reports: SourceReport[], dryRun: boolean) {
   console.log('');
 }
 
-function writeJobSummary(reports: SourceReport[], dryRun: boolean) {
+function writeJobSummary(reports: SourceReport[], history: string, dryRun: boolean) {
   const file = process.env.GITHUB_STEP_SUMMARY;
   if (!file) return;
   const lines = ['## Snapshot sync', ''];
@@ -223,6 +228,7 @@ function writeJobSummary(reports: SourceReport[], dryRun: boolean) {
       lines.push(...report.warnings.map((line) => `- ${line}`));
     }
   }
+  lines.push('', `History: ${history}`);
   appendFileSync(file, `${lines.join('\n')}\n`);
 }
 
@@ -242,7 +248,17 @@ async function main() {
   for (const source of sources) reports.push(await syncSource(source, entries, dryRun));
 
   printConsole(reports, dryRun);
-  writeJobSummary(reports, dryRun);
+
+  // Record what the site will show, from the snapshots just written. A
+  // failure here must not fail the sync either.
+  let history: string;
+  try {
+    history = recordHistory({ dryRun }).message;
+  } catch (error) {
+    history = `FAILED, nothing recorded. ${describeError(error)}`;
+  }
+  console.log(`History: ${history}\n`);
+  writeJobSummary(reports, history, dryRun);
 }
 
 main().catch((error) => {

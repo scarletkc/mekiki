@@ -69,6 +69,24 @@ test('the JSON API serves every model', async ({ request }) => {
     const one = await request.get(`/api/models/${id}.json`);
     expect(one.ok(), id).toBe(true);
   }
+
+  const history = await request.get('/api/history.json');
+  expect(history.ok()).toBe(true);
+  expect(Array.isArray(((await history.json()) as { entries: unknown }).entries)).toBe(true);
+});
+
+test('the RSS feed a page advertises is RSS', async ({ page, request }) => {
+  await page.goto('/');
+  await expect(page.locator('table tbody tr').first()).toBeVisible();
+  const href = await page
+    .locator('link[rel="alternate"][type="application/rss+xml"]')
+    .getAttribute('href');
+  expect(href).toBeTruthy();
+  const feed = await request.get(href!);
+  expect(feed.ok()).toBe(true);
+  const xml = await feed.text();
+  expect(xml).toContain('<rss version="2.0"');
+  expect(xml).toContain('<channel>');
 });
 
 test('an unknown URL gets the 404 page', async ({ page }) => {

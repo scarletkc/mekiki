@@ -31,6 +31,7 @@ snapshots in `data/snapshots/`, so it works offline and needs no API key.
 | `pnpm smoke` | Browser smoke test of the built site (Playwright). Run `pnpm build` first. |
 | `pnpm sync` | Fetch the data sources and update `data/snapshots/`. |
 | `pnpm report` | Print every model's scores and the tier distribution. |
+| `pnpm history` | Record today's ratings in `data/history.jsonl` from the files as they are. Never goes online. |
 
 `pnpm smoke` needs a Chromium build once:
 
@@ -48,6 +49,11 @@ The key is read only by `pnpm sync` and must never be committed.
 without writing. What happens when a source fails is in
 [design §4.4](SPEC.md#44-sync).
 
+`pnpm sync` also records today's ratings in `data/history.jsonl`, the file the changelog,
+the RSS feeds and the trend charts are built from ([design §4.5](SPEC.md#45-history)).
+The daily workflow commits it. A local run writes it too; commit that only if you mean
+to, or discard it with `git checkout data/history.jsonl`.
+
 ## Change weights and thresholds
 
 Every number of the rating lives in `scoringConfig` in
@@ -62,6 +68,9 @@ value exponents and the tier thresholds. The formulas are in [design §5](SPEC.m
    numbers does not break them.
 
 The Method page is generated from the same file and cannot drift from it.
+
+The same file holds `changelogConfig.scoreDelta`: how far a score has to drift, without
+changing tier, before the changelog lists it.
 
 To add a leaderboard, add a metric to `scoring.config.ts`, make its source's adapter in
 `scripts/sources/` write the metric to the snapshot, and give it a label in each
@@ -89,12 +98,16 @@ src/
   lib/logo.ts                            the mark; header, favicon and share images use it
   lib/og.tsx                             share images, rendered to PNG at build time
   lib/compare.ts                         compare page selection (?m=<id>,<id>)
+  lib/history.ts, lib/changelog.ts       rating history and the changes derived from it
+  lib/feed.ts                            RSS feeds
   i18n/                                  dictionaries and locale helpers
   views/                                 page bodies, shared by all languages
   pages/                                 routes, JSON endpoints, share images, sitemap.xml
   components/                            table and compare islands, share button, tier meter, shadcn/ui
 data/snapshots/                          one JSON file per data source
+data/history.jsonl                       the ratings, one line per recorded day
 scripts/sync.ts, scripts/report.ts       pnpm sync, pnpm report
+scripts/history.ts                       pnpm history
 scripts/sources/                         one adapter per data source
 tests/                                   unit tests
 e2e/                                     browser smoke test

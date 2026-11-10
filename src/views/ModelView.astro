@@ -1,9 +1,12 @@
 ---
 import ShareButton from '../components/ShareButton.astro';
+import ChangeText from '../components/ChangeText.astro';
+import HistoryChart from '../components/HistoryChart.astro';
 import { TierMeter } from '../components/TierMeter';
 import { buttonVariants } from '../components/ui/button';
 import { fmt, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
+import { changesFor, modelSeries } from '../lib/changelog';
 import type { ModelRecord } from '../lib/dataset';
 import { compareQuery } from '../lib/compare';
 import {
@@ -16,7 +19,8 @@ import {
 import { METRIC_KEYS, scoringConfig } from '../lib/scoring.config';
 import { cacheHitPercent } from '../lib/scoring';
 import { modelImagePath, modelShareText } from '../lib/share';
-import { getDataset } from '../lib/site-data';
+import { utcDate } from '../lib/history';
+import { getDataset, getHistory } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
 
 interface Props {
@@ -26,8 +30,9 @@ interface Props {
 
 const { locale, model } = Astro.props;
 const t = useTranslations(locale);
+const dataset = await getDataset();
 // What a run cost is divided by to become a price per 1M tokens.
-const typicalTokenUse = (await getDataset()).run_cost.typical_token_use;
+const typicalTokenUse = dataset.run_cost.typical_token_use;
 
 const { intelligence, cost, value } = model.rating;
 
@@ -77,6 +82,24 @@ const priceNotes = [
 
 const { description, imageAlt } = modelShareText(model, t);
 const compareHref = `${localePath(locale, '/compare')}${compareQuery([model.id])}`;
+// History: recorded days, ending on what this page shows today.
+const { entries, changelog } = getHistory();
+const today = utcDate(new Date(dataset.generated_at));
+const series = modelSeries(entries, model.id, {
+  date: today,
+  intelligence: intelligence.score,
+  value: value.score,
+});
+const historyStart = series[0]?.date ?? today;
+const modelChanges = changesFor(changelog, model.id).slice(0, 12);
+const linkable = new Set(dataset.models.map((item) => item.id));
+const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
+  const tiers = scoringConfig[kind].tiers;
+  return (['top', 'high', 'mid'] as const).map((key) => ({
+    label: t.tier[kind][key],
+    value: tiers[key],
+  }));
+};
 ---
 
 <Base
@@ -226,6 +249,78 @@ const compareHref = `${localePath(locale, '/compare')}${compareQuery([model.id])
         </dl>
         <p class="text-muted-foreground mt-2 max-w-[68ch] text-sm">
           {intelligence.score === null ? t.detail.unratedNote : t.detail.scoreNote}
+        </p>
+      </section>
+
+      <section aria-labelledby="history" class="mt-10">
+        <h2 id="history" class="mb-2 text-base font-semibold">{t.detail.history}</h2>
+        {
+          series.length < 2 ? (
+            <p class="text-muted-foreground max-w-[68ch] text-sm">{fmt(t.detail.historyStart, { date: historyStart })}</p>
+          ) : (
+            <>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <HistoryChart
+                  title={t.rating.intelligence}
+                  points={series.map((point) => ({ date: point.date, score: point.intelligence }))}
+                  end={today}
+                  thresholds={thresholds('intelligence')}
+                  empty={t.empty.unrated}
+                />
+                <HistoryChart
+                  title={t.rating.value}
+                  points={series.map((point) => ({ date: point.date, score: point.value }))}
+                  end={today}
+                  thresholds={thresholds('value')}
+                  empty={t.empty.unrated}
+                />
+              </div>
+              <p class="text-muted-foreground mt-2 max-w-[68ch] text-xs">{t.detail.historyNote}</p>
+              <details class="mt-2 text-sm">
+                <summary class="text-muted-foreground hover:text-foreground cursor-pointer text-xs">{t.detail.historyData}</summary>
+                <div class="mt-1 overflow-x-auto">
+                  <table class="data-table">
+                    <caption>{t.detail.historyData}</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">{t.detail.date}</th>
+                        <th scope="col" class="num">{t.rating.intelligence}</th>
+                        <th scope="col" class="num">{t.rating.value}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...series].reverse().map((point) => (
+                        <tr>
+                          <th scope="row" class="num font-normal">{point.date}</th>
+                          <td class="num">{point.intelligence === null ? <span class="text-muted-foreground">{t.empty.unrated}</span> : formatScore(point.intelligence)}</td>
+                          <td class="num">{point.value === null ? <span class="text-muted-foreground">{t.empty.unrated}</span> : formatScore(point.value)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            </>
+          )
+        }
+
+        <h3 class="mt-6 mb-2 text-sm font-semibold">{t.detail.changes}</h3>
+        {
+          modelChanges.length === 0 ? (
+            <p class="text-muted-foreground text-sm">{fmt(t.detail.noChanges, { date: changelog.start ?? historyStart })}</p>
+          ) : (
+            <ul class="space-y-1 text-sm">
+              {modelChanges.map(({ date, change }) => (
+                <li class="flex gap-3">
+                  <time datetime={date} class="num text-muted-foreground shrink-0">{date}</time>
+                  <span class="min-w-0"><ChangeText locale={locale} change={change} linkable={linkable} /></span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+        <p class="mt-2 text-sm">
+          <a href={localePath(locale, '/changelog')} class="text-primary underline">{t.detail.allChanges}</a>
         </p>
       </section>
     </div>

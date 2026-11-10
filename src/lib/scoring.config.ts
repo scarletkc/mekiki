@@ -203,3 +203,17 @@ export const scoringConfig: ScoringConfig = {
     tiers: { top: 70, high: 60, mid: 50 },
   },
 };
+
+/**
+ * What the changelog and the RSS feeds report (src/lib/changelog.ts). Tier
+ * changes, price changes, new leaders and models added or removed are always
+ * listed. A score that moves without changing tier is listed once it has
+ * drifted at least `scoreDelta` points from the last score reported for it,
+ * so small daily leaderboard moves add up instead of being lost or spamming
+ * the feed.
+ */
+export const changelogConfig = {
+  scoreDelta: 3,
+};
+
+export type ChangelogConfig = typeof changelogConfig;

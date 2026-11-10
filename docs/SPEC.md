@@ -77,6 +77,8 @@ data/snapshots/*.json ────┘
       └── pnpm sync (scripts/sources/, one adapter per source)
 ```
 
+- After the snapshots, `pnpm sync` records the day's ratings in `data/history.jsonl`
+  (§4.5). The changelog, the RSS feeds and the trend charts are built from that file.
 - The model schema (`src/lib/model-schema.ts`) and snapshot schemas
   (`src/lib/snapshots.ts`) use Astro's own Zod (`astro/zod`), so the content collection
   and the Node scripts share one schema and one Zod version.
@@ -91,6 +93,7 @@ data/snapshots/*.json ────┘
 | --- | --- | --- | --- |
 | Model list and mappings | Hand-written | `src/content/models/**.md` | The maintainer |
 | External snapshots | `pnpm sync` | `data/snapshots/*.json` | The daily workflow |
+| Rating history | `pnpm sync`, once a day | `data/history.jsonl` | The daily workflow |
 | Rating parameters | Config | `src/lib/scoring.config.ts` | The maintainer |
 
 ### 4.1 Model files
@@ -203,6 +206,39 @@ nothing).
 - `pnpm sync` exits 0 even then, so a broken source never blocks a deploy.
 - A missing snapshot file still builds; the site shows "no data" for that source.
 - Without `AA_API_KEY`, Artificial Analysis is skipped.
+- After the sources, today's ratings are recorded in the history (§4.5). A failure there
+  doesn't fail the sync either.
+
+### 4.5 History
+
+`data/history.jsonl` keeps the ratings the site showed, one JSON line per UTC day, oldest
+first:
+
+```json
+{"date":"2026-11-10","models":{"<provider>/<model>":{"name":"...","status":"active","intelligence":{"score":93.2,"tier":"top"},"cost":{"tier":"high","blended":2.94,"input":4,"output":20,"cache_read":0.2},"value":{"score":59.6,"tier":"mid"}}}}
+```
+
+- It records what the site showed at the time, not a recomputation: every listed model's
+  name, status, scores, tiers and prices, taken from the dataset (`src/lib/history.ts`).
+  A change to the config or a model file shows up as changes in the next recording.
+- `pnpm sync` records today after writing the snapshots; `pnpm history` records from the
+  files as they are, without going online. A push to `main` does not sync, so it records
+  nothing: a config change reaches the history with the next daily sync, up to a day
+  later.
+- Whether a day changed is decided by comparing it with the previous line, not by
+  whether a snapshot changed: a config or model file change moves the scores while the
+  snapshots stay the same.
+- A day identical to the previous one is not written, so a missing day means "same as
+  before" and a quiet day makes no commit. Re-running on the same day replaces that
+  day's line, and removes it if it now matches the day before.
+- Nothing is recorded when the file already has a later day (a clock went backwards) or
+  has a broken line, so rewriting the file never drops lines silently.
+- The build reads this file only. A missing file is an empty history; a broken line is
+  skipped with a warning, and the build goes on.
+- Tiers are stored as plain strings, so renaming a tier later does not invalidate older
+  lines.
+- The history starts on 2026-11-10. Earlier snapshots were not backfilled: they cover
+  about ten hours of one day, during which the algorithm changed several times.
 
 ## 5. Rating
 
@@ -374,6 +410,7 @@ Static files generated at build time (Astro static endpoints):
 | `/api.json` | Metadata and the full rating of every model |
 | `/api/models.json` | `id`, `name`, `vendor`, `status` of every model |
 | `/api/models/<provider>/<model>.json` | One model |
+| `/api/history.json` | Every recorded day (§4.5) |
 
 `/api.json`, abridged to one model and one metric:
 
@@ -421,6 +458,8 @@ Static files generated at build time (Astro static endpoints):
   says whether it comes from a measured run cost (`run_cost`) or the price list
   (`list_price`).
 - `url` is the unprefixed, language-neutral link (§7).
+- `/api/history.json` is `{ version, generated_at, entries }`, where `entries` are the
+  lines of `data/history.jsonl` as they are, oldest first.
 - **Fields are only added.** A breaking change bumps `version` (`API_VERSION` in
   `src/lib/api.ts`).
 - Responses must carry `Access-Control-Allow-Origin: *` so browsers can call the API
@@ -434,6 +473,8 @@ Static files generated at build time (Astro static endpoints):
 | `/<locale>/` | The model table |
 | `/<locale>/m/<provider>/<model>` | One model |
 | `/<locale>/compare` | Up to four models side by side |
+| `/<locale>/changelog` | Rating changes, grouped by day |
+| `/<locale>/feed.xml` | The changelog as RSS; `/feed.xml` is the default language's |
 | `/<locale>/method` | Rating method, data sources and attribution, when each source last changed |
 | `/<locale>/api` | API fields and a live example |
 
@@ -444,8 +485,9 @@ Static files generated at build time (Astro static endpoints):
   Astro's own i18n routing is not used.
 - UI strings live in `src/i18n/`, one dictionary per language. `en.ts` defines the shape
   and the others are type-checked against it, so a missing string fails `pnpm check`.
-- Unprefixed URLs (`/`, `/compare`, `/method`, `/api`, `/m/<provider>/<model>`) only redirect to the
-  same page in one language, keeping the query string and hash. The target is, in order:
+- Unprefixed URLs (`/`, `/changelog`, `/compare`, `/method`, `/api`,
+  `/m/<provider>/<model>`) only redirect to the same page in one language, keeping the
+  query string and hash. The target is, in order:
   the language last picked in the switcher (`localStorage` key `locale`), the first
   browser language that matches, then English. Chinese goes to `/zh-tw/` for
   Traditional script or Taiwan, Hong Kong and Macau, and to `/zh-cn/` otherwise. GitHub
@@ -472,10 +514,18 @@ column shows a tier badge and the score.
 ### Model page
 
 The three ratings; how the intelligence score is built (raw score, leader, normalised
-score and weight per leaderboard); price, context window, release date, open weights and
-modalities; how value was priced; links to the source data and the model's JSON. The
+score and weight per leaderboard); the history of intelligence and value with the
+model's changes; price, context window, release date, open weights and modalities; how
+value was priced; links to the source data and the model's JSON. The
 header has a Compare button, which opens the compare page with this model, and a Share
 button.
+
+The history charts are step charts (a score holds until the next recorded change) drawn
+as inline SVG at build time, with no script. The vertical axis zooms to the data and the
+tier boundaries inside it are drawn as hairlines. The last point is the score the page
+shows, so the chart always agrees with the number above it. A model with fewer than two
+days of data gets a note saying when its history starts instead of a chart. A
+collapsible table under the charts lists the same numbers.
 
 ### Compare page
 
@@ -495,6 +545,28 @@ can be shared. Without `m`, it shows the three most intelligent current models.
   previews do not run scripts.
 - `/sitemap.xml` lists every locale-prefixed page with its `hreflang` alternates, and
   `robots.txt` points to it. Redirect pages and the 404 are left out.
+
+### Changelog and feeds
+
+The changelog (`src/lib/changelog.ts`) compares each recorded day with the one before
+and lists only the changes that matter:
+
+- a tier change, with the scores (or blended price) before and after;
+- a price change, with the cost tier when it changed with it; a cost tier that changed
+  without a price change (the thresholds or the blend weights changed) is a tier change;
+- a new leader in intelligence or value;
+- a model added, removed, moved to legacy or back;
+- a score that moved without changing tier, once it has drifted at least
+  `changelogConfig.scoreDelta` points from the last score listed for it, so slow drift
+  adds up instead of being lost.
+
+The first recorded day is the baseline and lists nothing. Models that were removed are
+not linked, since their page is gone.
+
+Each language has an RSS 2.0 feed with one item per day, for the last 50 days. Every
+date in it (`pubDate`, `guid`, `lastBuildDate`) comes from the history, never from the
+build, so a rebuild does not look like news. Pages advertise their language's feed in
+`<head>`.
 
 ### Everywhere
 
@@ -516,7 +588,7 @@ and on manual dispatch:
 
 1. Check out and install.
 2. Daily and manual runs only: `pnpm sync` with `AA_API_KEY`, then commit and push any
-   snapshot change.
+   change to the snapshots or the history.
 3. `biome ci`, `pnpm check`, `pnpm test`.
 4. `pnpm build`, upload, deploy to GitHub Pages.
 5. A separate `smoke` job runs `pnpm smoke` on the same build artifact. It is optional:
@@ -576,4 +648,15 @@ add megabytes to every build for a few short labels.
 **A hand-written sitemap.** `@astrojs/sitemap` writes `sitemap-index.xml` and would list
 the redirect pages, which are not indexed.
 
-Not built yet: score history, an RSS feed or changelog, and more UI languages.
+
+**The history keeps what the site showed.** Recomputing old days with today's algorithm
+would keep the trend lines smooth across config changes, but the changelog and the feeds
+would rewrite themselves after every tuning, and a feed item that changes after it was
+read is worse than a visible step. Recording the shown ratings also needs no copy of old
+snapshots.
+
+**The changelog leaves out small moves.** Leaderboards shift scores by a tenth of a point
+almost every day; listing each move would bury tier and price changes. Scores are still
+listed once they drift far enough (§7).
+
+Not built yet: more UI languages.

@@ -27,6 +27,7 @@ const endpoints = [
     href: sample ? samplePath : null,
     content: a.endpointOne,
   },
+  { path: '/api/history.json', href: '/api/history.json', content: a.endpointHistory },
 ];
 ---
 
@@ -83,6 +84,7 @@ const endpoints = [
       <li>{a.fieldTier}</li>
       <li>{a.fieldPrice}</li>
       <li>{a.fieldValue}</li>
+      <li>{a.fieldHistory}</li>
     </ul>
 
     <h2 id="versioning">{a.versionTitle}</h2>
