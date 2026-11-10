@@ -4,13 +4,9 @@ vendor: Anthropic
 status: legacy
 sources:
   modelsdev: anthropic/claude-opus-5
-  aa:
-  arena_text:
+  aa: claude-opus-5
+  arena_text: "Claude Opus 5 (Max)"
+  arena_webdev: "Claude Opus 5 (Max)"
 subjective:
   score:
-  verdict:
-  pros: []
-  cons: []
-  best_for: []
-reviewed_at:
 ---

@@ -1,37 +1,65 @@
 {
   "source": "arena",
-  "fetched_at": "2026-11-10T16:38:59.176Z",
+  "fetched_at": "2026-11-10T17:40:53.455Z",
   "total": 421,
   "frontier": {
-    "arena_text": 1538.28
+    "arena_text": 1538.28,
+    "arena_webdev": 1817.7
   },
   "models": {
     "Claude Haiku 5.5 (High)": {
       "arena_text": 1398.7,
+      "arena_webdev": 1595.12,
+      "published": "2026-11-09"
+    },
+    "Claude Opus 5 (Max)": {
+      "arena_text": 1506.32,
+      "arena_webdev": 1690.84,
       "published": "2026-11-09"
     },
     "Claude Opus 5.5 (High)": {
       "arena_text": 1513,
+      "arena_webdev": null,
+      "published": "2026-11-09"
+    },
+    "Claude Opus 5.5 (Max)": {
+      "arena_text": null,
+      "arena_webdev": 1817.7,
       "published": "2026-11-09"
     },
     "Claude Sonnet 5.5 (xHigh)": {
       "arena_text": 1468.82,
+      "arena_webdev": 1774.26,
+      "published": "2026-11-09"
+    },
+    "DeepSeek-V4-Pro (High, 20260813)": {
+      "arena_text": 1444.95,
+      "arena_webdev": 1581.19,
       "published": "2026-11-09"
     },
     "Gemini 3.8 Flash (High)": {
       "arena_text": 1500.41,
+      "arena_webdev": 1583.8,
       "published": "2026-11-09"
     },
     "Gemini 4 Argon (High)": {
       "arena_text": 1530.16,
+      "arena_webdev": 1682.59,
       "published": "2026-11-09"
     },
     "GPT-6.1 Sol (Max)": {
       "arena_text": 1445.94,
+      "arena_webdev": 1742.84,
+      "published": "2026-11-09"
+    },
+    "GPT-6.1 Terra (Max)": {
+      "arena_text": null,
+      "arena_webdev": 1678.73,
       "published": "2026-11-09"
     },
     "Grok 4.7 (xHigh)": {
       "arena_text": 1398.47,
+      "arena_webdev": 1639.36,
       "published": "2026-11-09"
     }
   }

@@ -4,9 +4,28 @@ import { toApiFull, toApiIndex, toApiModel } from '@/lib/api';
 import { buildDataset, latestSync } from '@/lib/dataset';
 import { DEFAULT_LOCALE, localePath, stripLocale } from '@/i18n';
 import { modelIdFromPath, type ModelEntry } from '@/lib/model-schema';
+import { METRIC_KEYS, scoringConfig, type ScoringConfig } from '@/lib/scoring.config';
 import type { Snapshots } from '@/lib/snapshots';
 
 const NOW = new Date('2026-11-11T00:00:00Z');
+
+// A fixed copy of the config, so these expectations do not move when the
+// live weights and gaps in scoring.config.ts are tuned.
+const config: ScoringConfig = {
+  ...scoringConfig,
+  intelligence: {
+    benchmarkWeight: 0.6,
+    subjectiveWeight: 0.4,
+    metrics: {
+      aa_intelligence: { source: 'aa', mapping: 'aa', weight: 0.5, floor: { type: 'absolute', value: 0 } },
+      arena_text: { source: 'arena', mapping: 'arena_text', weight: 0.3, floor: { type: 'below_frontier', gap: 300 } },
+      arena_webdev: { source: 'arena', mapping: 'arena_webdev', weight: 0.2, floor: { type: 'below_frontier', gap: 300 } },
+    },
+    tiers: { top: 90, high: 75, mid: 55 },
+  },
+  cost: { inputWeight: 3, outputWeight: 1, indexFloorPrice: 0.1, indexCeilPrice: 30, tiers: { low: 1, mid: 5, high: 15 } },
+  value: { intelligenceExponent: 0.6, affordabilityExponent: 0.4, minAffordability: 5, tiers: { top: 70, high: 60, mid: 50 } },
+};
 
 function entry(id: string, frontmatter: string, body = ''): ModelEntry {
   return parseModelFile(`---\n${frontmatter}\n---\n${body}`, `${id}.md`);
@@ -43,16 +62,20 @@ const snapshots: Snapshots = {
   aa: {
     source: 'aa',
     fetched_at: '2026-11-09T00:00:00.000Z',
-    frontier: { aa_intelligence: 70, aa_coding: 62 },
+    frontier: { aa_intelligence: 70 },
     models: {
-      flagship: { name: 'Flagship', aa_intelligence: 68, aa_coding: 60, index_cost_usd: 123.4 },
+      flagship: { name: 'Flagship', aa_intelligence: 68, index_cost_usd: 123.4 },
     },
   },
+  // The same model is listed under different names on the two Arena boards.
   arena: {
     source: 'arena',
     fetched_at: '2026-11-10T12:00:00.000Z',
-    frontier: { arena_text: 1500 },
-    models: { 'Flagship (High)': { arena_text: 1490, published: '2026-11-09' } },
+    frontier: { arena_text: 1500, arena_webdev: 1800 },
+    models: {
+      'Flagship (High)': { arena_text: 1490, arena_webdev: null, published: '2026-11-09' },
+      'Flagship (Max)': { arena_text: null, arena_webdev: 1790, published: '2026-11-09' },
+    },
   },
 };
 
@@ -64,14 +87,10 @@ const flagship = entry(
     'sources:',
     '  aa: flagship',
     '  arena_text: Flagship (High)',
+    '  arena_webdev: "Flagship (Max)"',
     'subjective:',
     '  score: 95',
-    '  verdict: Best in class',
-    '  pros: [fast]',
-    '  best_for: [coding]',
-    'reviewed_at: 2026-11-01',
   ].join('\n'),
-  'Long review.',
 );
 
 const blank = entry(
@@ -84,14 +103,10 @@ const blank = entry(
     '  modelsdev:',
     '  aa:',
     '  arena_text:',
+    '  arena_webdev:',
     'subjective:',
     '  score:',
-    '  verdict:',
-    '  pros: []',
-    '  cons:',
-    '  best_for: []',
     'overrides:',
-    'reviewed_at:',
   ].join('\n'),
 );
 
@@ -102,24 +117,34 @@ describe('model files', () => {
   });
 
   it('treats empty YAML values as not filled in', () => {
-    expect(blank.data.subjective).toEqual({ pros: [], cons: [], best_for: [] });
+    expect(blank.data.subjective).toEqual({});
     expect(blank.data.sources).toEqual({});
     expect(blank.data.overrides).toEqual({});
-    expect(blank.data.reviewed_at).toBeUndefined();
-    expect(blank.hasReview).toBe(false);
   });
 
-  it('normalises the review date whether YAML gives a date or a string', () => {
-    expect(flagship.data.reviewed_at).toBe('2026-11-01');
-    expect(entry('a/b', 'name: B\nvendor: A\nreviewed_at: "2026-01-02"').data.reviewed_at).toBe(
-      '2026-01-02',
+  it('reads every mapping field', () => {
+    expect(flagship.data.sources).toEqual({
+      aa: 'flagship',
+      arena_text: 'Flagship (High)',
+      arena_webdev: 'Flagship (Max)',
+    });
+    expect(flagship.data.subjective).toEqual({ score: 95 });
+  });
+
+  it('ignores text-review fields, which the site no longer has', () => {
+    const old = entry(
+      'a/b',
+      'name: B\nvendor: A\nsubjective:\n  score: 70\n  verdict: Great\n  pros: [fast]\nreviewed_at: 2026-11-01',
+      'A long review.',
     );
+    expect(old.data.subjective).toEqual({ score: 70 });
+    expect(Object.keys(old.data).sort()).toEqual(['name', 'overrides', 'sources', 'status', 'subjective', 'vendor']);
   });
 
   it('rejects invalid frontmatter with the file name in the message', () => {
     expect(() => entry('a/b', 'name: B')).toThrow(/a\/b\.md/);
     expect(() => entry('a/b', 'name: B\nvendor: A\nsubjective:\n  score: 120')).toThrow();
-    expect(() => entry('a/b', `name: B\nvendor: A\nsubjective:\n  verdict: ${'x'.repeat(41)}`)).toThrow();
+    expect(() => entry('a/b', 'name: B\nvendor: A\nstatus: retired')).toThrow();
     expect(() => parseModelFile('no frontmatter', 'a/b.md')).toThrow(/frontmatter/);
   });
 
@@ -131,19 +156,71 @@ describe('model files', () => {
 });
 
 describe('buildDataset', () => {
-  const dataset = buildDataset([blank, flagship], snapshots, { now: NOW });
+  const dataset = buildDataset([blank, flagship], snapshots, { now: NOW, config });
   const [first, second] = dataset.models;
 
-  it('rates a fully mapped model exactly like SPEC §6.5 case A', () => {
+  it('rates a fully mapped model from every leaderboard', () => {
     expect(first?.id).toBe('acme/flagship');
-    expect(first?.rating.intelligence).toMatchObject({ score: 96.2, tier: 'top', basis: 'both', benchmark: 96.9 });
+    // 0.5 × 97.14 + 0.3 × 96.67 + 0.2 × 96.67 = 96.90; with a subjective 95: 96.14
+    expect(first?.rating.intelligence).toMatchObject({
+      score: 96.1,
+      tier: 'top',
+      basis: 'both',
+      benchmark: 96.9,
+      subjective: 95,
+    });
+    expect(first?.rating.intelligence.breakdown).toEqual({
+      aa_intelligence: { raw: 68, normalized: 97.1, weight: 0.5, frontier: 70 },
+      arena_text: { raw: 1490, normalized: 96.7, weight: 0.3, frontier: 1500 },
+      arena_webdev: { raw: 1790, normalized: 96.7, weight: 0.2, frontier: 1800 },
+    });
     expect(first?.rating.cost).toMatchObject({ blended: 10, tier: 'high', index: 80.7, cache_read: 0.5 });
     expect(first?.rating.value).toEqual({ score: 50.5, tier: 'mid' });
     expect(first?.facts).toMatchObject({ context: 1000000, open_weights: false, index_cost_usd: 123.4 });
     expect(first?.price_source).toBe('modelsdev');
-    expect(first?.stale).toBe(false);
-    expect(first?.has_review).toBe(true);
+    expect(first?.source_ids).toEqual({
+      modelsdev: 'acme/flagship',
+      aa: 'flagship',
+      arena_text: 'Flagship (High)',
+      arena_webdev: 'Flagship (Max)',
+    });
+    expect(first?.matched).toEqual({ modelsdev: true, aa: true, arena: true });
     expect(first?.url).toBe('https://mekiki.fog.moe/m/acme/flagship');
+  });
+
+  it('needs no subjective score: intelligence is then the benchmark score', () => {
+    const noOpinion = entry(
+      'acme/flagship',
+      'name: Flagship\nvendor: Acme\nsources:\n  aa: flagship\n  arena_text: Flagship (High)\n  arena_webdev: "Flagship (Max)"',
+    );
+    const [model] = buildDataset([noOpinion], snapshots, { now: NOW, config }).models;
+    expect(model?.rating.intelligence).toMatchObject({
+      score: 96.9,
+      basis: 'benchmark_only',
+      benchmark: 96.9,
+      subjective: null,
+    });
+    expect(model?.rating.value.score).not.toBeNull();
+  });
+
+  it('rates a model that is on one leaderboard only', () => {
+    const webdevOnly = entry(
+      'acme/flagship',
+      'name: Flagship\nvendor: Acme\nsources:\n  arena_webdev: "Flagship (Max)"',
+    );
+    const [model] = buildDataset([webdevOnly], snapshots, { now: NOW, config }).models;
+    expect(model?.rating.intelligence).toMatchObject({ score: 96.7, basis: 'benchmark_only' });
+    expect(model?.matched).toEqual({ modelsdev: true, aa: false, arena: true });
+  });
+
+  it('does not read a rating from the wrong board', () => {
+    // "Flagship (Max)" exists in the snapshot, but only with a WebDev rating.
+    const wrongBoard = entry(
+      'acme/flagship',
+      'name: Flagship\nvendor: Acme\nsources:\n  arena_text: "Flagship (Max)"',
+    );
+    const [model] = buildDataset([wrongBoard], snapshots, { now: NOW, config }).models;
+    expect(model?.rating.intelligence.score).toBeNull();
   });
 
   it('sorts unrated models last and leaves their numbers null, never 0', () => {
@@ -160,27 +237,19 @@ describe('buildDataset', () => {
       'acme/flagship',
       'name: Flagship\nvendor: Acme\noverrides:\n  price: { input: 1, output: 2 }',
     );
-    const [model] = buildDataset([overridden], snapshots, { now: NOW }).models;
+    const [model] = buildDataset([overridden], snapshots, { now: NOW, config }).models;
     expect(model?.rating.cost).toMatchObject({ input: 1, output: 2, blended: 1.25, cache_read: 0.5 });
     expect(model?.price_source).toBe('override');
   });
 
   it('marks a zero price as free', () => {
     const free = entry('acme/free', 'name: Free\nvendor: Acme');
-    const [model] = buildDataset([free], snapshots, { now: NOW }).models;
+    const [model] = buildDataset([free], snapshots, { now: NOW, config }).models;
     expect(model?.rating.cost).toMatchObject({ free: true, index: 0, tier: 'low' });
   });
 
-  it('flags a review older than 90 days', () => {
-    const old = entry('a/old', 'name: Old\nvendor: A\nreviewed_at: 2026-08-01');
-    const fresh = entry('a/fresh', 'name: Fresh\nvendor: A\nreviewed_at: 2026-08-14');
-    const { models } = buildDataset([old, fresh], snapshots, { now: NOW });
-    expect(models.find((model) => model.id === 'a/old')?.stale).toBe(true);
-    expect(models.find((model) => model.id === 'a/fresh')?.stale).toBe(false);
-  });
-
   it.each(['modelsdev', 'aa', 'arena'] as const)('still builds without the %s snapshot', (source) => {
-    const partial = buildDataset([flagship], { ...snapshots, [source]: null }, { now: NOW });
+    const partial = buildDataset([flagship], { ...snapshots, [source]: null }, { now: NOW, config });
     expect(partial.sources[source].fetched_at).toBeNull();
     const [model] = partial.models;
     expect(model?.matched[source]).toBe(false);
@@ -195,18 +264,29 @@ describe('buildDataset', () => {
   });
 
   it('builds with no snapshots at all', () => {
-    const empty = buildDataset([flagship, blank], { modelsdev: null, aa: null, arena: null }, { now: NOW });
+    const empty = buildDataset([flagship, blank], { modelsdev: null, aa: null, arena: null }, { now: NOW, config });
     expect(empty.models[0]?.rating.intelligence).toMatchObject({ score: 95, basis: 'subjective_only' });
+    expect(empty.frontier).toEqual({ aa_intelligence: null, arena_text: null, arena_webdev: null });
     expect(latestSync(empty)).toBeNull();
   });
 
-  it('reports the most recent sync', () => {
+  it('reports the most recent sync and the frontier of every metric', () => {
     expect(latestSync(dataset)).toBe('2026-11-10T12:00:00.000Z');
+    expect(dataset.frontier).toEqual({ aa_intelligence: 70, arena_text: 1500, arena_webdev: 1800 });
+  });
+});
+
+describe('scoring config', () => {
+  it('reads every metric from a snapshot the model files can map to', () => {
+    const mappings = Object.keys(flagship.data.sources);
+    for (const key of METRIC_KEYS) {
+      expect(mappings).toContain(scoringConfig.intelligence.metrics[key].mapping);
+    }
   });
 });
 
 describe('JSON API', () => {
-  const dataset = buildDataset([blank, flagship], snapshots, { now: NOW });
+  const dataset = buildDataset([blank, flagship], snapshots, { now: NOW, config });
   const full = toApiFull(dataset);
 
   it('matches the documented shape', () => {
@@ -223,7 +303,7 @@ describe('JSON API', () => {
       vendor: 'Acme',
       status: 'active',
       intelligence: {
-        score: 96.2,
+        score: 96.1,
         tier: 'top',
         label: 'Top',
         labels: { 'zh-CN': '最高', 'zh-TW': '最高', en: 'Top' },
@@ -232,8 +312,8 @@ describe('JSON API', () => {
         subjective: 95,
         breakdown: {
           aa_intelligence: { raw: 68, normalized: 97.1, weight: 0.5 },
-          aa_coding: { raw: 60, normalized: 96.8, weight: 0.2 },
           arena_text: { raw: 1490, normalized: 96.7, weight: 0.3 },
+          arena_webdev: { raw: 1790, normalized: 96.7, weight: 0.2 },
         },
       },
       cost: {
@@ -247,9 +327,6 @@ describe('JSON API', () => {
         cache_read: 0.5,
       },
       value: { score: 50.5, tier: 'mid', label: 'Mid', labels: { 'zh-CN': '中', 'zh-TW': '中', en: 'Mid' } },
-      verdict: 'Best in class',
-      best_for: ['coding'],
-      reviewed_at: '2026-11-01',
       url: 'https://mekiki.fog.moe/m/acme/flagship',
     });
   });
@@ -263,12 +340,18 @@ describe('JSON API', () => {
     expect(Object.keys(roundTripped.cost)).toEqual(Object.keys(full.models[0]!.cost));
     expect(Object.keys(roundTripped.value)).toEqual(Object.keys(full.models[0]!.value));
     expect(roundTripped.intelligence.score).toBeNull();
-    expect(roundTripped.intelligence.breakdown.arena_text).toEqual({ raw: null, normalized: null, weight: 0.3 });
+    expect(roundTripped.intelligence.subjective).toBeNull();
+    expect(roundTripped.intelligence.breakdown.arena_webdev).toEqual({ raw: null, normalized: null, weight: 0.2 });
     expect(roundTripped.cost.blended).toBeNull();
     expect(roundTripped.value.label).toBeNull();
-    expect(roundTripped.verdict).toBeNull();
-    expect(roundTripped.reviewed_at).toBeNull();
-    expect(roundTripped.best_for).toEqual([]);
+  });
+
+  it('carries no text-review fields', () => {
+    for (const model of full.models) {
+      expect(model).not.toHaveProperty('verdict');
+      expect(model).not.toHaveProperty('best_for');
+      expect(model).not.toHaveProperty('reviewed_at');
+    }
   });
 
   it('lists every model in the index', () => {

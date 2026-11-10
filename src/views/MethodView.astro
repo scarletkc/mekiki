@@ -37,9 +37,6 @@ const metrics = METRIC_KEYS.map((key) => {
         : fmt(m.floorBelowFrontier, { gap: floor.gap }),
   };
 });
-const eloGap = METRIC_KEYS.map((key) => intelligence.metrics[key].floor).find(
-  (floor) => floor.type === 'below_frontier',
-);
 
 const blend = intelligence.benchmarkWeight + intelligence.subjectiveWeight;
 const shares = {
@@ -94,7 +91,7 @@ const sources = SOURCE_IDS.map((id) => ({
     <p>{m.intro}</p>
 
     <h2 id="intelligence">{m.intelligenceTitle}</h2>
-    <p>{fmt(m.intelligenceBody, { gap: eloGap?.type === 'below_frontier' ? eloGap.gap : 0 })}</p>
+    <p>{m.intelligenceBody}</p>
     <pre><code>n = clamp(100 × (x − floor) ÷ (frontier − floor), 0, 100)</code></pre>
     <p>{m.benchmarkBody}</p>
     <div class="overflow-x-auto">

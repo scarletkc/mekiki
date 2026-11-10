@@ -2,25 +2,29 @@
  * Contract every data-source adapter implements (docs/SPEC.md §5.3):
  * fetch → validate (Zod) → trim to the tracked models → snapshot.
  *
- * To add a leaderboard: write an adapter, register it in ./index.ts, add
- * its snapshot schema to src/lib/snapshots.ts and a metric to
+ * To add a leaderboard: make an adapter write the new metric (a new adapter
+ * registered in ./index.ts, or another board in an existing one), add the
+ * field to the snapshot schema in src/lib/snapshots.ts and the metric to
  * src/lib/scoring.config.ts.
  */
+import type { ModelFrontmatter } from '../../src/lib/model-schema';
 import type { SnapshotOf, SourceId } from '../../src/lib/snapshots';
 
-/** A model file, seen from one source. */
+/** A model file, as the adapters see it. */
 export interface TrackedModel {
   /** Canonical mekiki ID, `<provider>/<model>`. */
   id: string;
   name: string;
-  /** The model's ID in this source, from its frontmatter; null when not mapped. */
-  sourceId: string | null;
+  /** The model's ID in each source, from its frontmatter. */
+  sources: ModelFrontmatter['sources'];
 }
 
 export interface Unmatched {
   model: TrackedModel;
-  /** `unmapped`: no ID in the frontmatter. `not_found`: the ID is not in the source. */
-  reason: 'unmapped' | 'not_found';
+  /** The frontmatter field to fix, e.g. `sources.arena_text`. */
+  field: string;
+  /** The value that was looked up; null when the field is empty. */
+  value: string | null;
   /** Closest entries in the source, for a human to pick from. Never applied automatically. */
   candidates: string[];
 }

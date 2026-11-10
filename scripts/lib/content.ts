@@ -44,11 +44,7 @@ export function parseModelFile(text: string, relativePath: string): ModelEntry {
       .join('\n');
     throw new Error(`${relativePath}: invalid frontmatter\n${issues}`);
   }
-  return {
-    id: modelIdFromPath(relativePath),
-    data: parsed.data,
-    hasReview: (match[2] ?? '').trim().length > 0,
-  };
+  return { id: modelIdFromPath(relativePath), data: parsed.data };
 }
 
 /** All model files under src/content/models, sorted by ID. */

@@ -6,7 +6,13 @@
  * Pure: takes its inputs as arguments and must not import `astro:*`.
  */
 import type { ModelEntry } from './model-schema';
-import { METRIC_KEYS, scoringConfig, type MetricKey, type ScoringConfig } from './scoring.config';
+import {
+  METRIC_KEYS,
+  scoringConfig,
+  type MappingField,
+  type MetricKey,
+  type ScoringConfig,
+} from './scoring.config';
 import { rateModel, type Price, type Rating } from './scoring';
 import { SOURCE_IDS, SOURCE_INFO, type Snapshots, type SourceId } from './snapshots';
 
@@ -29,14 +35,6 @@ export interface ModelRecord {
   rating: Rating;
   /** Where the price comes from; null when there is no price. */
   price_source: 'override' | 'modelsdev' | null;
-  verdict: string | null;
-  pros: string[];
-  cons: string[];
-  best_for: string[];
-  reviewed_at: string | null;
-  /** True when the review is older than `staleAfterDays`. */
-  stale: boolean;
-  has_review: boolean;
   facts: {
     /** Context window in tokens. */
     context: number | null;
@@ -47,12 +45,10 @@ export interface ModelRecord {
     index_cost_usd: number | null;
   };
   /** The model's ID in each source, as mapped in its frontmatter. */
-  source_ids: { modelsdev: string; aa: string | null; arena_text: string | null };
-  /** Whether that ID was found in the source's snapshot. */
+  source_ids: { modelsdev: string } & Record<MappingField, string | null>;
+  /** Whether the model was found in each source's snapshot. */
   matched: Record<SourceId, boolean>;
-  /** Pages on the source sites that show the raw numbers. */
-  links: Record<SourceId, string | null>;
-  /** Canonical page URL (default locale). */
+  /** Language-neutral page URL; it redirects to the default locale. */
   url: string;
 }
 
@@ -69,28 +65,31 @@ export interface BuildOptions {
   config?: ScoringConfig;
 }
 
-function daysBetween(fromIsoDate: string, to: Date): number {
-  const from = Date.parse(`${fromIsoDate}T00:00:00Z`);
-  if (Number.isNaN(from)) return 0;
-  return (to.getTime() - from) / 86_400_000;
-}
+const asNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
 
-function metricValue(snapshots: Snapshots, entry: ModelEntry, key: MetricKey): number | null {
-  const { aa, arena_text } = entry.data.sources;
-  if (key === 'arena_text') {
-    return arena_text ? (snapshots.arena?.models[arena_text]?.arena_text ?? null) : null;
-  }
-  return aa ? (snapshots.aa?.models[aa]?.[key] ?? null) : null;
+/** A metric's raw score for one model: snapshot → mapped ID → metric. */
+function metricValue(
+  snapshots: Snapshots,
+  entry: ModelEntry,
+  key: string,
+  config: ScoringConfig,
+): number | null {
+  const metric = config.intelligence.metrics[key];
+  if (!metric) return null;
+  const id = entry.data.sources[metric.mapping];
+  if (!id) return null;
+  const model = snapshots[metric.source]?.models[id] as Record<string, unknown> | undefined;
+  return asNumber(model?.[key]);
 }
 
 export function frontierOf(
   snapshots: Snapshots,
   config: ScoringConfig = scoringConfig,
-): Record<MetricKey, number | null> {
-  const frontier = {} as Record<MetricKey, number | null>;
-  for (const key of METRIC_KEYS) {
-    const snapshot = snapshots[config.intelligence.metrics[key].source];
-    frontier[key] = snapshot?.frontier[key] ?? null;
+): Record<string, number | null> {
+  const frontier: Record<string, number | null> = {};
+  for (const [key, metric] of Object.entries(config.intelligence.metrics)) {
+    frontier[key] = asNumber(snapshots[metric.source]?.frontier[key]);
   }
   return frontier;
 }
@@ -118,13 +117,14 @@ export function buildDataset(
 
   const models = entries.map((entry): ModelRecord => {
     const { data } = entry;
-    const modelsdevId = data.sources.modelsdev ?? entry.id;
-    const aaId = data.sources.aa ?? null;
-    const arenaId = data.sources.arena_text ?? null;
+    const { sources } = data;
+    const modelsdevId = sources.modelsdev ?? entry.id;
 
     const facts = snapshots.modelsdev?.models[modelsdevId] ?? null;
-    const aa = aaId ? (snapshots.aa?.models[aaId] ?? null) : null;
-    const arena = arenaId ? (snapshots.arena?.models[arenaId] ?? null) : null;
+    const aa = sources.aa ? (snapshots.aa?.models[sources.aa] ?? null) : null;
+    const arena = [sources.arena_text, sources.arena_webdev].some(
+      (id) => id !== undefined && snapshots.arena?.models[id] !== undefined,
+    );
 
     let price: Price | null = null;
     let priceSource: ModelRecord['price_source'] = null;
@@ -140,15 +140,15 @@ export function buildDataset(
       priceSource = 'modelsdev';
     }
 
-    const metrics = {} as Record<MetricKey, number | null>;
-    for (const key of METRIC_KEYS) metrics[key] = metricValue(snapshots, entry, key);
+    const metrics: Record<string, number | null> = {};
+    for (const key of Object.keys(config.intelligence.metrics)) {
+      metrics[key] = metricValue(snapshots, entry, key, config);
+    }
 
     const rating = rateModel(
       { metrics, frontier, subjective: data.subjective.score ?? null, price },
       config,
     );
-
-    const reviewedAt = data.reviewed_at ?? null;
 
     return {
       id: entry.id,
@@ -157,13 +157,6 @@ export function buildDataset(
       status: data.status,
       rating,
       price_source: priceSource,
-      verdict: data.subjective.verdict ?? null,
-      pros: data.subjective.pros,
-      cons: data.subjective.cons,
-      best_for: data.subjective.best_for,
-      reviewed_at: reviewedAt,
-      stale: reviewedAt !== null && daysBetween(reviewedAt, now) > config.staleAfterDays,
-      has_review: entry.hasReview,
       facts: {
         context: facts?.context ?? null,
         release_date: facts?.release_date ?? null,
@@ -171,13 +164,13 @@ export function buildDataset(
         modalities: facts?.modalities ?? null,
         index_cost_usd: aa?.index_cost_usd ?? null,
       },
-      source_ids: { modelsdev: modelsdevId, aa: aaId, arena_text: arenaId },
-      matched: { modelsdev: facts !== null, aa: aa !== null, arena: arena !== null },
-      links: {
-        modelsdev: SOURCE_INFO.modelsdev.url,
-        aa: aaId ? `https://artificialanalysis.ai/models/${encodeURIComponent(aaId)}` : null,
-        arena: arenaId ? SOURCE_INFO.arena.url : null,
+      source_ids: {
+        modelsdev: modelsdevId,
+        aa: sources.aa ?? null,
+        arena_text: sources.arena_text ?? null,
+        arena_webdev: sources.arena_webdev ?? null,
       },
+      matched: { modelsdev: facts !== null, aa: aa !== null, arena },
       url: `${SITE_URL}/m/${entry.id}`,
     };
   });
@@ -189,7 +182,10 @@ export function buildDataset(
     sources[id] = { ...SOURCE_INFO[id], fetched_at: snapshots[id]?.fetched_at ?? null };
   }
 
-  return { generated_at: now.toISOString(), sources, frontier, models };
+  const liveFrontier = {} as Record<MetricKey, number | null>;
+  for (const key of METRIC_KEYS) liveFrontier[key] = frontier[key] ?? null;
+
+  return { generated_at: now.toISOString(), sources, frontier: liveFrontier, models };
 }
 
 /** Latest `fetched_at` across all sources, or null when nothing was ever synced. */

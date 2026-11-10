@@ -5,8 +5,8 @@ Opinionated ratings of AI models, published as a static site and a public JSON A
 
 Each model gets three ratings:
 
-- **Intelligence**: public leaderboard scores (fetched automatically) blended with a subjective
-  score (entered by hand).
+- **Intelligence**: public leaderboard scores, fetched automatically. A hand-entered
+  subjective score can be blended in, but is optional.
 - **Cost**: derived from the official price.
 - **Value**: derived from intelligence and cost.
 
@@ -56,26 +56,22 @@ Adding a model means adding one Markdown file. Nothing else needs to change.
    status: active          # active | legacy (legacy models are collapsed on the home page)
    sources:
      modelsdev: openai/gpt-6.1-sol   # optional; defaults to the file's ID
-     aa:                             # slug on Artificial Analysis
-     arena_text: GPT-6.1 Sol (Max)   # exact name on the Arena text leaderboard
+     aa: gpt-6-1-sol                       # slug on Artificial Analysis
+     arena_text: "GPT-6.1 Sol (Max)"       # exact name on the Arena text leaderboard
+     arena_webdev: "GPT-6.1 Sol (Max)"     # exact name on the Arena WebDev leaderboard
    subjective:
-     score:                # 0-100; leave empty until you have used the model
-     verdict:              # one line, at most 40 characters
-     pros: []
-     cons: []
-     best_for: []          # tags such as coding, agent, writing
-   reviewed_at:            # YYYY-MM-DD
+     score:                # optional, 0-100; leave empty and the leaderboards decide alone
    ---
-
-   The long review goes here, in Markdown. It is shown on the model's page.
    ```
+
+   The file is frontmatter only; anything below it is ignored.
 
 3. Run `pnpm sync`. It fetches the model's price and scores, and lists every mapping that
    did not match together with the closest names in that source:
 
    ```text
-   Unmatched in Arena (set sources.arena_text in the model file):
-     anthropic/claude-opus-5: sources.arena_text is empty; candidates: "Claude Opus 5 (High)", "Claude Opus 5 (Max)"
+   Unmatched in Arena (set the field in the model file):
+     openai/gpt-6.1-terra: sources.arena_text is empty; candidates: "GPT-5.6 Terra (xHigh)", "GPT-6.1 Sol (Max)"
    ```
 
    Copy the right name into the file and run `pnpm sync` again. Until a model has been
@@ -86,12 +82,15 @@ Things to know:
 
 - **Mappings are always explicit.** Names differ between leaderboards, and the same model
   is often listed once per reasoning level. Nothing is matched by guessing; choose the entry
-  for the level you actually use.
-- **The `subjective` block is written by hand.** Tools never write to it. Empty fields are shown as
-  "not rated", never as 0.
+  for the level you actually use. The two Arena boards list different levels, so each has
+  its own field.
+- **A model needs no subjective score.** Without one, intelligence is the leaderboard score
+  alone. With one, the two are blended 60/40. Tools never write to `subjective`.
 - A subjective score of 100 means "the best there is right now", the same yardstick as a
   leaderboard score normalised to the current leader.
-- A review older than 90 days is flagged as old.
+- A model that is missing from a leaderboard is rated on the ones it is on; the weights are
+  re-normalised. A model on none of them is shown as "not rated", never as 0.
+- The site has no text reviews: no verdict, pros and cons, or long review.
 - To override the models.dev price, add:
 
   ```yaml
@@ -105,13 +104,16 @@ Things to know:
 
 Every number of the rating algorithm lives in
 [`src/lib/scoring.config.ts`](src/lib/scoring.config.ts): the benchmark/subjective split,
-the weight and zero point of each leaderboard metric, the blended-price formula, the value
-exponents, the tier thresholds, and how old a review may get.
+which leaderboard metrics are used with their weight and zero point, the blended-price
+formula, the value exponents and the tier thresholds.
 
 1. Edit `src/lib/scoring.config.ts`.
 2. Run `pnpm report` to see the scores and how the models spread across the tiers.
-3. Run `pnpm test`. The fixtures in `tests/scoring.test.ts` come from the spec and pin the
-   default numbers, so update them when you change a default on purpose.
+3. Run `pnpm test`. The tests pin the algorithm with a fixed reference config taken from
+   the spec, so tuning the live weights does not break them.
+
+To add a leaderboard, add a metric to that file, make its source's adapter in
+`scripts/sources/` write it to the snapshot, and give it a name in `src/i18n/`.
 
 The method page is generated from the same file and cannot drift from it. The algorithm
 itself is in [`src/lib/scoring.ts`](src/lib/scoring.ts), as pure functions.
@@ -121,8 +123,11 @@ itself is in [`src/lib/scoring.ts`](src/lib/scoring.ts), as pure functions.
 | Source | Used for | Access |
 | --- | --- | --- |
 | [models.dev](https://models.dev) | Price, context window, release date, open weights, modalities | `https://models.dev/api.json`, no key |
-| [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index, Coding Index, cost of running the index | Free API, key in `AA_API_KEY` |
-| [Arena](https://arena.ai/leaderboard/text) | Text leaderboard rating | Hugging Face dataset `lmarena-ai/leaderboard-dataset` (CC BY 4.0), no key |
+| [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index, cost of running the index | Free API, key in `AA_API_KEY` |
+| [Arena](https://arena.ai/leaderboard) | Text and WebDev leaderboard ratings | Hugging Face dataset `lmarena-ai/leaderboard-dataset` (CC BY 4.0), no key |
+
+Intelligence is built from three metrics: the AA Intelligence Index (weight 0.5), the Arena
+text rating (0.3) and the Arena WebDev rating (0.2), which stands in for coding ability.
 
 `pnpm sync` runs one adapter per source (`scripts/sources/`). Each adapter fetches,
 validates with Zod, keeps only the tracked models plus the best score on the full
@@ -139,13 +144,8 @@ reads them and nothing else.
   Without a key that source is skipped. The key is only ever read by `pnpm sync`; it must
   never be committed or reach the front end.
 
-Two caveats about Artificial Analysis:
-
-- The adapter was written from the API reference and has **not been run against a live
-  response yet**, because no key was available. Check its output after the first real sync.
-- According to that reference, the free tier always returns `null` for the Coding Index. A
-  missing metric is left out and the other weights are re-normalised, so intelligence is
-  currently built from the Intelligence Index and Arena only.
+Artificial Analysis also publishes a Coding Index, but its free API returns `null` for it on
+every model, so it is not used; Arena's WebDev board covers coding instead.
 
 Attribution is required by Artificial Analysis and by the Arena dataset's licence. The
 footer of every page carries it; keep it there.
@@ -178,8 +178,6 @@ and the others are type-checked against it, so a missing string fails `pnpm chec
   `/en/`. The query string and hash are kept. GitHub Pages cannot send HTTP redirects, so
   they redirect in the browser; without JavaScript they go to English. The API's `url`
   field uses the unprefixed form as a language-neutral link.
-- Hand-written text (verdict, strengths, weaknesses, review) is shown as written in every
-  language. It is not translated or converted.
 - The JSON API is not localised; it carries tier labels for every language instead.
 
 To add a language, add it to `LOCALES` and `LOCALE_INFO` in `src/i18n/locales.ts`, then add

@@ -1,21 +1,19 @@
 ---
-import { render, type CollectionEntry } from 'astro:content';
 import { TierMeter } from '../components/TierMeter';
 import { fmt, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import type { ModelRecord } from '../lib/dataset';
 import { formatPercent, formatPrice, formatScore, formatTokens } from '../lib/format';
 import { METRIC_KEYS, scoringConfig } from '../lib/scoring.config';
+import { SOURCE_INFO } from '../lib/snapshots';
 
 interface Props {
   locale: Locale;
   model: ModelRecord;
-  entry: CollectionEntry<'models'>;
 }
 
-const { locale, model, entry } = Astro.props;
+const { locale, model } = Astro.props;
 const t = useTranslations(locale);
-const { Content } = await render(entry);
 
 const { intelligence, cost, value } = model.rating;
 const { benchmarkWeight, subjectiveWeight } = scoringConfig.intelligence;
@@ -23,25 +21,36 @@ const share = (weight: number) =>
   formatPercent(weight / (benchmarkWeight + subjectiveWeight)).replace('%', '');
 
 const metrics = METRIC_KEYS.map((key) => {
-  const item = intelligence.breakdown[key];
-  const source = scoringConfig.intelligence.metrics[key].source;
-  const mapped = source === 'aa' ? model.source_ids.aa : model.source_ids.arena_text;
+  const config = scoringConfig.intelligence.metrics[key];
+  const item = intelligence.breakdown[key] ?? {
+    raw: null,
+    normalized: null,
+    weight: config.weight,
+    frontier: null,
+  };
+  const mapped = model.source_ids[config.mapping];
   // Say why a figure is missing: no mapping, not in the snapshot, or simply no score.
-  const missing = mapped === null ? t.detail.notMapped : !model.matched[source] ? t.detail.notFound : t.empty.noData;
-  return { key, label: t.metric[key], ...item, mapped, missing };
+  const missing =
+    mapped === null ? t.detail.notMapped : item.raw === null ? t.detail.notFound : t.empty.noData;
+  return { key, label: t.metric[key], ...item, mapped, missing, url: 'url' in config ? config.url : null };
 });
 
-const reviewed = model.reviewed_at !== null || intelligence.subjective !== null || model.verdict !== null;
-const hasNotes = model.pros.length > 0 || model.cons.length > 0 || model.best_for.length > 0;
-
+// Where the raw numbers can be checked: one link per leaderboard the model is mapped to.
 const links = [
-  { href: model.links.aa, label: t.detail.linkAa },
-  { href: model.links.arena, label: t.detail.linkArena },
-  { href: model.links.modelsdev, label: t.detail.linkModelsdev },
+  model.source_ids.aa
+    ? {
+        href: `https://artificialanalysis.ai/models/${encodeURIComponent(model.source_ids.aa)}`,
+        label: t.detail.linkAa,
+      }
+    : null,
+  ...metrics.map((metric) =>
+    metric.url && metric.mapped ? { href: metric.url, label: metric.label } : null,
+  ),
+  { href: SOURCE_INFO.modelsdev.url, label: t.detail.linkModelsdev },
   { href: `/api/models/${model.id}.json`, label: t.detail.linkJson },
-].filter((link): link is { href: string; label: string } => link.href !== null);
+].filter((link) => link !== null);
 
-const description = model.verdict ?? `${model.name} (${model.vendor}): ${t.meta.tagline}`;
+const description = `${model.name} (${model.vendor}): ${t.meta.tagline}`;
 ---
 
 <Base locale={locale} path={`/m/${model.id}`} title={model.name} description={description}>
@@ -59,19 +68,6 @@ const description = model.verdict ?? `${model.name} (${model.vendor}): ${t.meta.
       {model.vendor}
       <span class="mx-1" aria-hidden="true">/</span>
       <code class="font-mono text-[0.8125rem]">{model.id}</code>
-    </p>
-    {model.verdict && <p class="mt-3 max-w-[68ch] text-[1.0625rem]">{model.verdict}</p>}
-    <p class="text-muted-foreground mt-2 text-sm">
-      {
-        model.reviewed_at ? (
-          <>
-            {fmt(t.detail.reviewedAt, { date: model.reviewed_at })}
-            {model.stale && <span class="text-expense ml-2">{t.badge.stale}</span>}
-          </>
-        ) : !reviewed ? (
-          t.detail.notReviewed
-        ) : null
-      }
     </p>
   </header>
 
@@ -191,48 +187,6 @@ const description = model.verdict ?? `${model.name} (${model.vendor}): ${t.meta.
           }
         </p>
       </section>
-
-      {
-        hasNotes && (
-          <section class="mt-8 grid gap-6 sm:grid-cols-2">
-            {model.pros.length > 0 && (
-              <div>
-                <h2 class="mb-1.5 text-base font-semibold">{t.detail.pros}</h2>
-                <ul class="list-disc space-y-1 pl-5 text-sm">
-                  {model.pros.map((item) => <li>{item}</li>)}
-                </ul>
-              </div>
-            )}
-            {model.cons.length > 0 && (
-              <div>
-                <h2 class="mb-1.5 text-base font-semibold">{t.detail.cons}</h2>
-                <ul class="list-disc space-y-1 pl-5 text-sm">
-                  {model.cons.map((item) => <li>{item}</li>)}
-                </ul>
-              </div>
-            )}
-            {model.best_for.length > 0 && (
-              <div class="sm:col-span-2">
-                <h2 class="mb-1.5 text-base font-semibold">{t.detail.bestFor}</h2>
-                <ul class="flex flex-wrap gap-1.5 text-sm">
-                  {model.best_for.map((item) => <li class="bg-secondary rounded px-2 py-0.5">{item}</li>)}
-                </ul>
-              </div>
-            )}
-          </section>
-        )
-      }
-
-      {
-        model.has_review && (
-          <section class="mt-8" aria-labelledby="review">
-            <h2 id="review" class="mb-1 text-base font-semibold">{t.detail.review}</h2>
-            <div class="prose">
-              <Content />
-            </div>
-          </section>
-        )
-      }
     </div>
 
     <aside class="min-w-0 text-sm">

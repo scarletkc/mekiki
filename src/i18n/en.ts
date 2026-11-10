@@ -46,7 +46,6 @@ export const en = {
   badge: {
     legacy: 'Legacy',
     openWeights: 'Open weights',
-    stale: 'Old review',
   },
   home: {
     title: 'Models',
@@ -61,8 +60,6 @@ export const en = {
       cost: 'Cost',
       value: 'Value',
       price: 'Input / output price',
-      verdict: 'Verdict',
-      reviewed: 'Reviewed',
     },
     priceNote: 'Prices in USD per 1M tokens',
     search: 'Search models by name',
@@ -84,8 +81,6 @@ export const en = {
   },
   detail: {
     back: 'All models',
-    reviewedAt: 'Reviewed {date}',
-    notReviewed: "mekiki hasn't reviewed this model yet.",
     breakdown: 'How the intelligence score is built',
     metricCol: 'Metric',
     raw: 'Raw',
@@ -124,20 +119,15 @@ export const en = {
     modalityOut: 'Out',
     indexCost: 'Cost to run the AA Intelligence Index',
     indexCostNote: 'For reference only; not part of the score.',
-    pros: 'Strengths',
-    cons: 'Weaknesses',
-    bestFor: 'Best for',
-    review: 'Review',
     links: 'Source data',
     linkModelsdev: 'models.dev',
     linkAa: 'Artificial Analysis model page',
-    linkArena: 'Arena text leaderboard',
     linkJson: "This model's JSON",
   },
   metric: {
     aa_intelligence: 'AA Intelligence Index',
-    aa_coding: 'AA Coding Index',
     arena_text: 'Arena text',
+    arena_webdev: 'Arena WebDev',
   },
   method: {
     title: 'Method',
@@ -145,7 +135,7 @@ export const en = {
       'Every model gets three ratings: intelligence, cost and value. The weights and thresholds below are read straight from the scoring config, so this page changes when the config does.',
     intelligenceTitle: 'Intelligence',
     intelligenceBody:
-      'Each leaderboard metric is first normalised to 0–100, where 100 is the current leader on that metric. Index-style metrics start at 0; Elo-style metrics only use the {gap} points below the leader.',
+      'Each leaderboard metric is first normalised to 0–100, where 100 is the current leader on that metric. Index-style metrics start at 0; Elo-style metrics only use a fixed range below the leader, listed in the table.',
     benchmarkBody:
       'The benchmark score is the weighted mean of the metrics a model has. A missing metric is left out and the remaining weights are re-normalised.',
     weightsCaption: 'Benchmark metrics and weights',
@@ -189,15 +179,15 @@ export const en = {
     sourceLicense: 'Licence',
     sourceUpdated: 'Data updated',
     useModelsdev: 'Price, context window, release date, open weights, modalities',
-    useAa: 'Intelligence Index, Coding Index, cost to run the index',
-    useArena: 'Text leaderboard rating',
+    useAa: 'Intelligence Index, cost to run the index',
+    useArena: 'Text and WebDev leaderboard ratings',
     licenseAa: 'Attribution per its terms',
     caveatsTitle: 'Caveats',
     caveatAaCoding:
-      "Artificial Analysis's free API doesn't return the Coding Index at the moment, so that metric is left out for now and its weight is shared by the others.",
+      "Coding ability is measured by Arena's WebDev board. Artificial Analysis also publishes a Coding Index, but its free API doesn't include it, so it isn't used.",
     caveatVariants:
       'Leaderboards often list one model several times, once per reasoning level. The entry used here is the level mekiki actually uses.',
-    caveatPersonal: 'Subjective scores and comments are personal judgement, not benchmark results.',
+    caveatPersonal: 'The subjective score is personal judgement, not a benchmark result.',
   },
   api: {
     title: 'API',

@@ -59,9 +59,6 @@ export interface ModelRow {
     free: boolean;
   };
   value: { score: number | null; tier: ValueTier | null };
-  verdict: string | null;
-  reviewedAt: string | null;
-  stale: boolean;
   openWeights: boolean | null;
 }
 
@@ -84,17 +81,7 @@ const features = tableFeatures({
 
 const helper = createColumnHelper<typeof features, ModelRow>();
 
-const COLUMN_IDS = [
-  'model',
-  'vendor',
-  'intelligence',
-  'cost',
-  'value',
-  'price',
-  'verdict',
-  'reviewed',
-] as const;
-type ColumnId = (typeof COLUMN_IDS)[number];
+const COLUMN_IDS = ['model', 'vendor', 'intelligence', 'cost', 'value', 'price'] as const;
 
 const DEFAULT_SORT: SortingState = [{ id: 'intelligence', desc: true }];
 const ALL = 'all';
@@ -403,32 +390,6 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
           );
         },
       }),
-      helper.accessor((row) => row.verdict ?? undefined, {
-        id: 'verdict',
-        header: t.columns.verdict,
-        ...text,
-        cell: ({ row }) =>
-          row.original.verdict ?? <span className="text-muted-foreground">{empty.unrated}</span>,
-      }),
-      helper.accessor((row) => row.reviewedAt ?? undefined, {
-        id: 'reviewed',
-        header: t.columns.reviewed,
-        ...figure,
-        cell: ({ row }) => {
-          const { reviewedAt, stale } = row.original;
-          if (reviewedAt === null) {
-            return <span className="text-muted-foreground">{empty.unrated}</span>;
-          }
-          return (
-            <span className="flex flex-wrap items-center gap-x-2">
-              <time dateTime={reviewedAt} className="num">
-                {reviewedAt}
-              </time>
-              {stale && <span className="text-expense text-xs">{badge.stale}</span>}
-            </span>
-          );
-        },
-      }),
     ]);
   }, [t, tier, empty, badge, lang]);
 
@@ -454,10 +415,6 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
 
   const tierOptions = <T extends string>(keys: readonly T[], labels: Record<T, string>) =>
     keys.map((key) => ({ value: key, label: labels[key] }));
-
-  const wide: Partial<Record<ColumnId, string>> = {
-    verdict: 'min-w-[14rem]',
-  };
 
   return (
     <div>
@@ -545,7 +502,6 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
                       className={cn(
                         'bg-muted/60 h-9 px-0',
                         index === 0 && 'bg-muted sticky left-0 z-10',
-                        wide[header.column.id as ColumnId],
                       )}
                     >
                       <button
@@ -582,7 +538,6 @@ export function ModelTable({ models, strings, lang }: ModelTableProps) {
                       'px-3 py-2 align-middle',
                       index === 0 &&
                         'bg-background group-hover:bg-muted sticky left-0 z-10 max-w-[10.5rem] min-w-[8.5rem] pl-4 whitespace-normal sm:max-w-none sm:pl-3 sm:whitespace-nowrap',
-                      cell.column.id === 'verdict' && 'whitespace-normal',
                     )}
                   >
                     <table.FlexRender cell={cell} />

@@ -8,9 +8,6 @@ import { z } from 'astro/zod';
 /** Directory of the model files, relative to the repository root. */
 export const MODELS_DIR = 'src/content/models';
 
-/** Maximum length of the one-line verdict. */
-export const VERDICT_MAX_LENGTH = 40;
-
 /**
  * Canonical model ID from a path relative to MODELS_DIR:
  * `openai/gpt-6.1-sol.md` → `openai/gpt-6.1-sol`. The ID is taken verbatim
@@ -26,18 +23,6 @@ const blankToUndefined = (value: unknown) =>
   value === null || (typeof value === 'string' && value.trim() === '') ? undefined : value;
 
 const optionalString = z.preprocess(blankToUndefined, z.string().trim().optional());
-
-const stringList = z.preprocess(
-  (value) => (value === null || value === undefined ? [] : value),
-  z.array(z.string().trim().min(1)),
-);
-
-// YAML parsers disagree on bare dates: some return a Date, some a string.
-const isoDate = z.preprocess((value) => {
-  const filled = blankToUndefined(value);
-  if (filled instanceof Date) return filled.toISOString().slice(0, 10);
-  return filled;
-}, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected a date like 2026-11-11').optional());
 
 const price = z.number().min(0);
 
@@ -58,30 +43,21 @@ export const modelSchema = z.object({
         aa: optionalString,
         /** Exact model name on the Arena text leaderboard. */
         arena_text: optionalString,
+        /** Exact model name on the Arena WebDev leaderboard. */
+        arena_webdev: optionalString,
       }),
     )
     .default({}),
-  /** The maintainer's own judgement. Never filled in by tooling. */
+  /** The maintainer's own judgement. Optional, and never filled in by tooling. */
   subjective: z
     .preprocess(
       (value) => value ?? {},
       z.object({
         /** 0–100, where 100 means "the best there is right now". */
         score: z.preprocess(blankToUndefined, z.number().min(0).max(100).optional()),
-        verdict: z.preprocess(
-          blankToUndefined,
-          z
-            .string()
-            .trim()
-            .max(VERDICT_MAX_LENGTH, `verdict must be at most ${VERDICT_MAX_LENGTH} characters`)
-            .optional(),
-        ),
-        pros: stringList,
-        cons: stringList,
-        best_for: stringList,
       }),
     )
-    .default({ pros: [], cons: [], best_for: [] }),
+    .default({}),
   /** Manual overrides of automatically fetched data. */
   overrides: z
     .preprocess(
@@ -101,8 +77,6 @@ export const modelSchema = z.object({
       }),
     )
     .default({}),
-  /** Date of the latest review, YYYY-MM-DD. */
-  reviewed_at: isoDate,
 });
 
 export type ModelFrontmatter = z.infer<typeof modelSchema>;
@@ -112,6 +86,4 @@ export interface ModelEntry {
   /** Canonical ID, `<provider>/<model>`. */
   id: string;
   data: ModelFrontmatter;
-  /** True when the Markdown body (the long review) is not empty. */
-  hasReview: boolean;
 }

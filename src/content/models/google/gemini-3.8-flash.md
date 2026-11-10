@@ -4,13 +4,9 @@ vendor: Google
 status: active
 sources:
   modelsdev: google/gemini-3.8-flash
-  aa:
-  arena_text: Gemini 3.8 Flash (High)
+  aa: gemini-3-8-flash
+  arena_text: "Gemini 3.8 Flash (High)"
+  arena_webdev: "Gemini 3.8 Flash (High)"
 subjective:
   score:
-  verdict:
-  pros: []
-  cons: []
-  best_for: []
-reviewed_at:
 ---

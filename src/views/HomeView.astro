@@ -30,9 +30,6 @@ const rows: ModelRow[] = dataset.models.map((model) => ({
     free: model.rating.cost.free,
   },
   value: { score: model.rating.value.score, tier: model.rating.value.tier },
-  verdict: model.verdict,
-  reviewedAt: model.reviewed_at,
-  stale: model.stale,
   openWeights: model.facts.open_weights,
 }));
 

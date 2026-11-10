@@ -7,7 +7,7 @@ export const getStaticPaths = localizedModelStaticPaths;
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { locale, model, entry } = Astro.props;
+const { locale, model } = Astro.props;
 ---
 
-<ModelView locale={locale} model={model} entry={entry} />
+<ModelView locale={locale} model={model} />

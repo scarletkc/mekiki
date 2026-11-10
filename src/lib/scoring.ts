@@ -8,12 +8,10 @@
  * always agrees with the number shown next to it.
  */
 import {
-  METRIC_KEYS,
   scoringConfig,
   type CostTier,
   type FloorRule,
   type IntelligenceTier,
-  type MetricKey,
   type ScoringConfig,
   type ValueTier,
 } from './scoring.config';
@@ -31,9 +29,9 @@ export interface Price {
 
 export interface RatingInput {
   /** Raw benchmark scores of this model, keyed by metric. Missing or null = no score. */
-  metrics: Partial<Record<MetricKey, number | null>>;
+  metrics: Record<string, number | null | undefined>;
   /** Current best raw score of each metric across the whole leaderboard. */
-  frontier: Partial<Record<MetricKey, number | null>>;
+  frontier: Record<string, number | null | undefined>;
   /** Subjective score, 0–100, or null when not reviewed. */
   subjective: number | null;
   /** Official price, or null when unknown. */
@@ -55,7 +53,8 @@ export interface Rating {
     basis: Basis;
     benchmark: number | null;
     subjective: number | null;
-    breakdown: Record<MetricKey, MetricBreakdown>;
+    /** One entry per metric in the config, whether or not the model has a score. */
+    breakdown: Record<string, MetricBreakdown>;
   };
   cost: {
     tier: CostTier | null;
@@ -106,13 +105,12 @@ export function computeBenchmark(
   metrics: RatingInput['metrics'],
   frontier: RatingInput['frontier'],
   config: ScoringConfig = scoringConfig,
-): { score: number | null; breakdown: Record<MetricKey, MetricBreakdown> } {
-  const breakdown = {} as Record<MetricKey, MetricBreakdown>;
+): { score: number | null; breakdown: Record<string, MetricBreakdown> } {
+  const breakdown: Record<string, MetricBreakdown> = {};
   let weighted = 0;
   let totalWeight = 0;
 
-  for (const key of METRIC_KEYS) {
-    const { weight, floor } = config.intelligence.metrics[key];
+  for (const [key, { weight, floor }] of Object.entries(config.intelligence.metrics)) {
     const raw = metrics[key];
     const top = frontier[key];
     let normalized: number | null = null;
@@ -237,9 +235,8 @@ export function rateModel(input: RatingInput, config: ScoringConfig = scoringCon
       ? computeValue(intelligence.score, index, config)
       : null;
 
-  const breakdown = {} as Record<MetricKey, MetricBreakdown>;
-  for (const key of METRIC_KEYS) {
-    const item = benchmark.breakdown[key];
+  const breakdown: Record<string, MetricBreakdown> = {};
+  for (const [key, item] of Object.entries(benchmark.breakdown)) {
     breakdown[key] = {
       ...item,
       normalized: item.normalized === null ? null : round1(item.normalized),

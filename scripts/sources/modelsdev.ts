@@ -73,13 +73,18 @@ export const modelsdevAdapter: SourceAdapter<'modelsdev'> = {
     const warnings: string[] = [];
 
     for (const model of tracked) {
-      const sourceId = model.sourceId ?? model.id;
+      const sourceId = model.sources.modelsdev ?? model.id;
       const slash = sourceId.indexOf('/');
       const provider = sourceId.slice(0, slash);
       const name = sourceId.slice(slash + 1);
       const rawModel = slash > 0 ? providers[provider]?.models[name] : undefined;
       if (rawModel === undefined) {
-        unmatched.push({ model, reason: 'not_found', candidates: suggest(model, pool) });
+        unmatched.push({
+          model,
+          field: 'sources.modelsdev',
+          value: sourceId,
+          candidates: suggest(model, pool),
+        });
         continue;
       }
       const item = modelSchema.safeParse(rawModel);

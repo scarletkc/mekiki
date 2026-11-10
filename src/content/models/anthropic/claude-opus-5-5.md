@@ -4,13 +4,9 @@ vendor: Anthropic
 status: active
 sources:
   modelsdev: anthropic/claude-opus-5-5
-  aa:
-  arena_text: Claude Opus 5.5 (High)
+  aa: claude-opus-5-5
+  arena_text: "Claude Opus 5.5 (High)"
+  arena_webdev: "Claude Opus 5.5 (Max)"
 subjective:
   score:
-  verdict:
-  pros: []
-  cons: []
-  best_for: []
-reviewed_at:
 ---

@@ -3,38 +3,19 @@
  * `getDataset()`, which is computed once per build so every page and every
  * JSON file carries the same numbers and the same `generated_at`.
  */
-import { getCollection, type CollectionEntry } from 'astro:content';
-import { buildDataset, type Dataset, type ModelRecord } from './dataset';
-import type { ModelEntry } from './model-schema';
+import { getCollection } from 'astro:content';
+import { buildDataset, type Dataset } from './dataset';
 import { loadSnapshots } from './snapshots';
 
-type ModelCollectionEntry = CollectionEntry<'models'>;
+let cached: Promise<Dataset> | undefined;
 
-let cached: Promise<{ dataset: Dataset; entries: Map<string, ModelCollectionEntry> }> | undefined;
-
-async function load() {
+async function load(): Promise<Dataset> {
   const collection = await getCollection('models');
-  const entries: ModelEntry[] = collection.map((entry) => ({
-    id: entry.id,
-    data: entry.data,
-    hasReview: (entry.body ?? '').trim().length > 0,
-  }));
-  return {
-    dataset: buildDataset(entries, loadSnapshots()),
-    entries: new Map(collection.map((entry) => [entry.id, entry])),
-  };
+  const entries = collection.map((entry) => ({ id: entry.id, data: entry.data }));
+  return buildDataset(entries, loadSnapshots());
 }
 
-export async function getDataset(): Promise<Dataset> {
+export function getDataset(): Promise<Dataset> {
   cached ??= load();
-  return (await cached).dataset;
-}
-
-/** A model together with its content entry (needed to render the long review). */
-export async function getModelPages(): Promise<
-  { model: ModelRecord; entry: ModelCollectionEntry }[]
-> {
-  cached ??= load();
-  const { dataset, entries } = await cached;
-  return dataset.models.map((model) => ({ model, entry: entries.get(model.id)! }));
+  return cached;
 }

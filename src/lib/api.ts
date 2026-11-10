@@ -7,7 +7,13 @@
  */
 import { useTranslations, tierLabels } from '../i18n';
 import { round1, type Basis } from './scoring';
-import type { CostTier, IntelligenceTier, MetricKey, ValueTier } from './scoring.config';
+import {
+  METRIC_KEYS,
+  type CostTier,
+  type IntelligenceTier,
+  type MetricKey,
+  type ValueTier,
+} from './scoring.config';
 import type { Dataset, ModelRecord } from './dataset';
 import { SOURCE_IDS, type SourceId } from './snapshots';
 
@@ -44,9 +50,6 @@ export interface ApiModel {
     cache_read: number | null;
   };
   value: TierFields<ValueTier> & { score: number | null };
-  verdict: string | null;
-  best_for: string[];
-  reviewed_at: string | null;
   url: string;
 }
 
@@ -77,11 +80,13 @@ export function toApiModel(model: ModelRecord): ApiModel {
   const { intelligence, cost, value } = model.rating;
 
   const breakdown = {} as ApiModel['intelligence']['breakdown'];
-  for (const [key, item] of Object.entries(intelligence.breakdown) as [
-    MetricKey,
-    (typeof intelligence.breakdown)[MetricKey],
-  ][]) {
-    breakdown[key] = { raw: item.raw, normalized: item.normalized, weight: item.weight };
+  for (const key of METRIC_KEYS) {
+    const item = intelligence.breakdown[key];
+    breakdown[key] = {
+      raw: item?.raw ?? null,
+      normalized: item?.normalized ?? null,
+      weight: item?.weight ?? 0,
+    };
   }
 
   return {
@@ -115,9 +120,6 @@ export function toApiModel(model: ModelRecord): ApiModel {
       label: value.tier ? defaultLabels.value[value.tier] : null,
       labels: value.tier ? tierLabels('value', value.tier) : null,
     },
-    verdict: model.verdict,
-    best_for: model.best_for,
-    reviewed_at: model.reviewed_at,
     url: model.url,
   };
 }

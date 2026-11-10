@@ -12,19 +12,11 @@ export const adapters: { [S in SourceId]: SourceAdapter<S> } = {
   arena: arenaAdapter,
 };
 
-/** The frontmatter field that maps a model to each source. */
-export const MAPPING_FIELD: Record<SourceId, string> = {
-  modelsdev: 'sources.modelsdev',
-  aa: 'sources.aa',
-  arena: 'sources.arena_text',
-};
-
-/** The model files as one source sees them. */
-export function trackedFor(source: SourceId, entries: ModelEntry[]): TrackedModel[] {
-  return entries.map((entry) => {
-    const { modelsdev, aa, arena_text: arenaText } = entry.data.sources;
-    const sourceId =
-      source === 'modelsdev' ? (modelsdev ?? entry.id) : source === 'aa' ? (aa ?? null) : (arenaText ?? null);
-    return { id: entry.id, name: entry.data.name, sourceId };
-  });
+/** The model files as the adapters see them. */
+export function trackedModels(entries: ModelEntry[]): TrackedModel[] {
+  return entries.map((entry) => ({
+    id: entry.id,
+    name: entry.data.name,
+    sources: entry.data.sources,
+  }));
 }

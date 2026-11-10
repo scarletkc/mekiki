@@ -11,6 +11,12 @@ const withTimestamp = <T extends object>(snapshot: T) => ({
   fetched_at: '2026-11-11T00:00:00.000Z',
 });
 
+const tracked = (id: string, name: string, sources: TrackedModel['sources'] = {}): TrackedModel => ({
+  id,
+  name,
+  sources,
+});
+
 describe('models.dev adapter', () => {
   // Trimmed copy of a real api.json entry, plus noise the adapter must tolerate.
   const raw = {
@@ -40,10 +46,9 @@ describe('models.dev adapter', () => {
   };
 
   it('keeps only tracked models and reads the price from the mapped provider', () => {
-    const tracked: TrackedModel[] = [
-      { id: 'anthropic/claude-sonnet-5-5', name: 'Claude Sonnet 5.5', sourceId: null },
-    ];
-    const { snapshot, unmatched } = modelsdevAdapter.transform(raw, tracked);
+    const { snapshot, unmatched } = modelsdevAdapter.transform(raw, [
+      tracked('anthropic/claude-sonnet-5-5', 'Claude Sonnet 5.5'),
+    ]);
     expect(snapshot.total).toBe(4);
     expect(snapshot.models).toEqual({
       'anthropic/claude-sonnet-5-5': {
@@ -63,24 +68,27 @@ describe('models.dev adapter', () => {
 
   it('honours an explicit mapping to another provider', () => {
     const { snapshot } = modelsdevAdapter.transform(raw, [
-      { id: 'anthropic/claude-sonnet-5-5', name: 'x', sourceId: 'reseller/claude-sonnet-5-5' },
+      tracked('anthropic/claude-sonnet-5-5', 'x', { modelsdev: 'reseller/claude-sonnet-5-5' }),
     ]);
     expect(snapshot.models['reseller/claude-sonnet-5-5']?.input).toBe(3);
   });
 
   it('reports models it cannot find, with candidates, and never guesses', () => {
     const { snapshot, unmatched } = modelsdevAdapter.transform(raw, [
-      { id: 'anthropic/claude-sonnet-5.5', name: 'Claude Sonnet 5.5', sourceId: null },
+      tracked('anthropic/claude-sonnet-5.5', 'Claude Sonnet 5.5'),
     ]);
     expect(snapshot.models).toEqual({});
     expect(unmatched).toHaveLength(1);
-    expect(unmatched[0]?.reason).toBe('not_found');
+    expect(unmatched[0]).toMatchObject({
+      field: 'sources.modelsdev',
+      value: 'anthropic/claude-sonnet-5.5',
+    });
     expect(unmatched[0]?.candidates).toContain('anthropic/claude-sonnet-5-5');
   });
 
   it('keeps a model without a price and warns', () => {
     const { snapshot, warnings } = modelsdevAdapter.transform(raw, [
-      { id: 'anthropic/no-price', name: 'No Price', sourceId: null },
+      tracked('anthropic/no-price', 'No Price'),
     ]);
     expect(snapshot.models['anthropic/no-price']).toMatchObject({ input: null, output: null });
     expect(warnings.join(' ')).toContain('no input/output price');
@@ -97,48 +105,80 @@ describe('models.dev adapter', () => {
 });
 
 describe('Arena adapter', () => {
-  // Rows as hyparquet returns them, taken from the live file.
-  const rows = [
-    { model_name: 'Gemini 4 Carbon (High)', rating: 1538.2768191996465, category: 'overall', leaderboard_publish_date: '2026-11-09' },
-    { model_name: 'Claude Opus 5 (Max)', rating: 1506.3, category: 'overall', leaderboard_publish_date: '2026-11-09' },
-    { model_name: 'Claude Opus 5 (High)', rating: 1502.3, category: 'overall', leaderboard_publish_date: '2026-11-09' },
-    { model_name: 'Claude Opus 5 (High)', rating: 1611.1, category: 'coding', leaderboard_publish_date: '2026-11-09' },
-  ];
+  // Rows as hyparquet returns them, taken from the live files. The two
+  // boards list different reasoning levels of the same model.
+  const row = (name: string, rating: number, category = 'overall') => ({
+    model_name: name,
+    rating,
+    category,
+    leaderboard_publish_date: '2026-11-09',
+  });
+  const raw = {
+    arena_text: [
+      row('Gemini 4 Carbon (High)', 1538.2768191996465),
+      row('Claude Opus 5.5 (High)', 1513.0021399366474),
+      row('Claude Opus 5 (Max)', 1506.3),
+      row('Claude Opus 5 (High)', 1502.3),
+      row('Claude Opus 5 (High)', 1611.1, 'coding'),
+    ],
+    arena_webdev: [
+      row('Claude Opus 5.5 (Max)', 1817.7),
+      row('Claude Opus 5 (Max)', 1700.4),
+      row('Claude Opus 5 (Max)', 1650, 'webdev-react'),
+    ],
+  };
 
-  it('uses only the overall category and takes the frontier from the full board', () => {
-    const { snapshot, unmatched } = arenaAdapter.transform(rows, [
-      { id: 'anthropic/claude-opus-5', name: 'Claude Opus 5', sourceId: 'Claude Opus 5 (High)' },
+  it('reads each board through its own mapping and takes the frontier from the full board', () => {
+    const { snapshot, unmatched } = arenaAdapter.transform(raw, [
+      tracked('anthropic/claude-opus-5-5', 'Claude Opus 5.5', {
+        arena_text: 'Claude Opus 5.5 (High)',
+        arena_webdev: 'Claude Opus 5.5 (Max)',
+      }),
+      tracked('anthropic/claude-opus-5', 'Claude Opus 5', {
+        arena_text: 'Claude Opus 5 (Max)',
+        arena_webdev: 'Claude Opus 5 (Max)',
+      }),
     ]);
-    expect(snapshot.total).toBe(3);
-    expect(snapshot.frontier).toEqual({ arena_text: 1538.28 });
+    expect(snapshot.total).toBe(4);
+    expect(snapshot.frontier).toEqual({ arena_text: 1538.28, arena_webdev: 1817.7 });
     expect(snapshot.models).toEqual({
-      'Claude Opus 5 (High)': { arena_text: 1502.3, published: '2026-11-09' },
+      'Claude Opus 5.5 (High)': { arena_text: 1513, arena_webdev: null, published: '2026-11-09' },
+      'Claude Opus 5.5 (Max)': { arena_text: null, arena_webdev: 1817.7, published: '2026-11-09' },
+      // Same name on both boards: one entry carrying both ratings.
+      'Claude Opus 5 (Max)': { arena_text: 1506.3, arena_webdev: 1700.4, published: '2026-11-09' },
     });
     expect(unmatched).toEqual([]);
     expect(snapshotSchemas.arena.safeParse(withTimestamp(snapshot)).success).toBe(true);
   });
 
   it('matches names exactly and lists every reasoning level as a candidate', () => {
-    const { snapshot, unmatched } = arenaAdapter.transform(rows, [
-      { id: 'anthropic/claude-opus-5', name: 'Claude Opus 5', sourceId: null },
-      { id: 'x/y', name: 'Other', sourceId: 'claude opus 5 (high)' },
+    const { snapshot, unmatched } = arenaAdapter.transform(raw, [
+      tracked('anthropic/claude-opus-5', 'Claude Opus 5', { arena_text: 'claude opus 5 (high)' }),
     ]);
     expect(snapshot.models).toEqual({});
-    expect(unmatched.map((item) => item.reason)).toEqual(['unmapped', 'not_found']);
+    expect(unmatched.map(({ field, value }) => ({ field, value }))).toEqual([
+      { field: 'sources.arena_text', value: 'claude opus 5 (high)' },
+      { field: 'sources.arena_webdev', value: null },
+    ]);
     expect(unmatched[0]?.candidates.slice(0, 2).sort()).toEqual([
       'Claude Opus 5 (High)',
       'Claude Opus 5 (Max)',
     ]);
+    expect(unmatched[1]?.candidates[0]).toBe('Claude Opus 5 (Max)');
   });
 
-  it('refuses a payload where most rows are invalid', () => {
-    expect(() => arenaAdapter.transform([{ nope: 1 }, { nope: 2 }, rows[0]], [])).toThrow();
-    expect(() => arenaAdapter.transform({ rows }, [])).toThrow();
+  it('refuses a payload where a board is missing, empty or mostly invalid', () => {
+    expect(() => arenaAdapter.transform(raw.arena_text, [])).toThrow();
+    expect(() => arenaAdapter.transform({ arena_text: raw.arena_text }, [])).toThrow();
+    expect(() => arenaAdapter.transform({ ...raw, arena_webdev: [] }, [])).toThrow();
+    expect(() =>
+      arenaAdapter.transform({ ...raw, arena_webdev: [{ nope: 1 }, { nope: 2 }, raw.arena_webdev[0]] }, []),
+    ).toThrow();
   });
 });
 
 describe('Artificial Analysis adapter', () => {
-  // The example response from the API reference, verbatim, plus one more model.
+  // The example response from the API reference, verbatim, plus two more models.
   const raw = [
     {
       id: 'cd684ea4-b475-4269-b001-d469d06d8a7a',
@@ -169,30 +209,23 @@ describe('Artificial Analysis adapter', () => {
     { id: 'y', name: 'No scores yet', slug: 'unscored', evaluations: null },
   ];
 
-  it('maps the documented fields and survives a null coding index', () => {
+  it('maps the documented fields and ignores the indexes that are not used', () => {
     const { snapshot, unmatched, warnings } = aaAdapter.transform(raw, [
-      { id: 'zai/glm-5.3', name: 'GLM-5.3', sourceId: 'glm-5-3' },
+      tracked('zai/glm-5.3', 'GLM-5.3', { aa: 'glm-5-3' }),
     ]);
     expect(snapshot.total).toBe(3);
-    expect(snapshot.frontier).toEqual({ aa_intelligence: 70.2, aa_coding: null });
+    expect(snapshot.frontier).toEqual({ aa_intelligence: 70.2 });
     expect(snapshot.models).toEqual({
-      'glm-5-3': {
-        name: 'GLM-5.3 (Max)',
-        aa_intelligence: 31.7,
-        aa_coding: null,
-        index_cost_usd: 3495.62,
-      },
+      'glm-5-3': { name: 'GLM-5.3 (Max)', aa_intelligence: 31.7, index_cost_usd: 3495.62 },
     });
     expect(unmatched).toEqual([]);
-    expect(warnings.join(' ')).toContain('Coding Index');
+    expect(warnings).toEqual([]);
     expect(snapshotSchemas.aa.safeParse(withTimestamp(snapshot)).success).toBe(true);
   });
 
   it('suggests slugs for an unmapped model by slug and by display name', () => {
-    const { unmatched } = aaAdapter.transform(raw, [
-      { id: 'zai/glm-5.3', name: 'GLM-5.3', sourceId: null },
-    ]);
-    expect(unmatched[0]?.reason).toBe('unmapped');
+    const { unmatched } = aaAdapter.transform(raw, [tracked('zai/glm-5.3', 'GLM-5.3')]);
+    expect(unmatched[0]).toMatchObject({ field: 'sources.aa', value: null });
     expect(unmatched[0]?.candidates).toEqual(['glm-5-3']);
   });
 
@@ -206,6 +239,17 @@ describe('Artificial Analysis adapter', () => {
     expect(await aaAdapter.fetch({ env: { AA_API_KEY: '  ' } })).toEqual({
       skip: 'AA_API_KEY is not set.',
     });
+  });
+
+  it('still reads a snapshot written before the coding index was dropped', () => {
+    const old = {
+      source: 'aa',
+      fetched_at: '2026-11-10T17:32:29.633Z',
+      total: 734,
+      frontier: { aa_intelligence: 64.6, aa_coding: null },
+      models: { x: { name: 'X', aa_intelligence: 50, aa_coding: null, index_cost_usd: 10 } },
+    };
+    expect(snapshotSchemas.aa.safeParse(old).success).toBe(true);
   });
 });
 

@@ -12,10 +12,38 @@ import {
   valueTier,
   type RatingInput,
 } from '@/lib/scoring';
-import { scoringConfig } from '@/lib/scoring.config';
+import { METRIC_KEYS, scoringConfig, type ScoringConfig } from '@/lib/scoring.config';
 
 /** Fictional leaderboard tops used by the fixtures in docs/SPEC.md §6.5. */
 const frontier = { aa_intelligence: 70, aa_coding: 62, arena_text: 1500 };
+
+/**
+ * The metric set the fixtures in docs/SPEC.md §6.5 were computed with: two
+ * index-style metrics and one Elo-style metric. The fixtures pin the
+ * algorithm, so they use this reference set and not whatever the live
+ * config in scoring.config.ts currently lists.
+ */
+const specConfig: ScoringConfig = {
+  ...scoringConfig,
+  intelligence: {
+    ...scoringConfig.intelligence,
+    benchmarkWeight: 0.6,
+    subjectiveWeight: 0.4,
+    metrics: {
+      aa_intelligence: { source: 'aa', mapping: 'aa', weight: 0.5, floor: { type: 'absolute', value: 0 } },
+      aa_coding: { source: 'aa', mapping: 'aa', weight: 0.2, floor: { type: 'absolute', value: 0 } },
+      arena_text: {
+        source: 'arena',
+        mapping: 'arena_text',
+        weight: 0.3,
+        floor: { type: 'below_frontier', gap: 300 },
+      },
+    },
+    tiers: { top: 90, high: 75, mid: 55 },
+  },
+  cost: { inputWeight: 3, outputWeight: 1, indexFloorPrice: 0.1, indexCeilPrice: 30, tiers: { low: 1, mid: 5, high: 15 } },
+  value: { intelligenceExponent: 0.6, affordabilityExponent: 0.4, minAffordability: 5, tiers: { top: 70, high: 60, mid: 50 } },
+};
 
 interface Fixture {
   name: string;
@@ -166,7 +194,7 @@ function near(actual: number | null, expected: number) {
 describe('SPEC §6.5 fixtures', () => {
   for (const { name, input, expected } of fixtures) {
     it(name, () => {
-      const rating = rateModel(input);
+      const rating = rateModel(input, specConfig);
 
       if (expected.benchmark === null) expect(rating.intelligence.benchmark).toBeNull();
       else near(rating.intelligence.benchmark, expected.benchmark);
@@ -212,23 +240,34 @@ describe('normalizeMetric', () => {
 
 describe('computeBenchmark', () => {
   it('re-normalises weights over the metrics that have a score', () => {
-    const { score } = computeBenchmark({ arena_text: 1350 }, frontier);
+    const { score } = computeBenchmark({ arena_text: 1350 }, frontier, specConfig);
     expect(score).toBe(50);
   });
 
-  it('skips a metric whose frontier is missing (e.g. AA free tier has no coding index)', () => {
+  it('skips a metric whose frontier is missing', () => {
     const withCoding = computeBenchmark(
       { aa_intelligence: 56, aa_coding: 40, arena_text: 1430 },
       { aa_intelligence: 70, aa_coding: null, arena_text: 1500 },
+      specConfig,
     );
-    const withoutCoding = computeBenchmark({ aa_intelligence: 56, arena_text: 1430 }, frontier);
+    const withoutCoding = computeBenchmark(
+      { aa_intelligence: 56, arena_text: 1430 },
+      frontier,
+      specConfig,
+    );
     expect(withCoding.score).toBeCloseTo(withoutCoding.score as number, 9);
     expect(withCoding.breakdown.aa_coding).toEqual({
       raw: 40,
       normalized: null,
-      weight: scoringConfig.intelligence.metrics.aa_coding.weight,
+      weight: 0.2,
       frontier: null,
     });
+  });
+
+  it('ignores scores for metrics that are not in the config', () => {
+    const { score, breakdown } = computeBenchmark({ made_up: 99, arena_text: 1350 }, { made_up: 100, arena_text: 1500 });
+    expect(score).toBe(50);
+    expect(breakdown.made_up).toBeUndefined();
   });
 
   it('returns null when no metric has a score', () => {
@@ -237,9 +276,14 @@ describe('computeBenchmark', () => {
     expect(computeBenchmark({ aa_intelligence: 50 }, {}).score).toBeNull();
   });
 
-  it('always reports every metric in the breakdown', () => {
+  it('always reports every configured metric in the breakdown', () => {
     const { breakdown } = computeBenchmark({}, {});
-    expect(Object.keys(breakdown).sort()).toEqual(['aa_coding', 'aa_intelligence', 'arena_text']);
+    expect(Object.keys(breakdown).sort()).toEqual([...METRIC_KEYS].sort());
+    expect(Object.keys(computeBenchmark({}, {}, specConfig).breakdown).sort()).toEqual([
+      'aa_coding',
+      'aa_intelligence',
+      'arena_text',
+    ]);
     expect(breakdown.arena_text.raw).toBeNull();
     expect(breakdown.arena_text.normalized).toBeNull();
   });

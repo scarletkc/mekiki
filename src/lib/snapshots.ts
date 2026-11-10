@@ -18,7 +18,7 @@ export type SourceId = (typeof SOURCE_IDS)[number];
 export const SOURCE_INFO: Record<SourceId, { name: string; url: string; license: string | null }> = {
   modelsdev: { name: 'models.dev', url: 'https://models.dev/', license: 'MIT' },
   aa: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', license: null },
-  arena: { name: 'Arena', url: 'https://arena.ai/leaderboard/text', license: 'CC BY 4.0' },
+  arena: { name: 'Arena', url: 'https://arena.ai/leaderboard', license: 'CC BY 4.0' },
 };
 
 const frontier = z.record(z.string(), z.number().nullable());
@@ -56,14 +56,18 @@ export const modelsdevModelSchema = z.object({
 export const aaModelSchema = z.object({
   name: z.string().nullable(),
   aa_intelligence: nullableNumber,
-  aa_coding: nullableNumber,
   /** Total USD spent running the full Intelligence Index on this model. */
   index_cost_usd: nullableNumber,
 });
 
+// One entry per model name. The same name can appear on several boards, and
+// a name may exist on one board only, so each rating is nullable.
 export const arenaModelSchema = z.object({
-  arena_text: nullableNumber,
-  /** Date of the leaderboard release this rating comes from. */
+  /** Rating on the text board. */
+  arena_text: nullableNumber.default(null),
+  /** Rating on the WebDev board. */
+  arena_webdev: nullableNumber.default(null),
+  /** Date of the leaderboard release these ratings come from. */
   published: z.string().nullable(),
 });
 

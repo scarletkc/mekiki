@@ -4,13 +4,9 @@ vendor: Anthropic
 status: active
 sources:
   modelsdev: anthropic/claude-sonnet-5-5
-  aa:
-  arena_text: Claude Sonnet 5.5 (xHigh)
+  aa: claude-sonnet-5-5
+  arena_text: "Claude Sonnet 5.5 (xHigh)"
+  arena_webdev: "Claude Sonnet 5.5 (xHigh)"
 subjective:
   score:
-  verdict:
-  pros: []
-  cons: []
-  best_for: []
-reviewed_at:
 ---

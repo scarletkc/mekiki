@@ -4,13 +4,9 @@ vendor: Google
 status: active
 sources:
   modelsdev: google/gemini-4-argon
-  aa:
-  arena_text: Gemini 4 Argon (High)
+  aa: gemini-4-argon
+  arena_text: "Gemini 4 Argon (High)"
+  arena_webdev: "Gemini 4 Argon (High)"
 subjective:
   score:
-  verdict:
-  pros: []
-  cons: []
-  best_for: []
-reviewed_at:
 ---

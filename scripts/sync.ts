@@ -20,7 +20,7 @@ import {
   type SourceId,
 } from '../src/lib/snapshots';
 import { readModelEntries } from './lib/content';
-import { MAPPING_FIELD, adapters, trackedFor } from './sources';
+import { adapters, trackedModels } from './sources';
 import { SourceDataError, type Unmatched } from './sources/types';
 
 /** A drop below this share of the previous model count is treated as an outage. */
@@ -103,7 +103,7 @@ async function syncSource<S extends SourceId>(
 
     const { snapshot, unmatched, warnings } = adapter.transform(
       fetched.raw,
-      trackedFor(source, entries),
+      trackedModels(entries),
     );
     report.unmatched = unmatched;
     report.warnings = warnings;
@@ -163,11 +163,8 @@ function statusLine({ source, outcome }: SourceReport, dryRun: boolean): string 
 
 function unmatchedLines(report: SourceReport): string[] {
   const lines: string[] = [];
-  for (const { model, reason, candidates } of report.unmatched) {
-    const problem =
-      reason === 'unmapped'
-        ? `${MAPPING_FIELD[report.source]} is empty`
-        : `"${model.sourceId}" not found`;
+  for (const { model, field, value, candidates } of report.unmatched) {
+    const problem = value === null ? `${field} is empty` : `${field} "${value}" not found`;
     const hint =
       candidates.length > 0
         ? `candidates: ${candidates.map((name) => `"${name}"`).join(', ')}`
@@ -184,7 +181,7 @@ function printConsole(reports: SourceReport[], dryRun: boolean) {
   for (const report of reports) {
     const lines = unmatchedLines(report);
     if (lines.length === 0) continue;
-    console.log(`\nUnmatched in ${SOURCE_INFO[report.source].name} (set ${MAPPING_FIELD[report.source]} in the model file):`);
+    console.log(`\nUnmatched in ${SOURCE_INFO[report.source].name} (set the field in the model file):`);
     for (const line of lines) console.log(`  ${line}`);
   }
 
