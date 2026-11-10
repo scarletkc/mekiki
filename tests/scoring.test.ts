@@ -6,6 +6,7 @@ import {
   computeValue,
   costIndex,
   costTier,
+  effectiveInputPrice,
   intelligenceTier,
   normalizeMetric,
   rateModel,
@@ -41,7 +42,14 @@ const specConfig: ScoringConfig = {
     },
     tiers: { top: 90, high: 75, mid: 55 },
   },
-  cost: { inputWeight: 3, outputWeight: 1, indexFloorPrice: 0.1, indexCeilPrice: 30, tiers: { low: 1, mid: 5, high: 15 } },
+  cost: {
+    cacheHitRate: 0.5,
+    inputWeight: 3,
+    outputWeight: 1,
+    indexFloorPrice: 0.1,
+    indexCeilPrice: 30,
+    tiers: { low: 1, mid: 5, high: 15 },
+  },
   value: { intelligenceExponent: 0.6, affordabilityExponent: 0.4, minAffordability: 5, tiers: { top: 70, high: 60, mid: 50 } },
 };
 
@@ -183,6 +191,26 @@ const fixtures: Fixture[] = [
       valueTier: 'mid',
     },
   },
+  {
+    name: 'G balanced, with a cache price',
+    input: {
+      metrics: { aa_intelligence: 60, aa_coding: 52, arena_text: 1450 },
+      frontier,
+      subjective: 85,
+      price: { input: 1.25, output: 10, cache_read: 0.125 },
+    },
+    expected: {
+      benchmark: 84.6,
+      intelligence: 84.8,
+      intelligenceTier: 'high',
+      basis: 'both',
+      blended: 3.015625,
+      costTier: 'mid',
+      costIndex: 59.7,
+      value: 63.0,
+      valueTier: 'high',
+    },
+  },
 ];
 
 const TOLERANCE = 0.1;
@@ -306,6 +334,32 @@ describe('cost', () => {
   it('blends input and output 3:1', () => {
     expect(blendedPrice(5, 25)).toBe(10);
     expect(blendedPrice(0, 0)).toBe(0);
+  });
+
+  it('bills the assumed cache hits at the cache-read price', () => {
+    expect(effectiveInputPrice(5, 0.5, specConfig)).toBe(2.75);
+    // A cache price of 0 is a real price, not a missing one.
+    expect(effectiveInputPrice(5, 0, specConfig)).toBe(2.5);
+  });
+
+  it('charges the full input price when the cache price is unknown', () => {
+    expect(effectiveInputPrice(5, null, specConfig)).toBe(5);
+    expect(effectiveInputPrice(5, undefined, specConfig)).toBe(5);
+  });
+
+  it('never lets a cache price above the input price raise the cost', () => {
+    expect(effectiveInputPrice(1, 2, specConfig)).toBe(1);
+  });
+
+  it('reproduces the cache-free price at a hit rate of 0', () => {
+    const noCache: ScoringConfig = { ...specConfig, cost: { ...specConfig.cost, cacheHitRate: 0 } };
+    const input: RatingInput = {
+      metrics: {},
+      frontier,
+      subjective: null,
+      price: { input: 5, output: 25, cache_read: 0.5 },
+    };
+    expect(rateModel(input, noCache).cost).toMatchObject({ blended: 10, index: 80.7, tier: 'high' });
   });
 
   it('maps the blended price to a log-scaled index', () => {

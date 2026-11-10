@@ -101,7 +101,7 @@ export const zhCN: Dictionary = {
     cacheRead: '缓存读取',
     blended: '混合价',
     blendedUnit: '混合价，美元 / 百万 token',
-    priceNote: '价格单位是美元 / 百万 token。混合价按输入 {input}、输出 {output} 的比例加权。',
+    priceNote: '价格单位是美元 / 百万 token。混合价假设 {hit}% 的输入命中缓存，再按输入 {input}、输出 {output} 的比例加权。',
     priceOverride: '价格为手动填写，未采用 models.dev 的数据。',
     costIndex: '成本指数',
     context: '上下文长度',
@@ -152,7 +152,7 @@ export const zhCN: Dictionary = {
     subjectiveBody: '主观分由 mekiki 手动给出，100 表示“mekiki 认为的当前最强”，和榜单归一化后的 100 是同一把尺。',
     costTitle: '成本',
     costBody:
-      '价格取 models.dev 上的官方价，单位是美元 / 百万 token。混合价 =（{input} × 输入价 + {output} × 输出价）÷ {total}。档位按混合价的绝对值划分。',
+      '价格取 models.dev 上的官方价，单位是美元 / 百万 token。假设 {hit}% 的输入 token 命中缓存：实际输入价 = {hitRate} × 缓存读取价 + {missRate} × 输入价。没有缓存读取价的模型按输入价全额计算，缓存写入的额外费用不计。混合价 =（{input} × 实际输入价 + {output} × 输出价）÷ {total}。档位按混合价的绝对值划分。',
     costIndexBody:
       '成本指数只用来算性价比：混合价在 ${floor} 到 ${ceil} 之间取对数后映射到 0–100，不高于 ${floor} 记 0。',
     valueTitle: '性价比',
@@ -195,7 +195,7 @@ export const zhCN: Dictionary = {
     fieldScores: '分数保留一位小数。缺失值是 null，字段不会被省略。',
     fieldTier: 'tier 是稳定的英文 key；label 是英文标签，labels 里有各语言的标签。',
     fieldBasis: 'intelligence.basis 说明智能分的来源：both、benchmark_only、subjective_only 或 none。',
-    fieldPrice: '价格单位是美元 / 百万 token；cost.blended 是混合价，cost.index 是 0–100 的成本指数。',
+    fieldPrice: '价格单位是美元 / 百万 token；cost.blended 是混合价，已计入假设的缓存命中（见“评分方法”），cost.index 是 0–100 的成本指数。',
     versionTitle: '版本',
     versionBody: '字段只加不改。有破坏性变更时，version 加一。当前是 version {version}。',
     attributionTitle: '署名',

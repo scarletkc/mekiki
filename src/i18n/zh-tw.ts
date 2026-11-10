@@ -101,7 +101,7 @@ export const zhTW: Dictionary = {
     cacheRead: '快取讀取',
     blended: '混合價',
     blendedUnit: '混合價，美元 / 百萬 token',
-    priceNote: '價格單位是美元 / 百萬 token。混合價依輸入 {input}、輸出 {output} 的比例加權。',
+    priceNote: '價格單位是美元 / 百萬 token。混合價假設 {hit}% 的輸入命中快取，再依輸入 {input}、輸出 {output} 的比例加權。',
     priceOverride: '價格為手動填寫，未採用 models.dev 的資料。',
     costIndex: '成本指數',
     context: '上下文長度',
@@ -152,7 +152,7 @@ export const zhTW: Dictionary = {
     subjectiveBody: '主觀分由 mekiki 手動給出，100 代表「mekiki 認為目前最強」，和榜單正規化後的 100 是同一把尺。',
     costTitle: '成本',
     costBody:
-      '價格取 models.dev 上的官方價，單位是美元 / 百萬 token。混合價 =（{input} × 輸入價 + {output} × 輸出價）÷ {total}。級距依混合價的絕對值劃分。',
+      '價格取 models.dev 上的官方價，單位是美元 / 百萬 token。假設 {hit}% 的輸入 token 命中快取：實際輸入價 = {hitRate} × 快取讀取價 + {missRate} × 輸入價。沒有快取讀取價的模型按輸入價全額計算，快取寫入的額外費用不計。混合價 =（{input} × 實際輸入價 + {output} × 輸出價）÷ {total}。級距依混合價的絕對值劃分。',
     costIndexBody:
       '成本指數只用來算性價比：混合價在 ${floor} 到 ${ceil} 之間取對數後對應到 0–100，不高於 ${floor} 記 0。',
     valueTitle: '性價比',
@@ -195,7 +195,7 @@ export const zhTW: Dictionary = {
     fieldScores: '分數保留一位小數。缺少的值是 null，欄位不會被省略。',
     fieldTier: 'tier 是穩定的英文 key；label 是英文標籤，labels 裡有各語言的標籤。',
     fieldBasis: 'intelligence.basis 說明智慧分的來源：both、benchmark_only、subjective_only 或 none。',
-    fieldPrice: '價格單位是美元 / 百萬 token；cost.blended 是混合價，cost.index 是 0–100 的成本指數。',
+    fieldPrice: '價格單位是美元 / 百萬 token；cost.blended 是混合價，已計入假設的快取命中（見「評分方法」），cost.index 是 0–100 的成本指數。',
     versionTitle: '版本',
     versionBody: '欄位只增不改。有破壞性變更時，version 加一。目前是 version {version}。',
     attributionTitle: '標示來源',

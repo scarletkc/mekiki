@@ -167,10 +167,15 @@ benchmark = Σ(w_s × n_s) / Σ(w_s)      权重：aa_intelligence 0.5, arena_te
 价格取 `sources.modelsdev` 对应条目的官方价（单位：美元 / 百万 token），有 `overrides.price` 时用覆盖值。
 
 ```
-blended    = (3 × input + 1 × output) / 4
+input_eff  = 0.5 × min(cache_read, input) + 0.5 × input                        // 没有 cache_read 时 input_eff = input
+blended    = (3 × input_eff + 1 × output) / 4
 cost_index = clamp( 100 × log10(blended / 0.1) / log10(30 / 0.1), 0, 100 )    // blended ≤ 0.1 时为 0
 ```
 
+- 缓存：假设 50% 的输入 token 命中缓存（`cost.cacheHitRate`），这部分按 `cache_read` 计价。实际用法里长上下文会反复重发，不算缓存会高估输入成本。
+  - 没有 `cache_read` 的模型按 `input` 全额计算，不猜折扣。
+  - `cache_read` 高于 `input` 时按 `input` 算（手动覆盖了输入价、缓存价仍来自 models.dev 时可能出现）。
+  - 缓存写入的额外费用（如按输入价加价收取的写入费）不计。
 - 档位按 `blended` 的绝对值划分（见 §6.4），`cost_index` 只用于算性价比。
 - 价格为 0：`cost_index` 为 0，页面显示「免费」。
 - 查不到价格：成本和性价比都为空，页面显示「暂无价格」。
@@ -202,7 +207,9 @@ API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
 
 这张表固定的是算法本身，所以用的是一组参考指标（两个指数类 0.5 / 0.2，一个 Elo 类 0.3，gap 300），与现行配置里用哪些榜单无关。测试里以 `specConfig` 传入。
 
-| 用例 | AA 智能 / 编程 / Arena | 主观 | 价格 入/出 | benchmark | intelligence | blended | cost_index | value |
+A–F 没有缓存价，按输入价全额计算；G 和 B 只差一个缓存价，用来固定缓存的算法（命中率 50%）。
+
+| 用例 | AA 智能 / 编程 / Arena | 主观 | 价格 入/出（/缓存） | benchmark | intelligence | blended | cost_index | value |
 |---|---|---|---|---|---|---|---|---|
 | A 旗舰 | 68 / 60 / 1490 | 95 | 5 / 25 | 96.9 | 96.2 最高 | 10.00 高 | 80.7 | 50.5 中 |
 | B 均衡 | 60 / 52 / 1450 | 85 | 1.25 / 10 | 84.6 | 84.8 高 | 3.4375 中 | 62.0 | 61.5 高 |
@@ -210,6 +217,7 @@ API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
 | D 超便宜 | 30 / 22 / 1300 | 40 | 0.05 / 0.2 | 38.5 | 39.1 低 | 0.0875 低 | 0 | 56.9 中 |
 | E 只有主观分 | 无 | 80 | 3 / 15 | 空 | 80.0 高 | 6.00 高 | 71.8 | 52.7 中 |
 | F 缺编程指数、无主观分 | 56 / 无 / 1430 | 无 | 2 / 8 | 78.8 | 78.8 高 | 3.50 中 | 62.3 | 58.6 中 |
+| G 均衡 + 缓存 | 60 / 52 / 1450 | 85 | 1.25 / 10 / 0.125 | 84.6 | 84.8 高 | 3.015625 中 | 59.7 | 63.0 高 |
 
 ## 7. JSON API
 
@@ -242,10 +250,10 @@ API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
         "breakdown": { "aa_intelligence": { "raw": 68, "normalized": 97.1 } }
       },
       "cost": {
-        "tier": "high", "label": "High", "index": 80.7,
-        "blended": 10, "input": 5, "output": 25, "cache_read": 0.5
+        "tier": "high", "label": "High", "index": 77.5,
+        "blended": 8.3125, "input": 5, "output": 25, "cache_read": 0.5
       },
-      "value": { "score": 50.5, "tier": "mid", "label": "Mid" },
+      "value": { "score": 53.8, "tier": "mid", "label": "Mid" },
       "url": "https://mekiki.fog.moe/m/<provider>/<model>"
     }
   ]

@@ -7,7 +7,7 @@ Each model gets three ratings:
 
 - **Intelligence**: public leaderboard scores, fetched automatically. A hand-entered
   subjective score can be blended in, but is optional.
-- **Cost**: derived from the official price.
+- **Cost**: derived from the official price, with an assumed share of cache hits.
 - **Value**: derived from intelligence and cost.
 
 mekiki (目利き) is Japanese for a discerning eye. Unlike [models.dev](https://models.dev),
@@ -110,7 +110,7 @@ Things to know:
 Every number of the rating algorithm lives in
 [`src/lib/scoring.config.ts`](src/lib/scoring.config.ts): the benchmark/subjective split,
 which leaderboard metrics are used with their weight and zero point, the blended-price
-formula, the value exponents and the tier thresholds.
+formula and the assumed cache hit rate, the value exponents and the tier thresholds.
 
 1. Edit `src/lib/scoring.config.ts`.
 2. Run `pnpm report` to see the scores and how the models spread across the tiers.

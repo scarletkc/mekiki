@@ -230,7 +230,13 @@ const description = `${model.name} (${model.vendor}): ${t.meta.tagline}`;
         </dd>
       </dl>
       <p class="text-muted-foreground mt-2 text-xs">
-        {fmt(t.detail.priceNote, { input: scoringConfig.cost.inputWeight, output: scoringConfig.cost.outputWeight })}
+        {
+          fmt(t.detail.priceNote, {
+            hit: Math.round(scoringConfig.cost.cacheHitRate * 100),
+            input: scoringConfig.cost.inputWeight,
+            output: scoringConfig.cost.outputWeight,
+          })
+        }
         {model.price_source === 'override' && t.detail.priceOverride}
         {model.facts.index_cost_usd !== null && t.detail.indexCostNote}
       </p>

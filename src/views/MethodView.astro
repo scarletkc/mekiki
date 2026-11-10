@@ -150,6 +150,9 @@ const sources = SOURCE_IDS.map((id) => ({
     <p>
       {
         fmt(m.costBody, {
+          hit: Math.round(cost.cacheHitRate * 100),
+          hitRate: cost.cacheHitRate,
+          missRate: Number((1 - cost.cacheHitRate).toFixed(2)),
           input: cost.inputWeight,
           output: cost.outputWeight,
           total: cost.inputWeight + cost.outputWeight,

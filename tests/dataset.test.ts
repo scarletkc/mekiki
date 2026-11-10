@@ -23,7 +23,14 @@ const config: ScoringConfig = {
     },
     tiers: { top: 90, high: 75, mid: 55 },
   },
-  cost: { inputWeight: 3, outputWeight: 1, indexFloorPrice: 0.1, indexCeilPrice: 30, tiers: { low: 1, mid: 5, high: 15 } },
+  cost: {
+    cacheHitRate: 0.5,
+    inputWeight: 3,
+    outputWeight: 1,
+    indexFloorPrice: 0.1,
+    indexCeilPrice: 30,
+    tiers: { low: 1, mid: 5, high: 15 },
+  },
   value: { intelligenceExponent: 0.6, affordabilityExponent: 0.4, minAffordability: 5, tiers: { top: 70, high: 60, mid: 50 } },
 };
 
@@ -174,8 +181,9 @@ describe('buildDataset', () => {
       arena_text: { raw: 1490, normalized: 96.7, weight: 0.3, frontier: 1500 },
       arena_webdev: { raw: 1790, normalized: 96.7, weight: 0.2, frontier: 1800 },
     });
-    expect(first?.rating.cost).toMatchObject({ blended: 10, tier: 'high', index: 80.7, cache_read: 0.5 });
-    expect(first?.rating.value).toEqual({ score: 50.5, tier: 'mid' });
+    // Half the input at the $0.5 cache price: (3 × 2.75 + 25) / 4 = 8.3125
+    expect(first?.rating.cost).toMatchObject({ blended: 8.3125, tier: 'high', index: 77.5, cache_read: 0.5 });
+    expect(first?.rating.value).toEqual({ score: 53.8, tier: 'mid' });
     expect(first?.facts).toMatchObject({ context: 1000000, open_weights: false, index_cost_usd: 123.4 });
     expect(first?.price_source).toBe('modelsdev');
     expect(first?.source_ids).toEqual({
@@ -238,7 +246,8 @@ describe('buildDataset', () => {
       'name: Flagship\nvendor: Acme\noverrides:\n  price: { input: 1, output: 2 }',
     );
     const [model] = buildDataset([overridden], snapshots, { now: NOW, config }).models;
-    expect(model?.rating.cost).toMatchObject({ input: 1, output: 2, blended: 1.25, cache_read: 0.5 });
+    // The models.dev cache price still applies: (3 × 0.75 + 2) / 4 = 1.0625
+    expect(model?.rating.cost).toMatchObject({ input: 1, output: 2, blended: 1.0625, cache_read: 0.5 });
     expect(model?.price_source).toBe('override');
   });
 
@@ -320,13 +329,13 @@ describe('JSON API', () => {
         tier: 'high',
         label: 'High',
         labels: { 'zh-CN': '高', 'zh-TW': '高', en: 'High' },
-        index: 80.7,
-        blended: 10,
+        index: 77.5,
+        blended: 8.3125,
         input: 5,
         output: 25,
         cache_read: 0.5,
       },
-      value: { score: 50.5, tier: 'mid', label: 'Mid', labels: { 'zh-CN': '中', 'zh-TW': '中', en: 'Mid' } },
+      value: { score: 53.8, tier: 'mid', label: 'Mid', labels: { 'zh-CN': '中', 'zh-TW': '中', en: 'Mid' } },
       url: 'https://mekiki.fog.moe/m/acme/flagship',
     });
   });

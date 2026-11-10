@@ -50,7 +50,13 @@ export interface ScoringConfig {
     tiers: { top: number; high: number; mid: number };
   };
   cost: {
-    /** blended = (inputWeight × input + outputWeight × output) / (inputWeight + outputWeight) */
+    /**
+     * Share of input tokens assumed to be served from the prompt cache (0–1):
+     * effective input = cacheHitRate × cache_read + (1 − cacheHitRate) × input.
+     * A model without a cache-read price pays the full input price.
+     */
+    cacheHitRate: number;
+    /** blended = (inputWeight × effective input + outputWeight × output) / (inputWeight + outputWeight) */
     inputWeight: number;
     outputWeight: number;
     /** Blended price (USD per 1M tokens) that maps to cost index 0. */
@@ -115,6 +121,9 @@ export const scoringConfig: ScoringConfig = {
     tiers: { top: 90, high: 75, mid: 55 },
   },
   cost: {
+    // Agents and chats that resend a long context hit the cache far more
+    // often than one-off calls do; half is a middle ground between the two.
+    cacheHitRate: 0.5,
     inputWeight: 3,
     outputWeight: 1,
     indexFloorPrice: 0.1,

@@ -105,7 +105,8 @@ export const en = {
     cacheRead: 'Cache read',
     blended: 'Blended',
     blendedUnit: 'Blended, USD per 1M tokens',
-    priceNote: 'Prices are in USD per 1M tokens. The blended price weights input and output {input}:{output}.',
+    priceNote:
+      'Prices are in USD per 1M tokens. The blended price assumes {hit}% of input tokens are cache hits, then weights input and output {input}:{output}.',
     priceOverride: 'Price entered by hand; the models.dev figure is not used.',
     costIndex: 'Cost index',
     context: 'Context window',
@@ -159,7 +160,7 @@ export const en = {
       'The subjective score is entered by hand. 100 means “the best there is right now, as mekiki sees it”, the same yardstick as a normalised benchmark score of 100.',
     costTitle: 'Cost',
     costBody:
-      'Prices are the official ones from models.dev, in USD per 1M tokens. Blended price = ({input} × input + {output} × output) ÷ {total}. Tiers are set by the absolute blended price.',
+      'Prices are the official ones from models.dev, in USD per 1M tokens. Assuming {hit}% of input tokens are cache hits, effective input = {hitRate} × cache read + {missRate} × input. A model without a cache-read price pays the full input price, and cache-write surcharges are not counted. Blended price = ({input} × effective input + {output} × output) ÷ {total}. Tiers are set by the absolute blended price.',
     costIndexBody:
       'The cost index is only used to compute value: the blended price between ${floor} and ${ceil} is mapped to 0–100 on a log scale, and anything at or below ${floor} is 0.',
     valueTitle: 'Value',
@@ -209,7 +210,7 @@ export const en = {
     fieldBasis:
       'intelligence.basis says where the intelligence score comes from: both, benchmark_only, subjective_only or none.',
     fieldPrice:
-      'Prices are in USD per 1M tokens. cost.blended is the blended price and cost.index is the 0–100 cost index.',
+      'Prices are in USD per 1M tokens. cost.blended is the blended price, with the assumed cache hits already counted (see Method), and cost.index is the 0–100 cost index.',
     versionTitle: 'Versioning',
     versionBody:
       'Fields are only ever added. A breaking change bumps version. The current version is {version}.',

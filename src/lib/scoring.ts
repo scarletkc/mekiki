@@ -151,7 +151,23 @@ export function computeIntelligence(
   return { score: null, basis: 'none' };
 }
 
-/** Blended price in USD per 1M tokens, weighting input over output. */
+/**
+ * Input price after prompt caching: a share `cacheHitRate` of input tokens
+ * is billed at the cache-read price. Without a known cache-read price the
+ * full input price applies. Cache-write surcharges are not counted.
+ */
+export function effectiveInputPrice(
+  input: number,
+  cacheRead: number | null | undefined,
+  config: ScoringConfig = scoringConfig,
+): number {
+  if (!isNumber(cacheRead)) return input;
+  const hit = clamp(config.cost.cacheHitRate, 0, 1);
+  // An overridden input price can end up below the cache price from models.dev.
+  return hit * Math.min(cacheRead, input) + (1 - hit) * input;
+}
+
+/** Blended price in USD per 1M tokens, weighting input over output. Pass the effective input price. */
 export function blendedPrice(
   input: number,
   output: number,
@@ -227,7 +243,9 @@ export function rateModel(input: RatingInput, config: ScoringConfig = scoringCon
     input.price && isNumber(input.price.input) && isNumber(input.price.output)
       ? input.price
       : null;
-  const blended = price ? blendedPrice(price.input, price.output, config) : null;
+  const blended = price
+    ? blendedPrice(effectiveInputPrice(price.input, price.cache_read, config), price.output, config)
+    : null;
   const index = blended !== null ? costIndex(blended, config) : null;
 
   const value =
@@ -262,7 +280,7 @@ export function rateModel(input: RatingInput, config: ScoringConfig = scoringCon
       input: price ? price.input : null,
       output: price ? price.output : null,
       cache_read: price && isNumber(price.cache_read) ? price.cache_read : null,
-      free: blended === 0,
+      free: price !== null && price.input === 0 && price.output === 0,
     },
     value: {
       score: valueScore,
