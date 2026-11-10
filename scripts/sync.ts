@@ -64,13 +64,13 @@ function serialize<T extends { models: Record<string, unknown> }>(snapshot: T): 
   return `${JSON.stringify({ ...snapshot, models }, null, 2)}\n`;
 }
 
-/** Everything in a snapshot except when it was fetched. */
-function comparable(snapshot: {
-  total?: number;
-  frontier: unknown;
-  models: Record<string, unknown>;
-}): string {
-  return serialize({ total: snapshot.total, frontier: snapshot.frontier, models: snapshot.models });
+/**
+ * The part of a snapshot that decides whether it changed. `total` is left
+ * out on purpose: a source gaining a model nobody tracks (models.dev does
+ * so almost daily) is not a change worth a commit.
+ */
+function comparable(snapshot: { frontier: unknown; models: Record<string, unknown> }): string {
+  return serialize({ frontier: snapshot.frontier, models: snapshot.models });
 }
 
 function describeError(error: unknown): string {
