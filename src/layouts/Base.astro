@@ -107,6 +107,9 @@ const headerButton = {
 };
 
 const REPO_URL = 'https://github.com/scarletkc/mekiki';
+const footerLink =
+  'decoration-muted-foreground/40 hover:text-foreground hover:decoration-foreground underline underline-offset-4 transition-colors';
+const [arenaBefore, arenaAfter] = t.footer.arenaLicense.split('{dataset}');
 const attribution = [
   SOURCE_INFO.aa,
   SOURCE_INFO.arena,
@@ -337,60 +340,44 @@ const attribution = [
       <slot />
     </main>
 
-    <footer class="text-muted-foreground bg-muted/40 mt-8 border-t text-sm">
+    <footer class="text-muted-foreground border-t text-xs">
       <div
-        class="mx-auto flex w-full max-w-[1280px] flex-col gap-5 px-4 py-8 sm:px-6 md:flex-row md:items-center md:justify-between"
+        class="mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 py-6 leading-relaxed sm:px-6 md:flex-row md:items-start md:justify-between md:gap-8"
       >
-        <a href={localePath(locale, '/')} class="text-foreground flex w-fit items-center gap-2.5">
-          <Logo class="size-6" />
-          <span class="font-semibold tracking-tight">mekiki</span>
-          <span class="text-muted-foreground border-l pl-2.5">{t.meta.tagline}</span>
-        </a>
-        <ul class="flex flex-wrap items-center gap-x-5 gap-y-2">
-          {
-            nav.map((item) => (
-              <li>
-                <a href={item.href} class="hover:text-foreground transition-colors">
-                  {item.label}
-                </a>
-              </li>
-            ))
-          }
-          <li>
-            <a
-              href={REPO_URL}
-              class="hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
-            >
-              <GithubMark class="size-3.5" />
-              {t.nav.github}
-            </a>
-          </li>
-        </ul>
-      </div>
-      <div class="border-t">
-        <div
-          class="mx-auto flex w-full max-w-[1280px] flex-col gap-1.5 px-4 py-5 text-xs leading-relaxed sm:px-6 lg:flex-row lg:items-baseline lg:justify-between lg:gap-8"
-        >
+        <div class="space-y-1">
           <p>
             {t.footer.sources}{
               attribution.map((source, index) => (
                 <>
                   {index > 0 && t.footer.listSeparator}
-                  <a class="hover:text-foreground underline" href={source.url}>{source.name}</a>
+                  <a class={footerLink} href={source.url}>{source.name}</a>
                 </>
               ))
-            }{t.footer.fullStop}<a
-              class="hover:text-foreground underline"
-              href="https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset">{t.footer.arenaLicense}</a
-            >{t.footer.fullStop}
+            }{t.footer.fullStop.trimEnd()}
           </p>
-          <p class="shrink-0 lg:text-end">
-            {t.footer.synced}
-            <span class="num">{synced ? formatDateTime(synced) : t.footer.never}</span>
-            <span class="mx-1.5" aria-hidden="true">·</span>
-            <a class="hover:text-foreground underline" href={REPO_URL}>{t.footer.repo}</a>
+          <p>
+            {arenaBefore}<a
+              class={footerLink}
+              href="https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset">{t.footer.arenaDataset}</a
+            >{arenaAfter}{t.footer.fullStop.trimEnd()}
           </p>
         </div>
+        <p class="flex flex-wrap items-center gap-x-2 gap-y-1 md:shrink-0 md:justify-end">
+          <span>
+            {t.footer.synced}<span class="num">{synced ? formatDateTime(synced) : t.footer.never}</span>
+          </span>
+          <span aria-hidden="true">·</span>
+          <a
+            href={REPO_URL}
+            class="group hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+          >
+            <GithubMark class="size-3.5" />
+            <span
+              class="decoration-muted-foreground/40 group-hover:decoration-foreground underline underline-offset-4 transition-colors"
+              >{t.footer.repo}</span
+            >
+          </a>
+        </p>
       </div>
     </footer>
 
