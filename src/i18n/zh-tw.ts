@@ -81,7 +81,7 @@ export const zhTW: Dictionary = {
   detail: {
     back: '全部模型',
     reviewedAt: '評價於 {date}',
-    notReviewed: 'KC 還沒有評價這個模型。',
+    notReviewed: 'mekiki 還未評價這個模型。',
     breakdown: '智慧分組成',
     metricCol: '指標',
     raw: '原始分',
@@ -93,7 +93,7 @@ export const zhTW: Dictionary = {
     basisLine: '依據：{basis}',
     basisNote: {
       both: '榜單分占 {benchmark}%，主觀分占 {subjective}%。',
-      benchmark_only: 'KC 還沒有打主觀分，智慧分等於榜單分。',
+      benchmark_only: 'mekiki 還未給出主觀分，智慧分等於榜單分。',
       subjective_only: '沒有可用的榜單資料，智慧分等於主觀分。',
       none: '既沒有榜單資料也沒有主觀分，暫不評級。',
     },
@@ -159,7 +159,7 @@ export const zhTW: Dictionary = {
     formulaBenchmark: '榜單分',
     formulaSubjective: '主觀分',
     formulaNone: '不評級，排序時排在最後',
-    subjectiveBody: '主觀分由 KC 手動填寫，100 代表「KC 認為目前最強」，和榜單正規化後的 100 是同一把尺。',
+    subjectiveBody: '主觀分由 mekiki 手動給出，100 代表「mekiki 認為目前最強」，和榜單正規化後的 100 是同一把尺。',
     costTitle: '成本',
     costBody:
       '價格取 models.dev 上的官方價，單位是美元 / 百萬 token。混合價 =（{input} × 輸入價 + {output} × 輸出價）÷ {total}。級距依混合價的絕對值劃分。',
@@ -186,7 +186,7 @@ export const zhTW: Dictionary = {
     licenseAa: '依其條款標示來源',
     caveatsTitle: '注意',
     caveatAaCoding: 'Artificial Analysis 的免費 API 目前不回傳程式指數，所以這個指標暫時不列入，權重由其餘指標分攤。',
-    caveatVariants: '同一個模型在榜單上常依推理等級分成多個項目，這裡取的是 KC 實際使用的那一級。',
+    caveatVariants: '同一個模型在榜單上常依推理等級分成多個項目，這裡取的是 mekiki 實際使用的那一級。',
     caveatPersonal: '主觀分和評語是個人判斷，不是評測結論。',
   },
   api: {
@@ -203,7 +203,7 @@ export const zhTW: Dictionary = {
     exampleBody: '下面是 {id} 的實際回應。',
     fieldsTitle: '欄位說明',
     fieldScores: '分數保留一位小數。缺少的值是 null，欄位不會被省略。',
-    fieldTier: 'tier 是穩定的英文 key；label 是簡體中文標籤，labels 裡有各語言的標籤。',
+    fieldTier: 'tier 是穩定的英文 key；label 是英文標籤，labels 裡有各語言的標籤。',
     fieldBasis: 'intelligence.basis 說明智慧分的來源：both、benchmark_only、subjective_only 或 none。',
     fieldPrice: '價格單位是美元 / 百萬 token；cost.blended 是混合價，cost.index 是 0–100 的成本指數。',
     versionTitle: '版本',

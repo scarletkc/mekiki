@@ -161,7 +161,7 @@ Static files, regenerated on every build:
 | `/api/models/<provider>/<model>.json` | One model |
 
 Scores have one decimal place, missing values are `null`, and no field is ever omitted.
-`tier` is a stable English key; `label` is the Simplified Chinese label and `labels` holds
+`tier` is a stable English key; `label` is the English label and `labels` holds
 every language. Fields are only added; a breaking change bumps `version`. The page at
 [`/api`](https://mekiki.fog.moe/api) documents the fields and shows a live example.
 

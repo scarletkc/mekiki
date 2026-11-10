@@ -193,7 +193,7 @@ value = intelligence^0.6 × max(100 − cost_index, 5)^0.4
 
 ### 6.4 档位
 
-API 里用英文 key，页面显示中文标签。
+API 里用英文 key 和英文 `label`，页面按当前语言显示标签。
 
 | 评级 | 档位（key / 标签 / 条件） |
 |---|---|
@@ -242,15 +242,15 @@ API 里用英文 key，页面显示中文标签。
       "vendor": "...",
       "status": "active",
       "intelligence": {
-        "score": 96.2, "tier": "top", "label": "最高", "basis": "both",
+        "score": 96.2, "tier": "top", "label": "Top", "basis": "both",
         "benchmark": 96.9, "subjective": 95,
         "breakdown": { "aa_intelligence": { "raw": 68, "normalized": 97.1 } }
       },
       "cost": {
-        "tier": "high", "label": "高", "index": 80.7,
+        "tier": "high", "label": "High", "index": 80.7,
         "blended": 10, "input": 5, "output": 25, "cache_read": 0.5
       },
-      "value": { "score": 50.5, "tier": "mid", "label": "中" },
+      "value": { "score": 50.5, "tier": "mid", "label": "Mid" },
       "verdict": "...",
       "best_for": [],
       "reviewed_at": "2026-11-11",
@@ -261,7 +261,7 @@ API 里用英文 key，页面显示中文标签。
 ```
 
 - 分数保留一位小数，缺失值用 `null`，不要省略字段。
-- 每个评级除了 `label`（简体中文）还有 `labels`，按语言给出标签：`{ "zh-CN": "最高", "zh-TW": "最高", "en": "Top" }`。`breakdown` 的每一项另带 `weight`。API 本身不分语言，只有一份。
+- 每个评级除了 `label`（英文）还有 `labels`，按语言给出标签：`{ "zh-CN": "最高", "zh-TW": "最高", "en": "Top" }`。`breakdown` 的每一项另带 `weight`。API 本身不分语言，只有一份。
 - 字段只加不改。有破坏性变更时 `version` 加一。
 - 上线后用 `curl -I https://mekiki.fog.moe/api.json` 确认响应带 `Access-Control-Allow-Origin: *`。没有的话，在域名侧加响应头规则，或把 API 单独挪到 Worker。
 
@@ -411,7 +411,8 @@ KC 在开工时追加的要求，覆盖了原先「不做多语言」的设定�
 - 站名只写 `mekiki`，不带日语；标语和首页简介里不出现「KC 的」。
 - 首页表格的 URL 参数与语言无关：`q`、`vendor`、`int`、`cost`、`val`、`open`、`sort`、`dir`、`legacy`。
 - KC 的评语（短评、优缺点、适用场景、长评）不翻译，也不做简繁转换，各语言都显示原文。
-- JSON API 只有一份。`label` 仍是简体中文，另加 `labels` 给出各语言的标签。
+- JSON API 只有一份，面向英文：`label` 是英文标签，另加 `labels` 给出各语言的标签。
+- 界面文案里不出现「KC」，需要主语的地方写 mekiki（如「mekiki 还未评价这个模型」）。
 - `404` 页面只有一个文件（GitHub Pages 的限制），三种语言的提示都写在里面。
 
 ### 数据源

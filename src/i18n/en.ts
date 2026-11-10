@@ -83,7 +83,7 @@ export const en: Dictionary = {
   detail: {
     back: 'All models',
     reviewedAt: 'Reviewed {date}',
-    notReviewed: "KC hasn't reviewed this model yet.",
+    notReviewed: "mekiki hasn't reviewed this model yet.",
     breakdown: 'How the intelligence score is built',
     metricCol: 'Metric',
     raw: 'Raw',
@@ -95,9 +95,9 @@ export const en: Dictionary = {
     basisLine: 'Basis: {basis}',
     basisNote: {
       both: 'Benchmarks count for {benchmark}%, the subjective score for {subjective}%.',
-      benchmark_only: "KC hasn't scored this model, so intelligence equals the benchmark score.",
+      benchmark_only: "mekiki hasn't scored this model yet, so intelligence equals the benchmark score.",
       subjective_only: 'There is no benchmark data, so intelligence equals the subjective score.',
-      none: "There is no benchmark data and no score from KC, so it isn't rated.",
+      none: "There is no benchmark data and no subjective score, so it isn't rated.",
     },
     notMapped: 'No mapping set',
     notFound: 'Not in the snapshot',
@@ -164,7 +164,7 @@ export const en: Dictionary = {
     formulaSubjective: 'Subjective score',
     formulaNone: 'Not rated; sorted last',
     subjectiveBody:
-      'The subjective score is entered by hand by KC. 100 means “the best there is right now, as KC sees it”, the same yardstick as a normalised benchmark score of 100.',
+      'The subjective score is entered by hand. 100 means “the best there is right now, as mekiki sees it”, the same yardstick as a normalised benchmark score of 100.',
     costTitle: 'Cost',
     costBody:
       'Prices are the official ones from models.dev, in USD per 1M tokens. Blended price = ({input} × input + {output} × output) ÷ {total}. Tiers are set by the absolute blended price.',
@@ -194,7 +194,7 @@ export const en: Dictionary = {
     caveatAaCoding:
       "Artificial Analysis's free API doesn't return the Coding Index at the moment, so that metric is left out for now and its weight is shared by the others.",
     caveatVariants:
-      'Leaderboards often list one model several times, once per reasoning level. The entry used here is the level KC actually runs.',
+      'Leaderboards often list one model several times, once per reasoning level. The entry used here is the level mekiki actually uses.',
     caveatPersonal: 'Subjective scores and comments are personal judgement, not benchmark results.',
   },
   api: {
@@ -213,7 +213,7 @@ export const en: Dictionary = {
     fieldsTitle: 'Fields',
     fieldScores: 'Scores have one decimal place. Missing values are null; fields are never omitted.',
     fieldTier:
-      'tier is a stable English key. label is the Simplified Chinese label, and labels holds the label in every language.',
+      'tier is a stable English key. label is the English label, and labels holds the label in every language.',
     fieldBasis:
       'intelligence.basis says where the intelligence score comes from: both, benchmark_only, subjective_only or none.',
     fieldPrice:

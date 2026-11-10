@@ -83,7 +83,7 @@ export const zhCN = {
   detail: {
     back: '全部模型',
     reviewedAt: '评价于 {date}',
-    notReviewed: 'KC 还没有评价这个模型。',
+    notReviewed: 'mekiki 还未评价这个模型。',
     breakdown: '智能分构成',
     metricCol: '指标',
     raw: '原始分',
@@ -95,7 +95,7 @@ export const zhCN = {
     basisLine: '依据：{basis}',
     basisNote: {
       both: '榜单分占 {benchmark}%，主观分占 {subjective}%。',
-      benchmark_only: 'KC 还没有打主观分，智能分等于榜单分。',
+      benchmark_only: 'mekiki 还未给出主观分，智能分等于榜单分。',
       subjective_only: '没有可用的榜单数据，智能分等于主观分。',
       none: '既没有榜单数据也没有主观分，暂不评级。',
     },
@@ -161,7 +161,7 @@ export const zhCN = {
     formulaBenchmark: '榜单分',
     formulaSubjective: '主观分',
     formulaNone: '不评级，排序时排在最后',
-    subjectiveBody: '主观分由 KC 手填，100 表示“KC 认为的当前最强”，和榜单归一化后的 100 是同一把尺。',
+    subjectiveBody: '主观分由 mekiki 手动给出，100 表示“mekiki 认为的当前最强”，和榜单归一化后的 100 是同一把尺。',
     costTitle: '成本',
     costBody:
       '价格取 models.dev 上的官方价，单位是美元 / 百万 token。混合价 =（{input} × 输入价 + {output} × 输出价）÷ {total}。档位按混合价的绝对值划分。',
@@ -188,7 +188,7 @@ export const zhCN = {
     licenseAa: '按其条款署名',
     caveatsTitle: '注意',
     caveatAaCoding: 'Artificial Analysis 的免费 API 目前不返回编程指数，所以这个指标暂时不计入，权重由其余指标分摊。',
-    caveatVariants: '同一个模型在榜单上常按推理档位分成多个条目，这里取的是 KC 实际使用的那一档。',
+    caveatVariants: '同一个模型在榜单上常按推理档位分成多个条目，这里取的是 mekiki 实际使用的那一档。',
     caveatPersonal: '主观分和评语是个人判断，不是评测结论。',
   },
   api: {
@@ -205,7 +205,7 @@ export const zhCN = {
     exampleBody: '下面是 {id} 的实际返回。',
     fieldsTitle: '字段说明',
     fieldScores: '分数保留一位小数。缺失值是 null，字段不会被省略。',
-    fieldTier: 'tier 是稳定的英文 key；label 是简体中文标签，labels 里有各语言的标签。',
+    fieldTier: 'tier 是稳定的英文 key；label 是英文标签，labels 里有各语言的标签。',
     fieldBasis: 'intelligence.basis 说明智能分的来源：both、benchmark_only、subjective_only 或 none。',
     fieldPrice: '价格单位是美元 / 百万 token；cost.blended 是混合价，cost.index 是 0–100 的成本指数。',
     versionTitle: '版本',

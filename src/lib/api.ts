@@ -15,7 +15,7 @@ export const API_VERSION = 1;
 
 interface TierFields<T extends string> {
   tier: T | null;
-  /** Simplified Chinese label of the tier. */
+  /** English label of the tier. */
   label: string | null;
   /** The label in every UI language, keyed by BCP 47 tag. */
   labels: Record<string, string> | null;
@@ -64,9 +64,9 @@ export interface ApiFull {
   models: ApiModel[];
 }
 
-// `label` is Simplified Chinese by contract (docs/SPEC.md §7), independent of
-// the site's default locale. `labels` carries every language.
-const defaultLabels = useTranslations('zh-cn').tier;
+// `label` is English by contract (docs/SPEC.md §7), whatever the site's default
+// locale is. `labels` carries every language.
+const defaultLabels = useTranslations('en').tier;
 
 /** Trim floating-point noise from a price without changing its value. */
 function tidy(value: number | null): number | null {

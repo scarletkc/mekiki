@@ -225,7 +225,7 @@ describe('JSON API', () => {
       intelligence: {
         score: 96.2,
         tier: 'top',
-        label: '最高',
+        label: 'Top',
         labels: { 'zh-CN': '最高', 'zh-TW': '最高', en: 'Top' },
         basis: 'both',
         benchmark: 96.9,
@@ -238,7 +238,7 @@ describe('JSON API', () => {
       },
       cost: {
         tier: 'high',
-        label: '高',
+        label: 'High',
         labels: { 'zh-CN': '高', 'zh-TW': '高', en: 'High' },
         index: 80.7,
         blended: 10,
@@ -246,7 +246,7 @@ describe('JSON API', () => {
         output: 25,
         cache_read: 0.5,
       },
-      value: { score: 50.5, tier: 'mid', label: '中', labels: { 'zh-CN': '中', 'zh-TW': '中', en: 'Mid' } },
+      value: { score: 50.5, tier: 'mid', label: 'Mid', labels: { 'zh-CN': '中', 'zh-TW': '中', en: 'Mid' } },
       verdict: 'Best in class',
       best_for: ['coding'],
       reviewed_at: '2026-11-01',
