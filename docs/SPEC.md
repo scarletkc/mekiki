@@ -1,7 +1,7 @@
 # mekiki 需求与技术方案
 
 交给 Claude Code 实现用。仓库 `scarletkc/mekiki`，站点 `https://mekiki.fog.moe`。
-建议放进仓库 `docs/SPEC.md`，实现过程中有偏离就回来改这份文档。
+本文档位于 `docs/SPEC.md`，实现过程中有偏离就回来改这份文档。实现时的偏离和补充集中记在 §14。
 
 ## 1. 这是什么
 
@@ -18,7 +18,7 @@
 - 不做全量模型数据库，只维护一份精选列表（预计几十个模型）
 - 不做登录、评论、投票，不要后端和数据库
 - 不自己跑评测
-- 不做多语言（见 §2）
+- 不翻译 KC 的评语：界面支持多语言（见 §2），但短评、优缺点、长评按 KC 写的原文显示
 
 ## 2. 默认假设
 
@@ -26,10 +26,10 @@
 
 | 项 | 默认值 |
 |---|---|
-| 界面语言 | 简体中文；字段名、API、代码用英文 |
+| 界面语言 | 简体中文（默认）、繁体中文、英语；字段名、API、代码用英文 |
 | 榜单来源 | Artificial Analysis（智能指数、编程指数）+ Arena 文本榜 |
 | 智能分权重 | 榜单 60%，主观 40% |
-| 榜单内部权重 | AA 智能指数 0.5，AA 编程指数 0.2，Arena 文本榜 0.3 |
+| 榜单内部权重 | AA 智能指数 0.5，AA 编程指数 0.2，Arena 文本榜 0.3（AA 免费档暂无编程指数，见 §14） |
 | 初始模型 | KC 给清单；没给的话先放 8–10 个当前主流模型当示例，主观字段全部留空 |
 | 包管理器 | pnpm |
 | 代码许可 | MIT |
@@ -109,11 +109,11 @@ reviewed_at:                     # 最近一次评价日期
 |---|---|---|---|
 | models.dev | 价格（输入、输出、缓存读）、上下文长度、发布日期、是否开源权重、模态 | `GET https://models.dev/api.json`，无需 key | 数据按 provider 分组，价格跟着 provider 走，所以 `sources.modelsdev` 带 provider 前缀 |
 | Artificial Analysis | 智能指数、编程指数、跑完整套智能指数的总花费 | 免费 API，请求头 `x-api-key` | 必须署名；key 不能出现在前端 |
-| Arena（原 LMArena） | 文本榜分数 | Hugging Face 数据集 `lmarena-ai/leaderboard-dataset`，子集 `text`，split `latest`，可用 HF Datasets Server 的 rows 接口取 JSON，无需 key | 按数据集页面标注的许可署名 |
+| Arena（原 LMArena） | 文本榜分数 | Hugging Face 数据集 `lmarena-ai/leaderboard-dataset`，子集 `text`，split `latest`，读它自动转换出的 Parquet 文件（原因见 §14），无需 key | CC BY 4.0，按许可署名 |
 
 实现时注意：
 
-- AA 文档里目前能看到两套路径：`/api/v2/data/llms/models` 和较新的 `/api/v2/language/models/free`。以 `https://artificialanalysis.ai/data-api/docs` 当天的内容为准，用免费档能访问的那个。
+- AA 用 `GET /api/v2/language/models/free?page=N`（2026-11-11 的文档：这是免费档唯一能访问的模型列表接口，`/language/models` 仅限 Pro；每 24 小时 100 次请求）。
 - AA 要求所有档位都署名，页脚放一个指向 `https://artificialanalysis.ai/` 的来源链接即可。Arena 同理，按其许可写来源。
 - 每个源一个适配器，接口统一：拉取 → Zod 校验 → 裁剪 → 写快照。以后加榜单只需加一个适配器和一条配置。
 
@@ -133,6 +133,8 @@ reviewed_at:                     # 最近一次评价日期
 ```
 
 - 只保留 mekiki 跟踪的模型，加上每个指标的榜首分数 `frontier`（取自该源的全部模型，不只是跟踪的那些）。这样 diff 小，也不会把别人的整份数据搬进仓库。
+- 另有 `total` 字段记录该源返回的模型总数，用来判断下一次同步是否异常。
+- `fetched_at` 只在数据有变化时更新，数据没变就不改文件，避免每天产生一次空提交。
 - 拉取失败、校验失败、或返回的模型数量明显异常时，保留旧快照不覆盖，把原因写进 Actions 的 job summary。
 
 ## 6. 评分算法
@@ -259,6 +261,7 @@ API 里用英文 key，页面显示中文标签。
 ```
 
 - 分数保留一位小数，缺失值用 `null`，不要省略字段。
+- 每个评级除了 `label`（简体中文）还有 `labels`，按语言给出标签：`{ "zh-CN": "最高", "zh-TW": "最高", "en": "Top" }`。`breakdown` 的每一项另带 `weight`。API 本身不分语言，只有一份。
 - 字段只加不改。有破坏性变更时 `version` 加一。
 - 上线后用 `curl -I https://mekiki.fog.moe/api.json` 确认响应带 `Access-Control-Allow-Origin: *`。没有的话，在域名侧加响应头规则，或把 API 单独挪到 Worker。
 
@@ -271,6 +274,8 @@ API 里用英文 key，页面显示中文标签。
 | `/method` | 评分方法、数据来源与署名、各源最近更新时间 |
 | `/api` | API 说明和示例 |
 
+以上是简体中文（默认语言）的路由，不带前缀。繁体中文和英语分别在 `/zh-tw/` 和 `/en/` 下，路径结构相同，例如 `/en/m/<provider>/<model>`。
+
 **首页表格**：列为模型、厂商、智能、成本、性价比、输入/输出价、短评、评价日期。三个评级列显示档位徽章加分数。支持按任意列排序（默认智能降序）、按厂商/档位/是否开源筛选、按名称搜索。排序和筛选状态写进 URL 查询参数，方便分享某个视图。`legacy` 模型默认折叠。
 
 **详情页**：三个评级；智能分的构成（每个榜单的原始分、归一化分、权重，以及主观分和 `basis`）；价格、上下文长度、发布日期；优点、缺点、适用场景；长评正文；各榜单原始页面的链接。
@@ -279,7 +284,7 @@ API 里用英文 key，页面显示中文标签。
 
 - 视觉以数据表为主体，信息密度参考 models.dev。不要做成营销落地页，不要 hero 区和大渐变标题。
 - 深色、浅色都支持，默认跟随系统，可手动切换。
-- 380px 宽的手机上可用：表格固定首列横向滚动，或改成卡片列表，二选一。
+- 380px 宽的手机上可用：表格固定首列横向滚动（已选这个方案）。
 - 没有数据的地方明确显示「未评」「暂无数据」，不要留空白或显示 0。
 - 页脚：数据来源署名（AA、Arena、models.dev）、最近同步时间、GitHub 仓库链接。
 
@@ -318,24 +323,30 @@ Astro 构建和部署步骤的具体写法（官方 action 的版本号等）照
 mekiki/
 ├─ src/
 │  ├─ content/models/<provider>/<model>.md
+│  ├─ content.config.ts        # 内容集合配置
 │  ├─ lib/
 │  │  ├─ scoring.ts            # 纯函数
 │  │  ├─ scoring.config.ts     # 全部权重和阈值
-│  │  └─ dataset.ts            # 合并内容 + 快照，产出页面和 API 共用的数据
-│  ├─ components/              # shadcn 组件、表格 island
+│  │  ├─ model-schema.ts       # 模型文件的 frontmatter schema（Astro 和脚本共用）
+│  │  ├─ snapshots.ts          # 快照的 schema 和读取
+│  │  ├─ dataset.ts            # 合并内容 + 快照，产出页面和 API 共用的数据
+│  │  ├─ api.ts                # JSON API 的结构
+│  │  └─ site-data.ts          # Astro 侧入口，每次构建只算一次
+│  ├─ i18n/                    # 各语言字典和路径工具
+│  ├─ layouts/、views/         # 布局和各页面主体（各语言共用）
+│  ├─ components/              # shadcn 组件、表格 island、档位徽章
 │  └─ pages/
-│     ├─ index.astro
-│     ├─ m/[...id].astro
-│     ├─ method.astro
-│     ├─ api.astro
+│     ├─ index.astro、method.astro、api.astro、m/[...id].astro
+│     ├─ [locale]/…            # 繁体中文和英语的同名页面
 │     ├─ api.json.ts
 │     └─ api/…                 # models.json 和单模型 JSON
 ├─ data/snapshots/             # modelsdev.json, aa.json, arena.json
 ├─ scripts/
 │  ├─ sync.ts
 │  ├─ report.ts
+│  ├─ lib/                     # 读模型文件、HTTP、候选名
 │  └─ sources/                 # 每个数据源一个适配器
-├─ tests/scoring.test.ts
+├─ tests/                      # scoring、sources、dataset
 ├─ public/CNAME
 ├─ docs/SPEC.md                # 本文档
 └─ .github/workflows/deploy.yml
@@ -382,6 +393,62 @@ Claude Code 做完自己的部分后，把这几项列成清单提醒 KC，不�
 - 给每个模型生成分享用的 OG 图片（发 X 时有用，优先级最高的后续项）
 - 分数历史趋势
 - RSS 或更新日志
-- 多语言
+- 更多界面语言，以及评语的多语言版本
 - 更多榜单（如 Arena 的 webdev 榜）
 - 用 AA 的总花费数据改进成本算法
+
+## 14. 实现记录（2026-11-11）
+
+实现时与前文不同的地方，以及前文没定、实现时定下来的做法。前面各节已同步改过，这里说明原因。
+
+### 多语言
+
+KC 在开工时追加的要求，覆盖了原先「不做多语言」的设定。
+
+- 语言：简体中文（默认）、繁体中文（台湾用语）、英语。界面文案在 `src/i18n/`，一个语言一个字典；`zh-cn.ts` 定义结构，其余语言按它做类型检查，缺 key 时 `pnpm check` 报错。
+- 路由：简体中文不带前缀，所以 §8 的路由和 API 里的 `url` 不变；另外两种语言在 `/zh-tw/`、`/en/` 下。每页带 `hreflang`，切换语言时保留当前的筛选和排序。
+- 首页表格的 URL 参数与语言无关：`q`、`vendor`、`int`、`cost`、`val`、`open`、`sort`、`dir`、`legacy`。
+- KC 的评语（短评、优缺点、适用场景、长评）不翻译，也不做简繁转换，各语言都显示原文。
+- JSON API 只有一份。`label` 仍是简体中文，另加 `labels` 给出各语言的标签。
+- `404` 页面只有一个文件（GitHub Pages 的限制），三种语言的提示都写在里面。
+
+### 数据源
+
+- **Artificial Analysis 适配器没有用真实响应验证过。** 实现时没有 API key，只能照文档（`/data-api/docs/reference`）写，这一点不符合 §3 的第 5 条。拿到 key 跑过第一次 `pnpm sync` 后，要对照真实响应检查 `scripts/sources/aa.ts`。
+- **AA 免费档不返回编程指数。** 文档写明免费档的 `artificial_analysis_coding_index` 恒为 `null`。按 §6.1 的规则，缺失的指标不计入、其余权重重新归一，所以目前榜单分实际只由 AA 智能指数（0.5）和 Arena 文本榜（0.3）构成，即 62.5% 比 37.5%。配置里编程指数的 0.2 保留着，AA 以后开放这个字段就会自动生效。要不要因此调整权重由 KC 决定。
+- **Arena 改读 Parquet 文件。** 实测 HF Datasets Server 的 `/filter` 接口会间歇返回 500（「the dataset index is loading」）或超时，而 `/rows` 要翻 100 多页（`latest` 这个 split 有 29 个分类共一万多行）。改为下载该 split 自动转换出的 Parquet 文件（一个请求，约 0.6 MB），用 `hyparquet` 解析，只取 `category = overall` 的行。
+- Arena 现在的站点是 `https://arena.ai/leaderboard/text`（`lmarena.ai` 会跳转过去）。
+- 同步时的异常判断：返回的模型总数低于适配器设的下限，或不到上次的一半，都视为异常，保留旧快照。失败时 `pnpm sync` 仍以 0 退出。
+- 候选名只用来打印提示，从不自动写入映射。
+
+### 评分
+
+- 档位按四舍五入到一位小数后的分数判定，这样页面上显示 90.0 的模型一定是「最高」，不会出现分数和档位对不上的情况。
+- `reviewed_at` 超过多少天算「评价较旧」也放进了 `scoring.config.ts`（`staleAfterDays`）。
+- 短评超过 40 个字符时内容校验不通过，`pnpm test` 和 `pnpm build` 都会报错并指出文件。
+
+### 技术选型
+
+- TypeScript 用 6.x：`@astrojs/check` 目前只支持到 TS 6，TS 7 还装不上。
+- Zod 用 Astro 自带的那一份（`astro/zod`），脚本和内容集合共用同一个 schema，避免两份 Zod 版本不一致。
+- 部署工作流没有用 `withastro/action`，而是把安装、测试、构建、上传拆成显式步骤，因为同步和测试必须在构建之前、且在同一个 job 里完成。action 的版本号取自各仓库当天的最新 release。工作流没有办法在本地验证，第一次运行后要看一下结果。
+- 字体只打包了一个拉丁字体（Instrument Sans，经 `@fontsource-variable` 本地打包），中文用系统字体，构建期间没有任何远程请求。
+
+### 示例数据
+
+KC 还没给清单，先放了 10 个模型，取自 2026-11-11 的 models.dev，都用第一方 provider 的条目。主观字段和长评全部留空。
+
+| 模型 | Arena 映射 | 说明 |
+|---|---|---|
+| `anthropic/claude-opus-5-5` | `Claude Opus 5.5 (High)` | 榜上只有这一个条目 |
+| `anthropic/claude-sonnet-5-5` | `Claude Sonnet 5.5 (xHigh)` | 同上 |
+| `anthropic/claude-haiku-5-5` | `Claude Haiku 5.5 (High)` | 同上 |
+| `openai/gpt-6.1-sol` | `GPT-6.1 Sol (Max)` | 同上 |
+| `google/gemini-4-argon` | `Gemini 4 Argon (High)` | 同上 |
+| `google/gemini-3.8-flash` | `Gemini 3.8 Flash (High)` | 同上 |
+| `xai/grok-4.7` | `Grok 4.7 (xHigh)` | 同上 |
+| `anthropic/claude-opus-5`（legacy） | 未填 | 榜上有 `(High)` 和 `(Max)` 两档，由 KC 选 |
+| `deepseek/deepseek-v4-pro` | 未填 | 榜上有三个条目，由 KC 选 |
+| `openai/gpt-6.1-terra` | 未填 | 文本榜上暂时没有这个模型 |
+
+只有在榜上恰好对应一个条目时才填了映射；这些映射 KC 也应该过一遍。AA 的 slug 看不到列表，全部没填，等有 key 之后按 `pnpm sync` 打印的候选名补。
