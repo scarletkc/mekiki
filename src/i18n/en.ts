@@ -86,6 +86,8 @@ export const en = {
     normalized: 'Normalised',
     weight: 'Weight',
     scoreNote: 'Intelligence is the weighted mean of the normalised leaderboard scores above.',
+    coverageNote:
+      'This model is on {n} of the {total} leaderboards. The ones it is not on are left out of the mean, not counted as 0.',
     unratedNote: "This model isn't on any of these leaderboards yet, so it isn't rated.",
     notMapped: 'Not listed',
     notFound: 'Not in the snapshot',

@@ -56,6 +56,8 @@ const metrics = METRIC_KEYS.map((key) => {
     mapped === null ? t.detail.notMapped : item.raw === null ? t.detail.notFound : t.empty.noData;
   return { key, label: t.metric[key], ...item, mapped, missing, url: 'url' in config ? config.url : null };
 });
+// How many leaderboards the score rests on; the rest are left out, not counted as 0.
+const covered = metrics.filter((metric) => metric.normalized !== null).length;
 
 // Where the raw numbers can be checked: one link per leaderboard the model is mapped to.
 const links = [
@@ -258,6 +260,9 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         </dl>
         <p class="text-muted-foreground mt-2 max-w-[68ch] text-sm">
           {intelligence.score === null ? t.detail.unratedNote : t.detail.scoreNote}
+          {intelligence.score !== null &&
+            covered < metrics.length &&
+            ` ${fmt(t.detail.coverageNote, { n: covered, total: metrics.length })}`}
         </p>
       </section>
 

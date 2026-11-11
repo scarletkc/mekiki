@@ -84,6 +84,7 @@ export const zhTW: Dictionary = {
     normalized: '正規化',
     weight: '權重',
     scoreNote: '智慧分是上面各榜單正規化分的加權平均。',
+    coverageNote: '這個模型上了 {total} 個榜單中的 {n} 個。沒上的榜不列入平均，不按 0 分算。',
     unratedNote: '這個模型還沒有上任何一個榜單，暫不評級。',
     notMapped: '未上榜',
     notFound: '快照裡沒有這個模型',
