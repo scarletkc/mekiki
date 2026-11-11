@@ -180,9 +180,10 @@ export const scoringConfig: ScoringConfig = {
   intelligence: {
     metrics,
     // Each line sits in a gap between the listed models, at least a point from
-    // the nearest, so a small daily move does not flip a tier; hence 74 and 44
-    // rather than multiples of 5 (set on 2026-11-11).
-    tiers: { top: 90, high: 74, mid: 60, low: 44 },
+    // the nearest, so a small daily move does not flip a tier; hence 87 and 74
+    // rather than multiples of 5. The 31 models then split 3 / 5 / 4 / 13 / 6
+    // (set on 2026-11-11, after the list became generated).
+    tiers: { top: 87, high: 74, mid: 55, low: 38 },
   },
   cost: {
     // 7 : 2 : 1 is Artificial Analysis's default blend (artificialanalysis.ai/
@@ -200,8 +201,9 @@ export const scoringConfig: ScoringConfig = {
     indexFloorPrice: 0.04,
     indexCeilPrice: 12,
     // Each step is 2 to 4 times the last, and each line is at least 10% from
-    // the nearest listed model's price (set on 2026-11-11).
-    tiers: { very_low: 0.1, low: 0.4, mid: 1, high: 2 },
+    // the nearest listed model's price. The 31 models then split
+    // 5 / 7 / 4 / 9 / 6 (set on 2026-11-11, after the list became generated).
+    tiers: { very_low: 0.13, low: 0.48, mid: 1, high: 2 },
   },
   value: {
     intelligenceExponent: 0.6,
@@ -209,9 +211,11 @@ export const scoringConfig: ScoringConfig = {
     minAffordability: 5,
     runCostWeight: 1,
     // Value spreads less than intelligence (it is a geometric mean with the
-    // price), so its lines are 6 points apart, each at least a point from the
-    // nearest listed model (set on 2026-11-11).
-    tiers: { top: 64, high: 58, mid: 52, low: 46 },
+    // price), and 15 models sit between 45 and 54 with no gap of two points, so
+    // no line can go through them: the 31 models split 2 / 3 / 15 / 10 / 1.
+    // Each line is at least a point from the nearest listed model (set on
+    // 2026-11-11, after the list became generated).
+    tiers: { top: 65, high: 57, mid: 44, low: 34 },
   },
 };
 

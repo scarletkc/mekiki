@@ -164,7 +164,7 @@ console.log(
 
 const unmapped = models.filter((m) => SOURCE_IDS.some((id) => !m.matched[id]));
 if (unmapped.length > 0) {
-  console.log('\nMissing source data (run `pnpm sync` to see candidate names)');
+  console.log('\nNot on every source (rated on the rest)');
   for (const model of unmapped) {
     const missing = SOURCE_IDS.filter((id) => !model.matched[id]);
     console.log(`  ${model.id}: ${missing.join(', ')}`);
