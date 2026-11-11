@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { useTranslations } from '@/i18n';
+import { LOCALES, useTranslations } from '@/i18n';
 import { SITE_URL } from '@/lib/dataset';
 import { type JsonLdPage, pageJsonLd, serializeJsonLd } from '@/lib/jsonld';
 
@@ -60,6 +60,17 @@ describe('structured data', () => {
         (file) => new URL(file, SITE_URL).href,
       ),
     );
+  });
+
+  it('describes the dataset at a length search engines accept, in every language', () => {
+    for (const locale of LOCALES) {
+      const graph = pageJsonLd({ ...base, locale, path: '/api' }, useTranslations(locale))[
+        '@graph'
+      ];
+      const description = graph.find((item) => item['@type'] === 'Dataset')!.description as string;
+      expect(description.length, locale).toBeGreaterThanOrEqual(50);
+      expect(description.length, locale).toBeLessThanOrEqual(5000);
+    }
   });
 
   it('cannot close the script element it is written into', () => {

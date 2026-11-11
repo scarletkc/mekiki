@@ -21,7 +21,7 @@ export interface JsonLd {
 
 const DATA_FILES = ['/api.json', '/api/models.json', '/api/history.json'];
 
-export function pageJsonLd(page: JsonLdPage, t: Pick<Dictionary, 'meta' | 'nav'>): JsonLd {
+export function pageJsonLd(page: JsonLdPage, t: Pick<Dictionary, 'meta' | 'nav' | 'api'>): JsonLd {
   const { locale, path, modified } = page;
   const language = LOCALE_INFO[locale].tag;
   const home = new URL(localePath(locale, '/'), SITE_URL).href;
@@ -75,7 +75,7 @@ export function pageJsonLd(page: JsonLdPage, t: Pick<Dictionary, 'meta' | 'nav'>
       '@id': `${url}#dataset`,
       url,
       name: `mekiki: ${t.meta.tagline}`,
-      description: t.meta.description,
+      description: `${t.meta.description} ${t.api.intro}`,
       isAccessibleForFree: true,
       creator: { '@type': 'Organization', name: 'mekiki', url: SITE_URL },
       ...(modified ? { dateModified: modified } : {}),
