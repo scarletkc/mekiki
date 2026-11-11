@@ -56,7 +56,7 @@ const tierRows = [
     tiers: INTELLIGENCE_TIERS.map((key) => ({
       key,
       label: t.tier.intelligence[key],
-      rule: key === 'low' ? `< ${intelligence.tiers.mid}` : `≥ ${intelligence.tiers[key]}`,
+      rule: key === 'very_low' ? `< ${intelligence.tiers.low}` : `≥ ${intelligence.tiers[key]}`,
     })),
   },
   {
@@ -72,7 +72,7 @@ const tierRows = [
     tiers: VALUE_TIERS.map((key) => ({
       key,
       label: t.tier.value[key],
-      rule: key === 'low' ? `< ${value.tiers.mid}` : `≥ ${value.tiers[key]}`,
+      rule: key === 'very_low' ? `< ${value.tiers.low}` : `≥ ${value.tiers[key]}`,
     })),
   },
 ];
@@ -183,7 +183,7 @@ const sources = SOURCE_IDS.map((id) => ({
         <thead>
           <tr>
             <th scope="col">{m.tierRating}</th>
-            <th scope="col" colspan="4">{m.tierConditions}</th>
+            <th scope="col" colspan="5">{m.tierConditions}</th>
           </tr>
         </thead>
         <tbody>

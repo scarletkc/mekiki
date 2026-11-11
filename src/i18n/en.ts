@@ -29,9 +29,9 @@ export const en = {
     value: 'Value',
   },
   tier: {
-    intelligence: { top: 'Top', high: 'High', mid: 'Mid', low: 'Low' },
-    cost: { low: 'Low', mid: 'Mid', high: 'High', very_high: 'Very high' },
-    value: { top: 'Top', high: 'High', mid: 'Mid', low: 'Low' },
+    intelligence: { top: 'Top', high: 'High', mid: 'Mid', low: 'Low', very_low: 'Very low' },
+    cost: { very_low: 'Very low', low: 'Low', mid: 'Mid', high: 'High', very_high: 'Very high' },
+    value: { top: 'Top', high: 'High', mid: 'Mid', low: 'Low', very_low: 'Very low' },
   },
   empty: {
     unrated: 'Not rated',

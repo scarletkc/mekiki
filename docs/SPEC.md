@@ -372,9 +372,9 @@ cheap but dim both score low.
 
 | Rating | Tier keys, best first | Decided by |
 | --- | --- | --- |
-| Intelligence | `top`, `high`, `mid`, `low` | Score at or above `intelligence.tiers` |
-| Cost | `low`, `mid`, `high`, `very_high` | Blended price below `cost.tiers` |
-| Value | `top`, `high`, `mid`, `low` | Score at or above `value.tiers` |
+| Intelligence | `top`, `high`, `mid`, `low`, `very_low` | Score at or above `intelligence.tiers` |
+| Cost | `very_low`, `low`, `mid`, `high`, `very_high` | Blended price below `cost.tiers` |
+| Value | `top`, `high`, `mid`, `low`, `very_low` | Score at or above `value.tiers` |
 
 - Tiers are decided on the score rounded to one decimal, so a model shown as 90.0 is
   always in the tier that starts at 90.
@@ -393,8 +393,8 @@ The fixtures fix the algorithm, not the live config, so they use their own refer
 config (`specConfig` in the test file): two index-style metrics weighted 0.5 and 0.2, one
 Elo-style metric weighted 0.3 with a gap of 300, a 7 : 2 : 1 cache-read : input :
 output blend, a cost scale from $0.04 to $12, value exponents 0.6 and 0.4 with a minimum
-affordability of 5, and tier thresholds of 90 / 75 / 55 (intelligence),
-$0.4 / $2 / $6 (cost) and 70 / 60 / 50 (value). Tuning `scoring.config.ts` does not
+affordability of 5, and tier thresholds of 90 / 75 / 55 / 40 (intelligence),
+$0.1 / $0.4 / $2 / $6 (cost) and 70 / 60 / 50 / 40 (value). Tuning `scoring.config.ts` does not
 break them.
 
 F has no cache price, so its cached share is billed at the input price, which pins that
@@ -405,7 +405,7 @@ fallback.
 | A flagship | 68 / 60 / 1490 | 5 / 25 / 0.5 | 96.9 top | 3.85 high | 80.1 | 51.5 mid |
 | B balanced | 60 / 52 / 1450 | 1.25 / 10 / 0.125 | 84.6 high | 1.3375 mid | 61.5 | 61.7 high |
 | C cheap and good | 50 / 40 / 1400 | 0.3 / 2.5 / 0.03 | 68.6 mid | 0.331 low | 37.0 | 66.3 high |
-| D very cheap | 30 / 22 / 1300 | 0.05 / 0.2 / 0.005 | 38.5 low | 0.0335 low | 0 | 56.4 mid |
+| D very cheap | 30 / 22 / 1300 | 0.05 / 0.2 / 0.005 | 38.5 very_low | 0.0335 very_low | 0 | 56.4 mid |
 | E on no leaderboard | none | 3 / 15 / 0.3 | null | 2.31 high | 71.1 | null |
 | F no coding score, no cache price | 56 / none / 1430 | 2 / 8 / none | 78.8 high | 2.60 high | 73.2 | 51.2 mid |
 

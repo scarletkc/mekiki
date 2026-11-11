@@ -27,9 +27,9 @@ export const zhCN: Dictionary = {
     value: '性价比',
   },
   tier: {
-    intelligence: { top: '最高', high: '高', mid: '中', low: '低' },
-    cost: { low: '低', mid: '中', high: '高', very_high: '很高' },
-    value: { top: '最高', high: '高', mid: '中', low: '低' },
+    intelligence: { top: '最高', high: '高', mid: '中', low: '低', very_low: '很低' },
+    cost: { very_low: '很低', low: '低', mid: '中', high: '高', very_high: '很高' },
+    value: { top: '最高', high: '高', mid: '中', low: '低', very_low: '很低' },
   },
   empty: {
     unrated: '未评',

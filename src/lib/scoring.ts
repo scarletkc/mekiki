@@ -227,16 +227,18 @@ export function intelligenceTier(
   score: number,
   config: ScoringConfig = scoringConfig,
 ): IntelligenceTier {
-  const { top, high, mid } = config.intelligence.tiers;
+  const { top, high, mid, low } = config.intelligence.tiers;
   if (score >= top) return 'top';
   if (score >= high) return 'high';
   if (score >= mid) return 'mid';
-  return 'low';
+  if (score >= low) return 'low';
+  return 'very_low';
 }
 
 /** Cost tier from the blended price (absolute thresholds, not the index). */
 export function costTier(blended: number, config: ScoringConfig = scoringConfig): CostTier {
-  const { low, mid, high } = config.cost.tiers;
+  const { very_low, low, mid, high } = config.cost.tiers;
+  if (blended < very_low) return 'very_low';
   if (blended < low) return 'low';
   if (blended < mid) return 'mid';
   if (blended < high) return 'high';
@@ -244,11 +246,12 @@ export function costTier(blended: number, config: ScoringConfig = scoringConfig)
 }
 
 export function valueTier(score: number, config: ScoringConfig = scoringConfig): ValueTier {
-  const { top, high, mid } = config.value.tiers;
+  const { top, high, mid, low } = config.value.tiers;
   if (score >= top) return 'top';
   if (score >= high) return 'high';
   if (score >= mid) return 'mid';
-  return 'low';
+  if (score >= low) return 'low';
+  return 'very_low';
 }
 
 /**

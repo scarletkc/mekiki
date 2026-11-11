@@ -108,7 +108,7 @@ const modelChanges = changesFor(changelog, model.id).slice(0, 12);
 const linkable = new Set(dataset.models.map((item) => item.id));
 const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
   const tiers = scoringConfig[kind].tiers;
-  return (['top', 'high', 'mid'] as const).map((key) => ({
+  return (['top', 'high', 'mid', 'low'] as const).map((key) => ({
     label: t.tier[kind][key],
     value: tiers[key],
   }));

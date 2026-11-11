@@ -34,7 +34,10 @@ interface ModelSpec {
 
 function tierOf(score: number | null): string | null {
   if (score === null) return null;
-  return score >= 90 ? 'top' : score >= 75 ? 'high' : score >= 55 ? 'mid' : 'low';
+  if (score >= 90) return 'top';
+  if (score >= 75) return 'high';
+  if (score >= 55) return 'mid';
+  return score >= 40 ? 'low' : 'very_low';
 }
 
 function model(spec: ModelSpec = {}): HistoryModel {

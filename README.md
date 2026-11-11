@@ -62,7 +62,7 @@ rated, never as 0.
 
 **Cost** is a blended price per million tokens that mixes the official cache-read, input
 and output prices in the proportions of typical agent and chat use, where most input is
-served from the prompt cache. Its tier, from Low to Very high, follows the price itself.
+served from the prompt cache. Its tier, from Very low to Very high, follows the price itself.
 
 **Value** weighs intelligence against what the model costs to run. Artificial Analysis
 publishes what it paid to run its whole benchmark on each model, so a model that thinks

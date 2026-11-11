@@ -19,8 +19,16 @@ import { OG_HEIGHT, OG_WIDTH } from './share';
 
 const HOST = 'mekiki.fog.moe';
 
-/** How many of the four pips each tier fills; mirrors src/components/TierMeter.tsx. */
-const LEVEL: Record<string, number> = { top: 4, high: 3, mid: 2, low: 1, very_high: 4 };
+/** How many of the five pips each tier fills; mirrors src/components/TierMeter.tsx. */
+const LEVEL: Record<string, number> = {
+  top: 5,
+  very_high: 5,
+  high: 4,
+  mid: 3,
+  low: 2,
+  very_low: 1,
+};
+const STEPS = [1, 2, 3, 4, 5];
 
 let fonts: { name: string; data: Buffer; weight: 400 | 600; style: 'normal' }[] | undefined;
 
@@ -56,14 +64,15 @@ function Logo({ size }: { size: number }) {
   );
 }
 
+/** Five pips take about the width four did, so a long label and price still fit. */
 function Pips({ level, color, scale = 1 }: { level: number; color: string; scale?: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5 * scale }}>
-      {[1, 2, 3, 4].map((step) => (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 * scale }}>
+      {STEPS.map((step) => (
         <div
           key={step}
           style={{
-            width: 13 * scale,
+            width: 11 * scale,
             height: 34 * scale,
             borderRadius: 3 * scale,
             backgroundColor: step <= level ? color : BRAND.pip,
@@ -83,7 +92,19 @@ interface Rating {
   note?: string;
 }
 
+/**
+ * Type sizes for the tier label and figure. A long label ("Very high") with a
+ * price must still fit one third of the card, and "Very low" with a
+ * three-decimal price ("$0.077") is the longest pair, so it steps down again.
+ */
+function ratingSizes({ tierLabel, figure }: Rating) {
+  if (tierLabel.length <= 5) return { label: 40, figure: 34, gap: 16 };
+  if (tierLabel.length + (figure?.length ?? 0) <= 13) return { label: 34, figure: 30, gap: 16 };
+  return { label: 32, figure: 27, gap: 12 };
+}
+
 function RatingBlock({ rating, first }: { rating: Rating; first: boolean }) {
+  const sizes = ratingSizes(rating);
   return (
     <div
       style={{
@@ -109,12 +130,11 @@ function RatingBlock({ rating, first }: { rating: Rating; first: boolean }) {
           {rating.tierLabel}
         </div>
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, height: 48 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: sizes.gap, height: 48 }}>
           <Pips level={LEVEL[rating.tier] ?? 0} color={rating.color} />
-          {/* A long label ("Very high") with a price must still fit one third of the card. */}
           <div
             style={{
-              fontSize: rating.tierLabel.length > 5 ? 34 : 40,
+              fontSize: sizes.label,
               fontWeight: 600,
               color: BRAND.foreground,
               whiteSpace: 'nowrap',
@@ -125,7 +145,7 @@ function RatingBlock({ rating, first }: { rating: Rating; first: boolean }) {
           {rating.figure !== null && (
             <div
               style={{
-                fontSize: rating.tierLabel.length > 5 ? 30 : 34,
+                fontSize: sizes.figure,
                 color: BRAND.muted,
                 whiteSpace: 'nowrap',
               }}
@@ -272,9 +292,9 @@ export function modelCard(model: ModelRecord): Promise<Uint8Array<ArrayBuffer>> 
 /** The share card of every other page. */
 export function siteCard(): Promise<Uint8Array<ArrayBuffer>> {
   const legend = [
-    { label: t.rating.intelligence, level: 4, color: BRAND.ink },
-    { label: t.rating.cost, level: 2, color: BRAND.seal },
-    { label: t.rating.value, level: 3, color: BRAND.ink },
+    { label: t.rating.intelligence, level: LEVEL.top, color: BRAND.ink },
+    { label: t.rating.cost, level: LEVEL.mid, color: BRAND.seal },
+    { label: t.rating.value, level: LEVEL.high, color: BRAND.ink },
   ];
   return toPng(
     <Frame>

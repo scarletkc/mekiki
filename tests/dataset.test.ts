@@ -34,7 +34,7 @@ const config: ScoringConfig = {
         floor: { type: 'below_frontier', gap: 300 },
       },
     },
-    tiers: { top: 90, high: 75, mid: 55 },
+    tiers: { top: 90, high: 75, mid: 55, low: 40 },
   },
   cost: {
     cacheReadWeight: 7,
@@ -42,14 +42,14 @@ const config: ScoringConfig = {
     outputWeight: 1,
     indexFloorPrice: 0.04,
     indexCeilPrice: 12,
-    tiers: { low: 0.4, mid: 2, high: 6 },
+    tiers: { very_low: 0.1, low: 0.4, mid: 2, high: 6 },
   },
   value: {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
     runCostWeight: 1,
-    tiers: { top: 70, high: 60, mid: 50 },
+    tiers: { top: 70, high: 60, mid: 50, low: 40 },
   },
 };
 
@@ -314,7 +314,7 @@ describe('buildDataset', () => {
           arena_webdev: { source: 'arena', mapping: 'arena_webdev', weight: 1, floor: gap },
           livebench: { source: 'livebench', mapping: 'livebench', weight: 0.5, floor: zero },
         },
-        tiers: { top: 90, high: 75, mid: 55 },
+        tiers: { top: 90, high: 75, mid: 55, low: 40 },
       },
     };
     const withBoard: Snapshots = {
@@ -416,7 +416,7 @@ describe('buildDataset', () => {
   it('marks a zero price as free', () => {
     const free = entry('acme/free', 'name: Free\nvendor: Acme');
     const [model] = buildDataset([free], snapshots, { now: NOW, config }).models;
-    expect(model?.rating.cost).toMatchObject({ free: true, index: 0, tier: 'low' });
+    expect(model?.rating.cost).toMatchObject({ free: true, index: 0, tier: 'very_low' });
   });
 
   it.each(['modelsdev', 'aa', 'arena'] as const)(

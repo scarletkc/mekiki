@@ -54,7 +54,7 @@ const specConfig: ScoringConfig = {
         floor: { type: 'below_frontier', gap: 300 },
       },
     },
-    tiers: { top: 90, high: 75, mid: 55 },
+    tiers: { top: 90, high: 75, mid: 55, low: 40 },
   },
   cost: {
     cacheReadWeight: 7,
@@ -62,14 +62,14 @@ const specConfig: ScoringConfig = {
     outputWeight: 1,
     indexFloorPrice: 0.04,
     indexCeilPrice: 12,
-    tiers: { low: 0.4, mid: 2, high: 6 },
+    tiers: { very_low: 0.1, low: 0.4, mid: 2, high: 6 },
   },
   value: {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
     runCostWeight: 1,
-    tiers: { top: 70, high: 60, mid: 50 },
+    tiers: { top: 70, high: 60, mid: 50, low: 40 },
   },
 };
 
@@ -149,9 +149,9 @@ const fixtures: Fixture[] = [
     },
     expected: {
       intelligence: 38.5,
-      intelligenceTier: 'low',
+      intelligenceTier: 'very_low',
       blended: 0.0335,
-      costTier: 'low',
+      costTier: 'very_low',
       costIndex: 0,
       value: 56.4,
       valueTier: 'mid',
@@ -340,7 +340,9 @@ describe('cost', () => {
   });
 
   it('assigns tiers by absolute blended price', () => {
-    expect(costTier(0, specConfig)).toBe('low');
+    expect(costTier(0, specConfig)).toBe('very_low');
+    expect(costTier(0.09, specConfig)).toBe('very_low');
+    expect(costTier(0.1, specConfig)).toBe('low');
     expect(costTier(0.39, specConfig)).toBe('low');
     expect(costTier(0.4, specConfig)).toBe('mid');
     expect(costTier(1.99, specConfig)).toBe('mid');
@@ -357,6 +359,8 @@ describe('tiers', () => {
     expect(intelligenceTier(75)).toBe('high');
     expect(intelligenceTier(55)).toBe('mid');
     expect(intelligenceTier(54.9)).toBe('low');
+    expect(intelligenceTier(40)).toBe('low');
+    expect(intelligenceTier(39.9)).toBe('very_low');
   });
 
   it('value thresholds are inclusive', () => {
@@ -364,6 +368,8 @@ describe('tiers', () => {
     expect(valueTier(60)).toBe('high');
     expect(valueTier(50)).toBe('mid');
     expect(valueTier(49.9)).toBe('low');
+    expect(valueTier(40)).toBe('low');
+    expect(valueTier(39.9)).toBe('very_low');
   });
 });
 
@@ -492,7 +498,7 @@ describe('rateModel edge cases', () => {
     });
     expect(rating.cost.free).toBe(true);
     expect(rating.cost.index).toBe(0);
-    expect(rating.cost.tier).toBe('low');
+    expect(rating.cost.tier).toBe('very_low');
     expect(rating.value.score).toBeCloseTo(60 ** 0.6 * 100 ** 0.4, 1);
   });
 
@@ -509,7 +515,7 @@ describe('rateModel edge cases', () => {
 
   it('honours a custom config', () => {
     const config = structuredClone(scoringConfig);
-    config.intelligence.tiers = { top: 50, high: 40, mid: 30 };
+    config.intelligence.tiers = { top: 50, high: 40, mid: 30, low: 20 };
     const rating = rateModel(
       { metrics: { aa_intelligence: 35 }, frontier: { aa_intelligence: 70 }, price: null },
       config,

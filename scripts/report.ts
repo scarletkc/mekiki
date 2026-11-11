@@ -140,7 +140,7 @@ const { intelligence, cost, value } = scoringConfig;
 console.log('');
 console.log(
   distribution(
-    `Intelligence tiers (top ≥ ${intelligence.tiers.top}, high ≥ ${intelligence.tiers.high}, mid ≥ ${intelligence.tiers.mid})`,
+    `Intelligence tiers (top ≥ ${intelligence.tiers.top}, high ≥ ${intelligence.tiers.high}, mid ≥ ${intelligence.tiers.mid}, low ≥ ${intelligence.tiers.low})`,
     INTELLIGENCE_TIERS,
     models.map((m) => m.rating.intelligence.tier),
   ),
@@ -148,7 +148,7 @@ console.log(
 console.log('');
 console.log(
   distribution(
-    `Cost tiers by blended price (low < $${cost.tiers.low}, mid < $${cost.tiers.mid}, high < $${cost.tiers.high})`,
+    `Cost tiers by blended price (very_low < $${cost.tiers.very_low}, low < $${cost.tiers.low}, mid < $${cost.tiers.mid}, high < $${cost.tiers.high})`,
     COST_TIERS,
     models.map((m) => m.rating.cost.tier),
   ),
@@ -156,7 +156,7 @@ console.log(
 console.log('');
 console.log(
   distribution(
-    `Value tiers (top ≥ ${value.tiers.top}, high ≥ ${value.tiers.high}, mid ≥ ${value.tiers.mid})`,
+    `Value tiers (top ≥ ${value.tiers.top}, high ≥ ${value.tiers.high}, mid ≥ ${value.tiers.mid}, low ≥ ${value.tiers.low})`,
     VALUE_TIERS,
     models.map((m) => m.rating.value.tier),
   ),

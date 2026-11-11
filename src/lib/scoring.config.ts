@@ -34,9 +34,9 @@ export interface MetricConfig {
   url?: string;
 }
 
-export const INTELLIGENCE_TIERS = ['top', 'high', 'mid', 'low'] as const;
-export const COST_TIERS = ['low', 'mid', 'high', 'very_high'] as const;
-export const VALUE_TIERS = ['top', 'high', 'mid', 'low'] as const;
+export const INTELLIGENCE_TIERS = ['top', 'high', 'mid', 'low', 'very_low'] as const;
+export const COST_TIERS = ['very_low', 'low', 'mid', 'high', 'very_high'] as const;
+export const VALUE_TIERS = ['top', 'high', 'mid', 'low', 'very_low'] as const;
 export type IntelligenceTier = (typeof INTELLIGENCE_TIERS)[number];
 export type CostTier = (typeof COST_TIERS)[number];
 export type ValueTier = (typeof VALUE_TIERS)[number];
@@ -45,8 +45,8 @@ export interface ScoringConfig {
   intelligence: {
     /** Benchmark metrics that feed the intelligence score, keyed by metric. */
     metrics: Record<string, MetricConfig>;
-    /** Minimum (rounded) score for each tier, checked top-down; anything lower is `low`. */
-    tiers: { top: number; high: number; mid: number };
+    /** Minimum (rounded) score for each tier, checked top-down; anything lower is `very_low`. */
+    tiers: { top: number; high: number; mid: number; low: number };
   };
   cost: {
     /**
@@ -64,7 +64,7 @@ export interface ScoringConfig {
     /** Blended price (USD per 1M tokens) that maps to cost index 100. */
     indexCeilPrice: number;
     /** Upper bound (exclusive) of blended price for each tier; anything higher is `very_high`. */
-    tiers: { low: number; mid: number; high: number };
+    tiers: { very_low: number; low: number; mid: number; high: number };
   };
   value: {
     /** value = intelligence^a × max(100 − cost index, minAffordability)^b */
@@ -82,8 +82,8 @@ export interface ScoringConfig {
      * a run cost is rated on its blended price.
      */
     runCostWeight: number;
-    /** Minimum (rounded) score for each tier; anything lower is `low`. */
-    tiers: { top: number; high: number; mid: number };
+    /** Minimum (rounded) score for each tier; anything lower is `very_low`. */
+    tiers: { top: number; high: number; mid: number; low: number };
   };
 }
 
@@ -179,7 +179,7 @@ export const METRIC_KEYS = Object.keys(metrics) as MetricKey[];
 export const scoringConfig: ScoringConfig = {
   intelligence: {
     metrics,
-    tiers: { top: 90, high: 75, mid: 55 },
+    tiers: { top: 90, high: 75, mid: 55, low: 40 },
   },
   cost: {
     // 7 : 2 : 1 is Artificial Analysis's default blend (artificialanalysis.ai/
@@ -196,14 +196,14 @@ export const scoringConfig: ScoringConfig = {
     // they mean what they meant before.
     indexFloorPrice: 0.04,
     indexCeilPrice: 12,
-    tiers: { low: 0.4, mid: 2, high: 6 },
+    tiers: { very_low: 0.1, low: 0.4, mid: 2, high: 6 },
   },
   value: {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
     runCostWeight: 1,
-    tiers: { top: 70, high: 60, mid: 50 },
+    tiers: { top: 70, high: 60, mid: 50, low: 40 },
   },
 };
 
