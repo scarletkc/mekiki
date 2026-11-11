@@ -17,6 +17,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out
         uses: actions/checkout@v7
@@ -49,8 +50,10 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # No --with-deps: the runner already has the libraries, and the flag
+      # only adds fonts through apt, which hangs when the mirrors are down.
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps --only-shell chromium
+        run: pnpm exec playwright install --only-shell chromium
 
       - name: Smoke test
         run: pnpm smoke
