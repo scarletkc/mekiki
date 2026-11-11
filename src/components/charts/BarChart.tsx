@@ -73,15 +73,10 @@ export function BarChart({
   const tierNames = useMemo(() => {
     if (trackWidth === null) return [];
     const span = trackWidth - FIGURE_ROOM;
-    let free = 0;
     return tiers.filter((tier, index) => {
-      const left = span * (tier.value / hi);
       const next = tiers[index + 1];
-      const end = next ? span * (next.value / hi) : trackWidth;
-      const width = 4 + textWidth(tier.label, 11);
-      if (left < free || left + width > end) return false;
-      free = left + width + 6;
-      return true;
+      const end = next ? span * (next.value / hi) - 6 : trackWidth;
+      return span * (tier.value / hi) + 4 + textWidth(tier.label, 11) <= end;
     });
   }, [tiers, hi, trackWidth]);
 
