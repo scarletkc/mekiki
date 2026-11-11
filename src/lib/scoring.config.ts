@@ -6,10 +6,10 @@
  */
 
 /** Snapshot file (data/snapshots/<source>.json) a metric is read from. */
-export type BenchmarkSource = 'aa' | 'arena' | 'terminal_bench' | 'livebench';
+export type BenchmarkSource = 'aa' | 'arena' | 'livebench';
 
 /** The field under `sources` in a model file that names the model for a metric. */
-export type MappingField = 'aa' | 'arena_text' | 'arena_webdev' | 'terminal_bench' | 'livebench';
+export type MappingField = 'aa' | 'arena_text' | 'arena_webdev' | 'livebench';
 
 /**
  * How the 0 point of a metric is chosen when normalising to 0–100.
@@ -25,18 +25,10 @@ export interface MetricConfig {
   source: BenchmarkSource;
   mapping: MappingField;
   /**
-   * Relative weight inside its group, re-normalised over the metrics of the
-   * group a model actually has. For a metric without a group it is the
-   * weight inside the benchmark score.
+   * Relative weight inside the benchmark score, re-normalised over the
+   * metrics a model actually has.
    */
   weight: number;
-  /**
-   * What the metric measures. Metrics of one group are averaged first and
-   * the groups are averaged after, so a subject with many leaderboards
-   * does not outweigh one with few. A metric without a group counts as a
-   * group of its own.
-   */
-  group?: string;
   floor: FloorRule;
   /** Public page of the leaderboard, linked from the model page. */
   url?: string;
@@ -51,8 +43,6 @@ export type ValueTier = (typeof VALUE_TIERS)[number];
 
 export interface ScoringConfig {
   intelligence: {
-    /** Relative weight of each metric group inside the benchmark score. */
-    groups?: Record<string, { weight: number }>;
     /** Benchmark metrics that feed the intelligence score, keyed by metric. */
     metrics: Record<string, MetricConfig>;
     /** Minimum (rounded) score for each tier, checked top-down; anything lower is `low`. */
@@ -98,49 +88,53 @@ export interface ScoringConfig {
 }
 
 /**
- * What the leaderboards measure. The groups count the same, and so do the
- * metrics inside a group: general ability (broad test suites), preference
- * (which answer people pick in blind votes) and coding.
+ * LiveBench's categories, with LiveBench's own weights (`_overall_weights`
+ * in its categories.json; a category it does not list weighs 1), checked
+ * against release 20261106 on 2026-11-11.
+ *
+ * The categories the AA Intelligence Index already tests are dropped, so
+ * the same kind of task is not counted twice: Coding (bug fixes in a real
+ * repository, as in FrontierCode) and Long Agentic (long-running coding
+ * work, as in Terminal-Bench). The LiveBench score is the weighted mean of
+ * the kept categories, and LiveBench counts for the share of its overall
+ * weight they carry.
+ *
+ * The adapter stops if LiveBench's categories or weights stop matching
+ * this list, so a new category is sorted into one side by hand.
  */
-const groups = {
-  general: { weight: 1 },
-  preference: { weight: 1 },
-  coding: { weight: 1 },
-} satisfies Record<string, { weight: number }>;
+export const livebenchCategories = {
+  kept: { Reasoning: 1, 'Data Analysis': 1, Research: 1, Browser: 1, Design: 1.5 },
+  dropped: { Coding: 1.5, 'Long Agentic': 2 },
+} satisfies Record<'kept' | 'dropped', Record<string, number>>;
 
-export type MetricGroup = keyof typeof groups;
-export const METRIC_GROUPS = Object.keys(groups) as MetricGroup[];
+const sum = (weights: Record<string, number>) =>
+  Object.values(weights).reduce((total, weight) => total + weight, 0);
+
+/** Share of LiveBench's overall weight the kept categories carry (5.5 of 9). */
+export const livebenchKeptShare =
+  sum(livebenchCategories.kept) /
+  (sum(livebenchCategories.kept) + sum(livebenchCategories.dropped));
 
 /**
  * The leaderboard metrics in use. To add one: add it here, make its source's
  * adapter write it to the snapshot (scripts/sources/), and add its label to
  * the dictionaries in src/i18n/.
  *
- * Coding ability is measured by Arena's WebDev board and Terminal-Bench.
- * Artificial Analysis also has a Coding Index, but its free API does not
- * return it.
+ * Each leaderboard counts once. A leaderboard the AA Intelligence Index
+ * already contains is not used (Terminal-Bench, FrontierCode), and one
+ * that overlaps with it in part counts only for the part that does not
+ * (LiveBench, see `livebenchCategories`).
  */
 const metrics = {
   aa_intelligence: {
     source: 'aa',
     mapping: 'aa',
-    group: 'general',
     weight: 1,
     floor: { type: 'absolute', value: 0 },
-  },
-  // LiveBench's overall score: the weighted mean of its suites.
-  livebench: {
-    source: 'livebench',
-    mapping: 'livebench',
-    group: 'general',
-    weight: 1,
-    floor: { type: 'absolute', value: 0 },
-    url: 'https://livebench.ai/',
   },
   arena_text: {
     source: 'arena',
     mapping: 'arena_text',
-    group: 'preference',
     weight: 1,
     floor: { type: 'below_frontier', gap: 300 },
     url: 'https://arena.ai/leaderboard/text',
@@ -151,30 +145,25 @@ const metrics = {
   arena_webdev: {
     source: 'arena',
     mapping: 'arena_webdev',
-    group: 'coding',
     weight: 1,
     floor: { type: 'below_frontier', gap: 450 },
     url: 'https://arena.ai/leaderboard/webdev',
   },
-  // Share of terminal tasks resolved. A row is a model inside an agent tool.
-  terminal_bench: {
-    source: 'terminal_bench',
-    mapping: 'terminal_bench',
-    group: 'coding',
-    weight: 1,
+  // The weighted mean of the categories AA does not already test.
+  livebench: {
+    source: 'livebench',
+    mapping: 'livebench',
+    weight: livebenchKeptShare,
     floor: { type: 'absolute', value: 0 },
-    url: 'https://www.tbench.ai/',
+    url: 'https://livebench.ai/',
   },
-} satisfies Record<string, MetricConfig & { group: MetricGroup }>;
+} satisfies Record<string, MetricConfig>;
 
 export type MetricKey = keyof typeof metrics;
 export const METRIC_KEYS = Object.keys(metrics) as MetricKey[];
-/** The group of a metric in use. */
-export const metricGroup = (key: MetricKey): MetricGroup => metrics[key].group;
 
 export const scoringConfig: ScoringConfig = {
   intelligence: {
-    groups,
     metrics,
     tiers: { top: 90, high: 75, mid: 55 },
   },

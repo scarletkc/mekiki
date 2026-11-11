@@ -1,35 +1,35 @@
 {
   "source": "livebench",
-  "fetched_at": "2026-11-10T18:44:41.061Z",
-  "total": 33,
+  "fetched_at": "2026-11-11T07:41:08.979Z",
+  "total": 34,
   "edition": "2026-11-06",
   "frontier": {
-    "livebench": 84.88
+    "livebench": 87.15
   },
   "models": {
     "claude-haiku-5.5": {
-      "livebench": 68.94
+      "livebench": 74.23
     },
     "claude-opus-5.5": {
-      "livebench": 83.44
+      "livebench": 86.32
     },
     "claude-sonnet-5.5": {
-      "livebench": 76.99
+      "livebench": 81.88
     },
     "gemini-3.8-flash": {
-      "livebench": 55.99
+      "livebench": 67.7
     },
     "gemini-4-argon": {
-      "livebench": 77.69
+      "livebench": 82.49
     },
     "gpt-6.1-sol": {
-      "livebench": 81.37
+      "livebench": 86.91
     },
     "gpt-6.1-terra": {
-      "livebench": 78.77
+      "livebench": 84.14
     },
     "grok-4.7": {
-      "livebench": 67.91
+      "livebench": 74.71
     }
   }
 }

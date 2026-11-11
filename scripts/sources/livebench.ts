@@ -11,7 +11,10 @@
  *
  * The table has no overall column. The site computes it as the weighted
  * mean of the categories a model has a score for, with weight 1 for a
- * category `_overall_weights` does not list; this adapter does the same.
+ * category `_overall_weights` does not list. This adapter takes the same
+ * mean over the categories the AA Intelligence Index does not already
+ * test (`livebenchCategories` in src/lib/scoring.config.ts), and stops when
+ * the site's categories or weights no longer match that list.
  *
  * Rows are bare model IDs. Each model runs at its highest effort setting,
  * and where it does not, the ID says so.
@@ -20,6 +23,7 @@
  * they are republished with attribution only.
  */
 import { z } from 'astro/zod';
+import { livebenchCategories } from '../../src/lib/scoring.config';
 import type { LivebenchModel } from '../../src/lib/snapshots';
 import { suggest } from '../lib/candidates';
 import { getJson, getText } from '../lib/http';
@@ -57,6 +61,29 @@ function score(cell: string | undefined): number | null {
 
 const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
 
+/**
+ * Pure: how the site's categories and weights differ from the kept and
+ * dropped lists in the scoring config, one line per difference.
+ */
+export function categoryChanges(
+  siteWeights: Record<string, number>,
+  expected: Record<string, number> = {
+    ...livebenchCategories.kept,
+    ...livebenchCategories.dropped,
+  },
+): string[] {
+  const changes: string[] = [];
+  for (const [name, weight] of Object.entries(siteWeights)) {
+    if (!(name in expected)) changes.push(`new: ${name}`);
+    else if (expected[name] !== weight)
+      changes.push(`${name} weighs ${weight}, not ${expected[name]}`);
+  }
+  for (const name of Object.keys(expected)) {
+    if (!(name in siteWeights)) changes.push(`gone: ${name}`);
+  }
+  return changes;
+}
+
 export const livebenchAdapter: SourceAdapter<'livebench'> = {
   id: 'livebench',
   minTotal: 10,
@@ -85,17 +112,29 @@ export const livebenchAdapter: SourceAdapter<'livebench'> = {
       throw new SourceDataError('The table does not start with a "model" column.');
     }
 
-    // Category → its columns in the table and its weight in the overall score.
+    // Category → its weight in the site's overall score.
     const weights = z.record(z.string(), z.number()).safeParse(categories[WEIGHTS_KEY]);
-    const groups: { columns: number[]; weight: number }[] = [];
+    const siteWeights: Record<string, number> = {};
     for (const [name, suites] of Object.entries(categories)) {
       if (name === WEIGHTS_KEY || !Array.isArray(suites)) continue;
+      siteWeights[name] = weights.success ? (weights.data[name] ?? 1) : 1;
+    }
+    const changes = categoryChanges(siteWeights);
+    if (changes.length > 0) {
+      throw new SourceDataError(
+        `The categories changed (${changes.join('; ')}). Sort them in livebenchCategories in src/lib/scoring.config.ts.`,
+      );
+    }
+
+    // The kept categories → their columns in the table and their weight.
+    const groups: { columns: number[]; weight: number }[] = [];
+    for (const [name, weight] of Object.entries(livebenchCategories.kept)) {
+      const suites = categories[name] as unknown[];
       const columns = suites.map((suite) => header.indexOf(String(suite))).filter((at) => at > 0);
-      const weight = weights.success ? (weights.data[name] ?? 1) : 1;
       if (columns.length > 0 && weight > 0) groups.push({ columns, weight });
     }
     if (groups.length === 0) {
-      throw new SourceDataError('No category of the category list is a column of the table.');
+      throw new SourceDataError('No kept category is a column of the table.');
     }
 
     const warnings: string[] = [];

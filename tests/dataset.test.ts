@@ -107,7 +107,6 @@ const snapshots: Snapshots = {
       'Flagship (Max)': { arena_text: null, arena_webdev: 1790, published: '2026-11-09' },
     },
   },
-  terminal_bench: null,
   livebench: null,
 };
 
@@ -225,14 +224,12 @@ describe('buildDataset', () => {
       aa: 'flagship',
       arena_text: 'Flagship (High)',
       arena_webdev: 'Flagship (Max)',
-      terminal_bench: null,
       livebench: null,
     });
     expect(first?.matched).toEqual({
       modelsdev: true,
       aa: true,
       arena: true,
-      terminal_bench: false,
       livebench: false,
     });
     expect(first?.url).toBe('https://mekiki.fog.moe/m/acme/flagship');
@@ -294,70 +291,23 @@ describe('buildDataset', () => {
     });
   });
 
-  it('averages the leaderboards inside each group, then the groups', () => {
+  it('reads LiveBench next to the other boards at its own weight', () => {
     const zero = { type: 'absolute', value: 0 } as const;
     const gap = { type: 'below_frontier', gap: 300 } as const;
-    const grouped: ScoringConfig = {
+    const withLivebench: ScoringConfig = {
       ...config,
       intelligence: {
-        groups: { general: { weight: 1 }, preference: { weight: 1 }, coding: { weight: 1 } },
         metrics: {
-          aa_intelligence: {
-            source: 'aa',
-            mapping: 'aa',
-            group: 'general',
-            weight: 1,
-            floor: zero,
-          },
-          livebench: {
-            source: 'livebench',
-            mapping: 'livebench',
-            group: 'general',
-            weight: 1,
-            floor: zero,
-          },
-          arena_text: {
-            source: 'arena',
-            mapping: 'arena_text',
-            group: 'preference',
-            weight: 1,
-            floor: gap,
-          },
-          arena_webdev: {
-            source: 'arena',
-            mapping: 'arena_webdev',
-            group: 'coding',
-            weight: 1,
-            floor: gap,
-          },
-          terminal_bench: {
-            source: 'terminal_bench',
-            mapping: 'terminal_bench',
-            group: 'coding',
-            weight: 1,
-            floor: zero,
-          },
+          aa_intelligence: { source: 'aa', mapping: 'aa', weight: 1, floor: zero },
+          arena_text: { source: 'arena', mapping: 'arena_text', weight: 1, floor: gap },
+          arena_webdev: { source: 'arena', mapping: 'arena_webdev', weight: 1, floor: gap },
+          livebench: { source: 'livebench', mapping: 'livebench', weight: 0.5, floor: zero },
         },
         tiers: { top: 90, high: 75, mid: 55 },
       },
     };
-    const withBoards: Snapshots = {
+    const withBoard: Snapshots = {
       ...snapshots,
-      terminal_bench: {
-        source: 'terminal_bench',
-        fetched_at: '2026-11-10T00:00:00.000Z',
-        edition: 'Terminal-Bench 4.1',
-        frontier: { terminal_bench: 60 },
-        models: {
-          'Tool / Flagship / max': {
-            terminal_bench: 45,
-            agent: 'Tool',
-            model: 'Flagship',
-            effort: 'max',
-            date: '2026-11-01',
-          },
-        },
-      },
       livebench: {
         source: 'livebench',
         fetched_at: '2026-11-10T00:00:00.000Z',
@@ -373,37 +323,32 @@ describe('buildDataset', () => {
       '  aa: flagship',
       '  arena_text: Flagship (High)',
       '  arena_webdev: "Flagship (Max)"',
-      '  livebench: flagship',
     ];
-    const everywhere = entry(
-      'acme/flagship',
-      [...mapped, '  terminal_bench: "Tool / Flagship / max"'].join('\n'),
-    );
-    const noTerminal = entry('acme/flagship', mapped.join('\n'));
+    const everywhere = entry('acme/flagship', [...mapped, '  livebench: flagship'].join('\n'));
+    const noLivebench = entry('acme/flagship', mapped.join('\n'));
 
-    const built = buildDataset([everywhere], withBoards, { now: NOW, config: grouped });
+    const built = buildDataset([everywhere], withBoard, { now: NOW, config: withLivebench });
     const [model] = built.models;
-    // General (97.14 + 90) ÷ 2 = 93.57, preference 96.67, coding (96.67 + 75) ÷ 2 = 85.83.
-    expect(model?.rating.intelligence.score).toBe(92);
+    // (97.14 + 96.67 + 96.67 + 0.5 × 90) ÷ 3.5 = 95.85
+    expect(model?.rating.intelligence.score).toBe(95.9);
     expect(model?.rating.intelligence.breakdown).toMatchObject({
-      aa_intelligence: { normalized: 97.1, weight: 0.1667 },
-      livebench: { raw: 72, normalized: 90, weight: 0.1667, frontier: 80 },
-      arena_text: { normalized: 96.7, weight: 0.3333 },
-      arena_webdev: { normalized: 96.7, weight: 0.1667 },
-      terminal_bench: { raw: 45, normalized: 75, weight: 0.1667, frontier: 60 },
+      aa_intelligence: { normalized: 97.1, weight: 0.2857 },
+      arena_text: { normalized: 96.7, weight: 0.2857 },
+      arena_webdev: { normalized: 96.7, weight: 0.2857 },
+      livebench: { raw: 72, normalized: 90, weight: 0.1429, frontier: 80 },
     });
-    expect(model?.matched).toMatchObject({ terminal_bench: true, livebench: true });
-    expect(model?.source_ids).toMatchObject({
-      terminal_bench: 'Tool / Flagship / max',
-      livebench: 'flagship',
-    });
-    expect(built.sources.terminal_bench.edition).toBe('Terminal-Bench 4.1');
+    expect(model?.matched.livebench).toBe(true);
+    expect(model?.source_ids.livebench).toBe('flagship');
+    expect(built.sources.livebench.edition).toBe('2026-11-06');
     expect(built.sources.aa.edition).toBeNull();
 
-    // Off one board, the rest of its group stands in: coding is WebDev alone.
-    const [partial] = buildDataset([noTerminal], withBoards, { now: NOW, config: grouped }).models;
-    expect(partial?.rating.intelligence.score).toBe(95.6);
-    expect(partial?.matched.terminal_bench).toBe(false);
+    // Off LiveBench, the other boards stand in: (97.14 + 96.67 + 96.67) ÷ 3.
+    const [partial] = buildDataset([noLivebench], withBoard, {
+      now: NOW,
+      config: withLivebench,
+    }).models;
+    expect(partial?.rating.intelligence.score).toBe(96.8);
+    expect(partial?.matched.livebench).toBe(false);
   });
 
   it('does not read a rating from the wrong board', () => {
@@ -436,7 +381,6 @@ describe('buildDataset', () => {
       modelsdev: false,
       aa: false,
       arena: false,
-      terminal_bench: false,
       livebench: false,
     });
     expect(second?.price_source).toBeNull();
@@ -489,7 +433,7 @@ describe('buildDataset', () => {
   it('builds with no snapshots at all', () => {
     const empty = buildDataset(
       [flagship, blank],
-      { modelsdev: null, aa: null, arena: null, terminal_bench: null, livebench: null },
+      { modelsdev: null, aa: null, arena: null, livebench: null },
       { now: NOW, config },
     );
     expect(empty.models.map((model) => model.rating.intelligence.score)).toEqual([null, null]);
@@ -498,7 +442,6 @@ describe('buildDataset', () => {
       livebench: null,
       arena_text: null,
       arena_webdev: null,
-      terminal_bench: null,
     });
     expect(latestSync(empty)).toBeNull();
   });
@@ -517,7 +460,7 @@ describe('scoring config', () => {
   it('reads every metric from a snapshot the model files can map to', () => {
     const everything = entry(
       'a/b',
-      'name: B\nvendor: A\nsources:\n  aa: x\n  arena_text: x\n  arena_webdev: x\n  terminal_bench: x\n  livebench: x',
+      'name: B\nvendor: A\nsources:\n  aa: x\n  arena_text: x\n  arena_webdev: x\n  livebench: x',
     );
     const mappings = Object.keys(everything.data.sources);
     for (const key of METRIC_KEYS) {
@@ -554,7 +497,6 @@ describe('JSON API', () => {
           arena_webdev: { raw: 1790, normalized: 96.7, weight: 0.2 },
           // Metrics the config in use here does not have are reported empty.
           livebench: { raw: null, normalized: null, weight: 0 },
-          terminal_bench: { raw: null, normalized: null, weight: 0 },
         },
       },
       cost: {

@@ -7,6 +7,5 @@ sources:
   aa: gpt-6-1-terra
   arena_text:
   arena_webdev: "GPT-6.1 Terra (Max)"
-  terminal_bench:
   livebench: gpt-6.1-terra
 ---

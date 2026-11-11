@@ -19,9 +19,9 @@ mekiki rates a short list of AI models on how smart they are, what they cost, an
 intelligence you get for the money. The numbers come from public leaderboards and
 official prices, and refresh every day.
 
-- **No hand-entered scores.** Intelligence combines five public leaderboards: the
-  Artificial Analysis Intelligence Index, LiveBench, Arena's text and WebDev boards, and
-  Terminal-Bench. Every weight and threshold is published on the Method page.
+- **No hand-entered scores.** Intelligence combines four public leaderboards: the
+  Artificial Analysis Intelligence Index, Arena's text and WebDev boards, and LiveBench.
+  Every weight and threshold is published on the Method page.
 - **Value counts the tokens a model burns.** Two models with the same price per token can
   cost very different amounts to use. Value is priced on what it actually cost to run each
   model through the same benchmark, not on the price list alone.
@@ -50,11 +50,13 @@ official prices, and refresh every day.
 
 ## How the ratings work
 
-**Intelligence** combines five leaderboards in three groups that count the same: general
-ability (the Artificial Analysis Intelligence Index and LiveBench), human preference
-(Arena text) and coding (Arena WebDev and Terminal-Bench). Each leaderboard is normalised
-so its current leader scores 100, and a model is rated on the leaderboards it is on. A
-model on none of them is shown as not rated, never as 0.
+**Intelligence** is one score blended from four leaderboards, and each one counts once.
+A leaderboard the Artificial Analysis Intelligence Index already contains, such as
+Terminal-Bench, is not used. The index and Arena's text and WebDev boards count the same;
+LiveBench counts only for the categories the index does not test, which carry 61% of
+LiveBench's own weights. Each leaderboard is normalised so its current leader scores 100,
+and a model is rated on the leaderboards it is on. A model on none of them is shown as not
+rated, never as 0.
 
 **Cost** is a blended price per million tokens that mixes the official cache-read, input
 and output prices in the proportions of typical agent and chat use, where most input is
@@ -104,8 +106,7 @@ file, and [adding a model](docs/adding-models.md) walks through it.
 | --- | --- |
 | [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index, and what it cost to run the index on each model |
 | [Arena](https://arena.ai/leaderboard) | Text and WebDev leaderboard ratings, from the [`lmarena-ai/leaderboard-dataset`](https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset) dataset (CC BY 4.0) |
-| [LiveBench](https://livebench.ai/) | Overall score across its suites |
-| [Terminal-Bench](https://www.tbench.ai/) | Share of terminal tasks a model resolves inside an agent tool |
+| [LiveBench](https://livebench.ai/) | Score across the categories the AA index does not test |
 | [models.dev](https://models.dev) | Prices, context window, release date, open weights and modalities |
 
 Thanks to all of them. Every page credits them; if you republish the data, credit them

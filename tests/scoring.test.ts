@@ -14,7 +14,12 @@ import {
   valueTier,
   type RatingInput,
 } from '@/lib/scoring';
-import { METRIC_KEYS, scoringConfig, type ScoringConfig } from '@/lib/scoring.config';
+import {
+  livebenchKeptShare,
+  METRIC_KEYS,
+  scoringConfig,
+  type ScoringConfig,
+} from '@/lib/scoring.config';
 
 /** Fictional leaderboard tops used by the fixtures in docs/SPEC.md §5.5. */
 const frontier = { aa_intelligence: 70, aa_coding: 62, arena_text: 1500 };
@@ -373,58 +378,21 @@ describe('computeValue', () => {
   });
 });
 
-describe('metric groups', () => {
-  const zero = { type: 'absolute', value: 0 } as const;
-  const metric = (group: string) =>
-    ({ source: 'aa', mapping: 'aa', group, weight: 1, floor: zero }) as const;
-  const grouped = (weights: { wide: number; narrow: number }): ScoringConfig => ({
-    ...specConfig,
-    intelligence: {
-      groups: { wide: { weight: weights.wide }, narrow: { weight: weights.narrow } },
-      metrics: { first: metric('wide'), second: metric('wide'), third: metric('narrow') },
-      tiers: { top: 90, high: 75, mid: 55 },
-    },
-  });
-  const equal = grouped({ wide: 1, narrow: 1 });
-  const tops = { first: 100, second: 100, third: 100 };
-
-  it('averages inside a group before averaging the groups', () => {
-    // A flat mean of 100, 0 and 100 would be 66.7.
-    const { score } = computeBenchmark({ first: 100, second: 0, third: 100 }, tops, equal);
-    expect(score).toBe(75);
-  });
-
-  it('scores a group on the metrics a model has', () => {
-    expect(computeBenchmark({ first: 80, third: 40 }, tops, equal).score).toBe(60);
-  });
-
-  it('leaves out a group that has no score', () => {
-    expect(computeBenchmark({ first: 80, second: 60 }, tops, equal).score).toBe(70);
-    expect(computeBenchmark({}, tops, equal).score).toBeNull();
-  });
-
-  it('honours the group weights', () => {
-    const { score } = computeBenchmark(
-      { first: 100, third: 0 },
-      tops,
-      grouped({ wide: 3, narrow: 1 }),
-    );
-    expect(score).toBe(75);
-  });
-
+describe('metric weights', () => {
   it("reports each metric's share of the whole", () => {
-    const { breakdown } = computeBenchmark({}, tops, equal);
-    expect(breakdown.first?.weight).toBe(0.25);
-    expect(breakdown.second?.weight).toBe(0.25);
-    expect(breakdown.third?.weight).toBe(0.5);
-  });
-
-  it('treats a metric without a group as a group of its own', () => {
-    // The reference config is flat: shares are its weights.
     const { breakdown } = computeBenchmark({}, frontier, specConfig);
     expect(breakdown.aa_intelligence?.weight).toBe(0.5);
     expect(breakdown.aa_coding?.weight).toBe(0.2);
     expect(breakdown.arena_text?.weight).toBe(0.3);
+  });
+
+  it('counts each leaderboard once and LiveBench for the categories it keeps', () => {
+    expect(livebenchKeptShare).toBeCloseTo(5.5 / 9, 12);
+    const { breakdown } = computeBenchmark({}, {});
+    expect(breakdown.aa_intelligence?.weight).toBe(0.2769);
+    expect(breakdown.arena_text?.weight).toBe(0.2769);
+    expect(breakdown.arena_webdev?.weight).toBe(0.2769);
+    expect(breakdown.livebench?.weight).toBe(0.1692);
   });
 });
 

@@ -7,6 +7,5 @@ sources:
   aa: deepseek-v4-pro
   arena_text: "DeepSeek-V4-Pro (High, 20260813)"
   arena_webdev: "DeepSeek-V4-Pro (High, 20260813)"
-  terminal_bench:
   livebench:
 ---

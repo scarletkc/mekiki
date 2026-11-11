@@ -2,9 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { suggest } from '../scripts/lib/candidates';
 import { aaAdapter } from '../scripts/sources/aa';
 import { arenaAdapter } from '../scripts/sources/arena';
-import { latestRelease, livebenchAdapter } from '../scripts/sources/livebench';
+import { categoryChanges, latestRelease, livebenchAdapter } from '../scripts/sources/livebench';
 import { modelsdevAdapter } from '../scripts/sources/modelsdev';
-import { parseBoardPage, terminalBenchAdapter } from '../scripts/sources/terminal-bench';
 import type { TrackedModel } from '../scripts/sources/types';
 import { snapshotSchemas } from '@/lib/snapshots';
 
@@ -279,118 +278,25 @@ describe('suggest', () => {
   });
 });
 
-describe('Terminal-Bench adapter', () => {
-  // Rows as the site's page carries them, trimmed to the fields that are read.
-  const row = (agent: string, model: string, effort: string | null, accuracy: number) => ({
-    status: 'display',
-    metadata: {
-      agent_display: { label: agent, url: 'https://example.com' },
-      model_display: { label: model },
-      reasoning_effort: effort,
-      date: '2026-09-22',
-    },
-    metrics: { accuracy, n_trials: 330 },
-  });
-  const board = {
-    leaderboard: { title: 'Terminal-Bench 4.1', name: '4-1-0' },
-    rows: [
-      row('Claude Code', 'Opus 5.5', 'max', 65.76),
-      row('Codex', 'GPT-6.1 Sol', 'max', 60.91),
-      row('Claude Code', 'Opus 5', 'xhigh', 53.33),
-      row('Claude Code', 'Opus 5', 'max', 52.12),
-      { ...row('Codex', 'Withdrawn', 'max', 99), status: 'hidden' },
-    ],
-  };
-
-  // The page as Next.js serves it: the data arrives as escaped strings, split over script tags.
-  const page = (data: unknown) => {
-    const stream = `7:["$","div",null,{"state":{"queries":[{"state":{"data":${JSON.stringify(data)}}}]}}]\n`;
-    const half = Math.floor(stream.length / 2);
-    const chunk = (text: string) =>
-      `<script>self.__next_f.push([1,${JSON.stringify(text)}])</script>`;
-    return `<html><body><script>self.__next_f.push([0])</script>${chunk(stream.slice(0, half))}${chunk(stream.slice(half))}</body></html>`;
-  };
-
-  it('finds the board in the page', () => {
-    expect(parseBoardPage(page(board))).toEqual(board);
-  });
-
-  it('fails when the page carries no board', () => {
-    expect(() => parseBoardPage('<html><body>Maintenance</body></html>')).toThrow(/No leaderboard/);
-    expect(() => parseBoardPage(page({ something: 'else' }))).toThrow(/No leaderboard/);
-  });
-
-  it('reads a row as an agent, a model and an effort', () => {
-    const { snapshot, unmatched } = terminalBenchAdapter.transform(board, [
-      tracked('anthropic/claude-opus-5-5', 'Claude Opus 5.5', {
-        terminal_bench: 'Claude Code / Opus 5.5 / max',
-      }),
-      tracked('anthropic/claude-opus-5', 'Claude Opus 5', {
-        terminal_bench: 'Claude Code / Opus 5 / max',
-      }),
-    ]);
-    // The hidden row is neither counted nor allowed to set the frontier.
-    expect(snapshot.total).toBe(4);
-    expect(snapshot.edition).toBe('Terminal-Bench 4.1');
-    expect(snapshot.frontier).toEqual({ terminal_bench: 65.76 });
-    expect(snapshot.models).toEqual({
-      'Claude Code / Opus 5.5 / max': {
-        terminal_bench: 65.76,
-        agent: 'Claude Code',
-        model: 'Opus 5.5',
-        effort: 'max',
-        date: '2026-09-22',
-      },
-      'Claude Code / Opus 5 / max': {
-        terminal_bench: 52.12,
-        agent: 'Claude Code',
-        model: 'Opus 5',
-        effort: 'max',
-        date: '2026-09-22',
-      },
-    });
-    expect(unmatched).toEqual([]);
-    expect(snapshotSchemas.terminal_bench.safeParse(withTimestamp(snapshot)).success).toBe(true);
-  });
-
-  it('matches rows exactly and lists every effort as a candidate', () => {
-    const { snapshot, unmatched } = terminalBenchAdapter.transform(board, [
-      tracked('anthropic/claude-opus-5', 'Claude Opus 5', { terminal_bench: 'Opus 5 (max)' }),
-    ]);
-    expect(snapshot.models).toEqual({});
-    expect(unmatched[0]).toMatchObject({ field: 'sources.terminal_bench', value: 'Opus 5 (max)' });
-    expect(unmatched[0]?.candidates).toEqual(
-      expect.arrayContaining(['Claude Code / Opus 5 / max', 'Claude Code / Opus 5 / xhigh']),
-    );
-  });
-
-  it('refuses a board without usable rows', () => {
-    const { leaderboard } = board;
-    expect(() => terminalBenchAdapter.transform({ rows: board.rows }, [])).toThrow();
-    expect(() => terminalBenchAdapter.transform({ leaderboard, rows: [] }, [])).toThrow(/no rows/);
-    expect(() =>
-      terminalBenchAdapter.transform(
-        { leaderboard, rows: [{ nope: 1 }, { nope: 2 }, board.rows[0]] },
-        [],
-      ),
-    ).toThrow(/failed validation/);
-  });
-});
-
 describe('LiveBench adapter', () => {
   // The shape of data/<release>/categories.json and table.csv on the live site.
   const categories = {
     'Long Agentic': ['long_agentic'],
     Reasoning: ['reasoning'],
     Coding: ['coding'],
-    _overall_weights: { 'Long Agentic': 2, Coding: 1.5 },
+    Browser: ['browser'],
+    'Data Analysis': ['data_analysis'],
+    Research: ['research'],
+    Design: ['design'],
+    _overall_weights: { 'Long Agentic': 2, Coding: 1.5, Design: 1.5 },
   };
   const table = [
-    'model,long_agentic,reasoning,coding',
-    'leader,80,90,70',
-    'gpt-6.1-sol,60,90,80',
-    'partial,,50,n/a',
-    'unscored,,,',
+    'model,long_agentic,reasoning,coding,browser,data_analysis,research,design',
+    'leader,80,90,70,60,70,80,90',
+    'gpt-6.1-sol,99,70,99,60,50,40,80',
+    'partial,,50,n/a,,,,',
+    'coder,90,,90,,,,',
+    'unscored,,,,,,,',
     '',
   ].join('\n');
   const raw = { release: '20261106', table, categories };
@@ -401,16 +307,18 @@ describe('LiveBench adapter', () => {
     expect(() => latestRelease('const r=[];')).toThrow(/No release/);
   });
 
-  it('computes the overall score the way the site does', () => {
+  it('scores only the categories the AA index does not test', () => {
     const { snapshot, unmatched, warnings } = livebenchAdapter.transform(raw, [
       tracked('openai/gpt-6.1-sol', 'GPT-6.1 Sol', { livebench: 'gpt-6.1-sol' }),
     ]);
-    // Weights 2, 1 and 1.5: (2 × 80 + 90 + 1.5 × 70) ÷ 4.5 = 78.89 for the leader,
-    // (2 × 60 + 90 + 1.5 × 80) ÷ 4.5 = 73.33 for GPT-6.1 Sol.
+    // Coding and Long Agentic are left out; Design weighs 1.5:
+    // (90 + 60 + 70 + 80 + 1.5 × 90) ÷ 5.5 = 79.09 for the leader,
+    // (70 + 60 + 50 + 40 + 1.5 × 80) ÷ 5.5 = 61.82 for GPT-6.1 Sol.
+    // "coder" only has scores in the dropped categories, so it is not listed.
     expect(snapshot.total).toBe(3);
     expect(snapshot.edition).toBe('2026-11-06');
-    expect(snapshot.frontier).toEqual({ livebench: 78.89 });
-    expect(snapshot.models).toEqual({ 'gpt-6.1-sol': { livebench: 73.33 } });
+    expect(snapshot.frontier).toEqual({ livebench: 79.09 });
+    expect(snapshot.models).toEqual({ 'gpt-6.1-sol': { livebench: 61.82 } });
     expect(unmatched).toEqual([]);
     expect(warnings).toEqual([]);
     expect(snapshotSchemas.livebench.safeParse(withTimestamp(snapshot)).success).toBe(true);
@@ -432,13 +340,33 @@ describe('LiveBench adapter', () => {
     expect(unmatched[0]?.candidates).toContain('gpt-6.1-sol');
   });
 
+  it('stops when the categories or their weights change', () => {
+    const { _overall_weights: weights, Browser: _browser, ...rest } = categories;
+    expect(() =>
+      livebenchAdapter.transform({ ...raw, categories: { ...categories, Math: ['math'] } }, []),
+    ).toThrow(/new: Math/);
+    expect(() =>
+      livebenchAdapter.transform(
+        { ...raw, categories: { ...categories, _overall_weights: { ...weights, Design: 2 } } },
+        [],
+      ),
+    ).toThrow(/Design weighs 2, not 1.5/);
+    expect(() =>
+      livebenchAdapter.transform(
+        { ...raw, categories: { ...rest, _overall_weights: weights } },
+        [],
+      ),
+    ).toThrow(/gone: Browser/);
+    expect(categoryChanges({ A: 1, B: 2 }, { A: 1, B: 2 })).toEqual([]);
+  });
+
   it('refuses data it cannot read', () => {
     expect(() => livebenchAdapter.transform({ ...raw, table: 'name,coding\nx,1' }, [])).toThrow(
       /model/,
     );
-    expect(() =>
-      livebenchAdapter.transform({ ...raw, categories: { Other: ['other'] } }, []),
-    ).toThrow(/category/);
+    expect(() => livebenchAdapter.transform({ ...raw, table: 'model,coding\nx,1' }, [])).toThrow(
+      /No kept category/,
+    );
     expect(() => livebenchAdapter.transform({ ...raw, release: 'latest' }, [])).toThrow();
     expect(() => livebenchAdapter.transform(table, [])).toThrow();
   });

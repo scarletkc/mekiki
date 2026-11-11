@@ -1,5 +1,5 @@
 ---
-import { fmt, useTranslations, type Locale } from '../i18n';
+import { fmt, LOCALE_INFO, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import { formatCount, formatDateTime, formatPercent } from '../lib/format';
 import {
@@ -7,7 +7,8 @@ import {
   INTELLIGENCE_TIERS,
   METRIC_KEYS,
   VALUE_TIERS,
-  metricGroup,
+  livebenchCategories,
+  livebenchKeptShare,
   scoringConfig,
 } from '../lib/scoring.config';
 import { cacheHitPercent } from '../lib/scoring';
@@ -33,7 +34,6 @@ const metrics = METRIC_KEYS.map((key) => {
   const { source, floor } = intelligence.metrics[key];
   return {
     label: t.metric[key],
-    group: t.group[metricGroup(key)],
     source: SOURCE_INFO[source].name,
     weight: formatPercent(shares[key]?.weight ?? 0),
     floor:
@@ -41,6 +41,13 @@ const metrics = METRIC_KEYS.map((key) => {
         ? fmt(m.floorAbsolute, { value: floor.value })
         : fmt(m.floorBelowFrontier, { gap: floor.gap }),
   };
+});
+// LiveBench's own category names, as the site lists them.
+const list = new Intl.ListFormat(LOCALE_INFO[locale].tag, { type: 'conjunction' });
+const livebenchNote = fmt(m.livebenchBody, {
+  kept: list.format(Object.keys(livebenchCategories.kept)),
+  dropped: list.format(Object.keys(livebenchCategories.dropped)),
+  share: formatPercent(livebenchKeptShare),
 });
 
 const tierRows = [
@@ -85,7 +92,6 @@ const sourceUse = {
   modelsdev: m.useModelsdev,
   aa: m.useAa,
   arena: m.useArena,
-  terminal_bench: m.useTerminalBench,
   livebench: m.useLivebench,
 };
 // What to say where a source names no licence for its data.
@@ -93,7 +99,6 @@ const unlicensed = {
   modelsdev: m.licenseNone,
   aa: m.licenseAa,
   arena: m.licenseNone,
-  terminal_bench: m.licenseNone,
   livebench: m.licenseNone,
 };
 const sources = SOURCE_IDS.map((id) => ({
@@ -118,7 +123,6 @@ const sources = SOURCE_IDS.map((id) => ({
         <thead>
           <tr>
             <th scope="col">{t.detail.metricCol}</th>
-            <th scope="col">{m.group}</th>
             <th scope="col">{m.source}</th>
             <th scope="col">{m.floor}</th>
             <th scope="col" class="num">{t.detail.weight}</th>
@@ -129,7 +133,6 @@ const sources = SOURCE_IDS.map((id) => ({
             metrics.map((metric) => (
               <tr>
                 <th scope="row">{metric.label}</th>
-                <td>{metric.group}</td>
                 <td>{metric.source}</td>
                 <td>{metric.floor}</td>
                 <td class="num">{metric.weight}</td>
@@ -139,6 +142,7 @@ const sources = SOURCE_IDS.map((id) => ({
         </tbody>
       </table>
     </div>
+    <p>{livebenchNote}</p>
 
     <h2 id="cost">{m.costTitle}</h2>
     <p>
@@ -238,7 +242,6 @@ const sources = SOURCE_IDS.map((id) => ({
       <li>{m.caveatAaCoding}</li>
       <li>{m.caveatVariants}</li>
       <li>{m.caveatRunCost}</li>
-      <li>{m.caveatAgents}</li>
     </ul>
   </article>
 </Base>

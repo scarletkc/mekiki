@@ -115,73 +115,31 @@ export function computeBenchmark(
   config: ScoringConfig = scoringConfig,
 ): { score: number | null; breakdown: Record<string, MetricBreakdown> } {
   const breakdown: Record<string, MetricBreakdown> = {};
-
-  // A metric without a group is a group of its own, weighted by its own
-  // weight, which makes an ungrouped config a plain weighted mean.
-  interface Group {
-    weight: number;
-    /** Sum of the weights of every metric in the group, scored or not. */
-    configured: number;
-    /** Sum over the metrics the model has a score for. */
-    scored: number;
-    weighted: number;
-  }
-  const groups = new Map<string, Group>();
   const entries = Object.entries(config.intelligence.metrics);
-  const groupKey = (key: string, group: string | undefined) => group ?? `metric:${key}`;
+  let configured = 0;
+  for (const [, { weight }] of entries) configured += Math.max(weight, 0);
 
-  for (const [key, { weight, floor, group }] of entries) {
-    const id = groupKey(key, group);
-    const state = groups.get(id) ?? {
-      weight: group === undefined ? weight : (config.intelligence.groups?.[group]?.weight ?? 1),
-      configured: 0,
-      scored: 0,
-      weighted: 0,
-    };
-    groups.set(id, state);
-    // Inside a group of one the metric's weight is the group's, not a share of it.
-    const inner = group === undefined ? 1 : weight;
-    state.configured += Math.max(inner, 0);
-
+  let weighted = 0;
+  let totalWeight = 0;
+  for (const [key, { weight, floor }] of entries) {
     const raw = metrics[key];
     const top = frontier[key];
     let normalized: number | null = null;
     if (isNumber(raw) && isNumber(top)) {
       normalized = normalizeMetric(raw, top, floor);
     }
-    if (normalized !== null && inner > 0) {
-      state.weighted += inner * normalized;
-      state.scored += inner;
+    if (normalized !== null && weight > 0) {
+      weighted += weight * normalized;
+      totalWeight += weight;
     }
+    // Reported as a share of the score, so the weights add up to 1.
+    const share = configured > 0 ? Math.max(weight, 0) / configured : 0;
     breakdown[key] = {
       raw: isNumber(raw) ? raw : null,
       normalized,
-      weight: Math.max(inner, 0),
+      weight: Math.round(share * 1e4) / 1e4,
       frontier: isNumber(top) ? top : null,
     };
-  }
-
-  // Each metric's share of the benchmark score when every metric has a score.
-  let allGroups = 0;
-  for (const group of groups.values()) allGroups += Math.max(group.weight, 0);
-  for (const [key, { group }] of entries) {
-    const state = groups.get(groupKey(key, group))!;
-    const item = breakdown[key]!;
-    const share =
-      allGroups > 0 && state.configured > 0
-        ? (Math.max(state.weight, 0) / allGroups) * (item.weight / state.configured)
-        : 0;
-    item.weight = Math.round(share * 1e4) / 1e4;
-  }
-
-  // Average inside each group, then across the groups that have a score.
-  let weighted = 0;
-  let totalWeight = 0;
-  for (const group of groups.values()) {
-    if (group.scored > 0 && group.weight > 0) {
-      weighted += group.weight * (group.weighted / group.scored);
-      totalWeight += group.weight;
-    }
   }
 
   return { score: totalWeight > 0 ? weighted / totalWeight : null, breakdown };

@@ -48,8 +48,6 @@ export const modelSchema = z.object({
         arena_text: optionalString,
         /** Exact model name on the Arena WebDev leaderboard. */
         arena_webdev: optionalString,
-        /** Row on the Terminal-Bench leaderboard: "<agent> / <model> / <effort>". */
-        terminal_bench: optionalString,
         /** Model ID on LiveBench. */
         livebench: optionalString,
       }),
