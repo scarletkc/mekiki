@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 import {
   ChartFigure,
+  ChartCaption,
   ChartFooter,
   ChartTooltip,
   ExportButton,
@@ -194,7 +195,7 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
     <ChartFigure>
       <figcaption className="mb-2 flex items-start justify-between gap-3">
         <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <span className="text-sm font-medium">{chart.quadrantCaption}</span>
+          <ChartCaption text={chart.quadrantCaption} link={strings.method} section="tiers" />
           <span className="text-muted-foreground text-xs">{strings.rating.intelligence} ↑</span>
         </span>
         <ExportButton
@@ -371,12 +372,6 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
       </div>
       <p className="text-muted-foreground mt-1 text-center text-xs">{chart.priceAxis}</p>
       <ChartFooter>
-        <p>
-          {fmt(chart.dividers, {
-            score: SPLIT_SCORE,
-            price: formatPrice(SPLIT_PRICE),
-          })}
-        </p>
         {layout && layout.unlabelled.length > 0 && (
           <p data-unlabelled>
             {unlabelledBefore}

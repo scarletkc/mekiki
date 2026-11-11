@@ -246,96 +246,91 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
           {s.compare.empty}
         </p>
       ) : (
-        <>
-          <div className="bg-card relative overflow-x-auto rounded-xl border">
-            <table className="w-full border-collapse text-sm">
-              <caption className="sr-only">{s.compare.title}</caption>
-              <thead>
-                <tr className="border-b">
-                  <td className="bg-muted sticky left-0 z-10 w-40 min-w-32" />
-                  {selected.map((model) => (
-                    <th
-                      key={model.id}
-                      scope="col"
-                      className="bg-muted min-w-44 px-3 py-2.5 text-start align-top font-normal"
-                    >
-                      <span className="flex items-start justify-between gap-2">
-                        <span className="min-w-0">
-                          <a
-                            href={model.href}
-                            className="font-medium underline decoration-transparent underline-offset-4 hover:decoration-current"
-                          >
-                            {model.name}
-                          </a>
-                          <span className="text-muted-foreground block text-xs">
-                            {model.vendor}
-                            {model.legacy && ` · ${s.badge.legacy}`}
-                          </span>
+        <div className="bg-card relative overflow-x-auto rounded-xl border">
+          <table className="w-full border-collapse text-sm">
+            <caption className="sr-only">{s.compare.title}</caption>
+            <thead>
+              <tr className="border-b">
+                <td className="bg-muted sticky left-0 z-10 w-40 min-w-32" />
+                {selected.map((model) => (
+                  <th
+                    key={model.id}
+                    scope="col"
+                    className="bg-muted min-w-44 px-3 py-2.5 text-start align-top font-normal"
+                  >
+                    <span className="flex items-start justify-between gap-2">
+                      <span className="min-w-0">
+                        <a
+                          href={model.href}
+                          className="font-medium underline decoration-transparent underline-offset-4 hover:decoration-current"
+                        >
+                          {model.name}
+                        </a>
+                        <span className="text-muted-foreground block text-xs">
+                          {model.vendor}
+                          {model.legacy && ` · ${s.badge.legacy}`}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => update(ids.filter((id) => id !== model.id))}
-                          aria-label={fmt(s.compare.remove, { name: model.name })}
-                          title={fmt(s.compare.remove, { name: model.name })}
-                          className="text-muted-foreground hover:text-foreground hover:bg-accent -mt-1 -mr-2 grid size-8 shrink-0 place-items-center rounded-md transition-colors sm:-mt-0.5 sm:-mr-1.5 sm:size-6"
-                        >
-                          <X className="size-3.5" aria-hidden="true" />
-                        </button>
                       </span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              {groups.map((group) => (
-                <tbody key={group.label}>
-                  <tr>
-                    <th
-                      scope="rowgroup"
-                      colSpan={selected.length + 1}
-                      className="text-muted-foreground px-3 pt-4 pb-1 text-start text-xs font-medium sm:pl-3"
-                    >
-                      <span className="sticky left-3">{group.label}</span>
-                    </th>
-                  </tr>
-                  {group.rows.map((row) => {
-                    const best = bestIds(selected, row);
-                    return (
-                      <tr
-                        key={row.label}
-                        className="hover:bg-muted/50 group border-b last:border-b-0"
+                      <button
+                        type="button"
+                        onClick={() => update(ids.filter((id) => id !== model.id))}
+                        aria-label={fmt(s.compare.remove, { name: model.name })}
+                        title={fmt(s.compare.remove, { name: model.name })}
+                        className="text-muted-foreground hover:text-foreground hover:bg-accent -mt-1 -mr-2 grid size-8 shrink-0 place-items-center rounded-md transition-colors sm:-mt-0.5 sm:-mr-1.5 sm:size-6"
                       >
-                        <th
-                          scope="row"
-                          className="bg-card sticky left-0 z-10 px-3 py-2 text-start align-middle font-normal transition-colors group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))]"
+                        <X className="size-3.5" aria-hidden="true" />
+                      </button>
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            {groups.map((group) => (
+              <tbody key={group.label}>
+                <tr>
+                  <th
+                    scope="rowgroup"
+                    colSpan={selected.length + 1}
+                    className="text-muted-foreground px-3 pt-4 pb-1 text-start text-xs font-medium sm:pl-3"
+                  >
+                    <span className="sticky left-3">{group.label}</span>
+                  </th>
+                </tr>
+                {group.rows.map((row) => {
+                  const best = bestIds(selected, row);
+                  return (
+                    <tr
+                      key={row.label}
+                      className="hover:bg-muted/50 group border-b last:border-b-0"
+                    >
+                      <th
+                        scope="row"
+                        className="bg-card sticky left-0 z-10 px-3 py-2 text-start align-middle font-normal transition-colors group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))]"
+                      >
+                        {row.label}
+                      </th>
+                      {selected.map((model) => (
+                        <td
+                          key={model.id}
+                          className={cn(
+                            'num px-3 py-2 align-middle',
+                            best.has(model.id) &&
+                              'font-semibold [&_.num]:text-foreground [&_.num]:font-semibold',
+                          )}
                         >
-                          {row.label}
-                        </th>
-                        {selected.map((model) => (
-                          <td
-                            key={model.id}
-                            className={cn(
-                              'num px-3 py-2 align-middle',
-                              best.has(model.id) &&
-                                'font-semibold [&_.num]:text-foreground [&_.num]:font-semibold',
-                            )}
-                          >
-                            {row.cell(model)}
-                            {best.has(model.id) && (
-                              <span className="sr-only"> ({s.compare.best})</span>
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              ))}
-            </table>
-          </div>
-          {selected.length > 1 && (
-            <p className="text-muted-foreground mt-3 text-xs">{s.compare.bestNote}</p>
-          )}
-        </>
+                          {row.cell(model)}
+                          {best.has(model.id) && (
+                            <span className="sr-only"> ({s.compare.best})</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            ))}
+          </table>
+        </div>
       )}
     </div>
   );

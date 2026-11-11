@@ -8,7 +8,6 @@ import { formatDateTime, formatPercent, formatPrice, formatScore } from './forma
 import { utcDate, type HistoryEntry } from './history';
 import { methodContent } from './method';
 import { modelDetail } from './model-detail';
-import { changelogConfig } from './scoring.config';
 import { usageBadge, usageCitation, usageDetail, usagePeriod, type UsagePeriod } from './usage';
 
 export const LLMS_PATH = '/llms.txt';
@@ -132,7 +131,7 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
     '# mekiki',
     `> ${t.meta.description}`,
     `## ${t.home.title}`,
-    t.home.intro,
+    link(t.usage.about, markdownUrl(locale, '/method')),
     table(
       [
         columns.model,
@@ -162,7 +161,7 @@ export function modelMarkdown(
   const d = t.detail;
   const { intelligence, value } = model.rating;
   const detail = modelDetail(model, t);
-  const about = link(d.about, markdownUrl(locale, '/method'));
+  const about = link(t.usage.about, markdownUrl(locale, '/method'));
   const rating = ratingText(model, t);
   const none = t.empty.noData;
   const period = usagePeriod(dataset);
@@ -186,7 +185,7 @@ export function modelMarkdown(
     [
       `- ${t.rating.intelligence}: ${rating.intelligence}`,
       `- ${t.rating.cost}: ${rating.cost}${detail.costNote ? ` (${detail.costNote})` : ''}`,
-      `- ${t.rating.value}: ${rating.value} (${detail.valueNote})`,
+      `- ${t.rating.value}: ${rating.value}`,
     ].join('\n'),
     `## ${d.breakdown}`,
     table(
@@ -222,7 +221,7 @@ export function modelMarkdown(
             .map((point) => [point.date, score(point.intelligence), score(point.value)]),
           [1, 2],
         ),
-    series.length >= 2 && d.historyNote,
+    about,
     `### ${d.changes}`,
     changes.length === 0
       ? fmt(d.noChanges, { date: history.changelog.start ?? historyStart })
@@ -271,6 +270,9 @@ export function methodMarkdown(dataset: Dataset, locale: Locale): string {
           `- ${row.rating}: ${row.tiers.map((tier) => `\`${tier.key}\` ${tier.label} ${tier.rule}`).join('; ')}`,
       )
       .join('\n'),
+    content.tiersCharts,
+    `## ${m.changesTitle}`,
+    content.changesBody,
     `## ${m.usageTitle}`,
     content.usage.body,
     content.usage.citation,
@@ -330,7 +332,8 @@ export function changelogMarkdown(changelog: Changelog, dataset: Dataset, locale
   const linkable = new Set(dataset.models.map((model) => model.id));
   return compose([
     `# ${c.title}`,
-    fmt(c.intro, { delta: changelogConfig.scoreDelta }),
+    c.intro,
+    link(t.usage.about, markdownUrl(locale, '/method')),
     link(c.feed, absoluteUrl(feedPath(locale))),
     changelog.start === null && c.empty,
     changelog.start !== null && changelog.days.length === 0 && c.none,

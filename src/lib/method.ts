@@ -1,6 +1,6 @@
 import { fmt, LOCALE_INFO, useTranslations, type Locale } from '../i18n';
 import type { Dataset } from './dataset';
-import { formatCount, formatPercent } from './format';
+import { formatCount, formatPercent, formatPrice } from './format';
 import { cacheHitPercent, computeBenchmark } from './scoring';
 import {
   COST_TIERS,
@@ -8,6 +8,7 @@ import {
   METRIC_KEYS,
   VALUE_TIERS,
   livebenchCategories,
+  changelogConfig,
   livebenchKeptShare,
   scoringConfig,
 } from './scoring.config';
@@ -96,6 +97,11 @@ export function methodContent(dataset: Dataset, locale: Locale) {
     typicalTokenUse === null
       ? m.valueRunCostBody
       : `${m.valueRunCostBody} ${fmt(m.valueRunCostNow, { typical: formatCount(typicalTokenUse) })}`;
+  const tiersCharts = fmt(m.tiersCharts, {
+    score: intelligence.tiers.high,
+    price: formatPrice(cost.tiers.mid),
+  });
+  const changesBody = fmt(m.changesBody, { delta: changelogConfig.scoreDelta });
   const valueBody = fmt(m.valueBody, {
     a: value.intelligenceExponent,
     b: value.affordabilityExponent,
@@ -137,6 +143,8 @@ export function methodContent(dataset: Dataset, locale: Locale) {
     costIndexBody,
     valueRunCostBody,
     valueBody,
+    tiersCharts,
+    changesBody,
     usage,
     sources,
   };

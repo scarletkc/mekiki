@@ -59,12 +59,6 @@ export function modelDetail(model: ModelRecord, t: Dictionary) {
   ].filter((link) => link !== null);
 
   const costNote = cost.blended === null || cost.free ? null : t.detail.blendedUnit;
-  const valueNote =
-    value.effective_price === null
-      ? t.empty.noPrice
-      : value.cost_basis === 'run_cost'
-        ? fmt(t.detail.valueFromRunCost, { price: formatPrice(value.effective_price) })
-        : t.detail.valueFromListPrice;
 
   const listed = (price: number | null) =>
     price === null ? null : cost.free ? t.empty.free : formatPrice(price);
@@ -87,6 +81,7 @@ export function modelDetail(model: ModelRecord, t: Dictionary) {
     fact('input', t.detail.input, listed(cost.input), t.empty.noPrice),
     fact('output', t.detail.output, listed(cost.output), t.empty.noPrice),
     fact('cache_read', t.detail.cacheRead, price(cost.cache_read)),
+    fact('effective_price', t.detail.effectivePrice, price(value.effective_price), t.empty.noPrice),
   ];
   const facts: ModelFact[] = [
     fact(
@@ -116,5 +111,5 @@ export function modelDetail(model: ModelRecord, t: Dictionary) {
     { key: 'facts', title: t.detail.facts, method: null, facts, notes: [] },
   ];
 
-  return { metrics, links, costNote, valueNote, groups };
+  return { metrics, links, costNote, groups };
 }
