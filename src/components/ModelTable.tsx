@@ -532,8 +532,15 @@ export function ModelTable({
                   {model.name}
                 </a>
                 <ModelBadges model={model} badge={badge} className="lg:flex-nowrap" />
-                {display.usage && model.usage && (
-                  <span className="text-muted-foreground num text-xs" title={model.usage.title}>
+                {model.usage && (
+                  <span
+                    className={cn(
+                      'text-muted-foreground num text-xs',
+                      !display.usage && 'invisible',
+                    )}
+                    title={display.usage ? model.usage.title : undefined}
+                    aria-hidden={!display.usage}
+                  >
                     #{model.usage.rank}
                   </span>
                 )}
