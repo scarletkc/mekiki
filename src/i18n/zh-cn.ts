@@ -100,6 +100,9 @@ export const zhCN: Dictionary = {
       '每天记录的数值；在下一次有变化的记录之前保持不变。指向一条线，或在下方选一个模型来查看。',
     trendEmpty: '记录满两天后显示折线图。',
     follow: '查看 {name}',
+    export: '导出图片',
+    exported: '图片已保存',
+    exportFailed: '图片导出失败',
   },
   detail: {
     back: '全部模型',

@@ -6,7 +6,9 @@ import { scoringConfig } from '@/lib/scoring.config';
 import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 import {
+  ChartFooter,
   ChartTooltip,
+  ExportButton,
   RatingTooltipBody,
   ratingSummary,
   textWidth,
@@ -110,9 +112,12 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
 
   return (
     <figure className="bg-card rounded-xl border px-3 pt-3 pb-3 sm:px-4">
-      <figcaption className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="text-sm font-medium">{chart.quadrantCaption}</span>
-        <span className="text-muted-foreground text-xs">{strings.rating.intelligence} ↑</span>
+      <figcaption className="mb-2 flex items-start justify-between gap-3">
+        <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <span className="text-sm font-medium">{chart.quadrantCaption}</span>
+          <span className="text-muted-foreground text-xs">{strings.rating.intelligence} ↑</span>
+        </span>
+        <ExportButton name={['quadrant']} strings={chart} />
       </figcaption>
       <div ref={ref} className="relative" style={{ height }}>
         {layout && width !== null && (
@@ -302,7 +307,7 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
         )}
       </div>
       <p className="text-muted-foreground mt-1 text-center text-xs">{chart.priceAxis}</p>
-      <div className="text-muted-foreground mt-3 space-y-1 border-t border-dashed pt-2.5 text-xs">
+      <ChartFooter>
         <p>
           {fmt(chart.dividers, {
             score: SPLIT_SCORE,
@@ -312,7 +317,7 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
         {skipped.length > 0 && (
           <p>{fmt(chart.notPlotted, { names: skipped.map((model) => model.name).join(', ') })}</p>
         )}
-      </div>
+      </ChartFooter>
     </figure>
   );
 }

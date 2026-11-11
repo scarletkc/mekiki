@@ -25,13 +25,14 @@ import {
   useTranslations,
   type Locale,
 } from '../i18n';
-import { latestSync, SITE_URL } from '../lib/dataset';
+import { latestSync, REPO_URL, SITE_URL } from '../lib/dataset';
 import { feedPath } from '../lib/feed';
 import { formatDateTime } from '../lib/format';
 import { pageJsonLd, serializeJsonLd } from '../lib/jsonld';
 import { OG_HEIGHT, OG_WIDTH, SITE_IMAGE_PATH } from '../lib/share';
 import { getDataset } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
+import { LLMS_PATH, markdownPath } from '../lib/markdown';
 
 interface Props {
   locale: Locale;
@@ -48,6 +49,7 @@ const { locale, path, title, description, image = SITE_IMAGE_PATH, imageAlt, noi
 const t = useTranslations(locale);
 const dataset = await getDataset();
 const synced = latestSync(dataset);
+const markdown = noindex ? null : markdownPath(locale, path);
 
 const pageTitle = title ? `${title} | mekiki` : `mekiki | ${t.meta.tagline}`;
 const pageDescription = description ?? t.meta.description;
@@ -115,7 +117,6 @@ const headerButton = {
   }),
 };
 
-const REPO_URL = 'https://github.com/scarletkc/mekiki';
 const FEEDBACK_URL = `${REPO_URL}/issues/new/choose`;
 const SPONSOR_URL = 'https://github.com/sponsors/scarletkc';
 const footerLink =
@@ -166,6 +167,8 @@ const attribution = [
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="alternate" type="application/json" href="/api.json" title="mekiki API" />
     <link rel="alternate" type="application/rss+xml" href={feedPath(locale)} title={t.changelog.feedTitle} />
+    {markdown && <link rel="alternate" type="text/markdown" href={markdown} />}
+    <link rel="describedby" type="text/plain" href={LLMS_PATH} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDescription} />
     <meta property="og:type" content="website" />

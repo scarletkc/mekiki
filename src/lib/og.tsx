@@ -7,9 +7,7 @@ import { en as t } from '../i18n/en';
 import type { ModelRecord } from './dataset';
 import { formatPrice, formatScore } from './format';
 import { BRAND, LOGO_EYE, LOGO_RADIUS, LOGO_VIEWBOX } from './logo';
-import { OG_HEIGHT, OG_WIDTH } from './share';
-
-const HOST = 'mekiki.fog.moe';
+import { OG_HEIGHT, OG_WIDTH, SITE_HOST as HOST } from './share';
 
 const LEVEL: Record<string, number> = {
   top: 5,
