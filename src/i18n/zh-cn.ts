@@ -93,6 +93,8 @@ export const zhCN: Dictionary = {
     },
     dividers: '分隔线标出“高”智能（{score}）和“高”成本（混合价 {price}）的起点。',
     notPlotted: '未画出（暂无价格或未评级）：{names}',
+    unlabelled: '图中未标注：{names}',
+    nameSeparator: '、',
     barCaption: '各模型的{metric}',
     tierLines: '细线标出每一档的起点。',
     trendCaption: '{metric}变化',

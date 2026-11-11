@@ -15,6 +15,7 @@ import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 import {
+  ChartFigure,
   ChartFooter,
   ChartTooltip,
   ExportButton,
@@ -44,16 +45,18 @@ export function TrendChart({
   metric,
   data,
   strings,
+  initialPinned = null,
 }: {
   models: ModelRow[];
   metric: ChartMetric;
   data: TrendData;
   strings: ChartStrings;
+  initialPinned?: string | null;
 }) {
   const { chart } = strings;
   const label = metricLabel(metric, strings);
   const [ref, width] = useWidth<HTMLDivElement>();
-  const [pinned, setPinned] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<string | null>(initialPinned);
   const [hovered, setHovered] = useState<string | null>(null);
   const [cursor, setCursor] = useState<number | null>(null);
 
@@ -186,10 +189,22 @@ export function TrendChart({
   const tickText = (tick: number) => (metric === 'cost' ? formatPrice(tick) : String(tick));
 
   return (
-    <figure className="bg-card rounded-xl border px-3 pt-3 pb-3 sm:px-4">
+    <ChartFigure>
       <figcaption className="mb-2 flex items-start justify-between gap-3">
         <span className="text-sm font-medium">{fmt(chart.trendCaption, { metric: label })}</span>
-        <ExportButton name={['trend', metric]} strings={chart} />
+        <ExportButton
+          name={['trend', metric]}
+          strings={chart}
+          render={() => (
+            <TrendChart
+              models={models}
+              metric={metric}
+              data={data}
+              strings={strings}
+              initialPinned={pinned}
+            />
+          )}
+        />
       </figcaption>
       <div
         ref={ref}
@@ -394,6 +409,6 @@ export function TrendChart({
       <ChartFooter>
         <p>{chart.trendNote}</p>
       </ChartFooter>
-    </figure>
+    </ChartFigure>
   );
 }

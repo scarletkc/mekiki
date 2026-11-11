@@ -3,12 +3,12 @@ import {
   clearOf,
   linearTicks,
   logDomain,
+  evenLogTicks,
   logTicks,
   placeLabels,
   pointAt,
   scoreDomain,
   stepPath,
-  thinLogTicks,
   trendSeries,
   zeroBasedAxis,
   type TrendPoint,
@@ -25,24 +25,32 @@ describe('logTicks', () => {
     expect(logTicks(0, 5)).toEqual([]);
     expect(logTicks(5, 1)).toEqual([]);
   });
+
+  it('takes other steps', () => {
+    expect(logTicks(0.03, 10, [1, 3])).toEqual([0.03, 0.1, 0.3, 1, 3, 10]);
+  });
 });
 
-describe('thinLogTicks', () => {
-  const ticks = [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
-  const at = (spacing: number) => (_tick: number, index: number) =>
-    [index * spacing - 12, index * spacing + 12] as [number, number];
+describe('evenLogTicks', () => {
+  const at = (scale: number) => (tick: number) => {
+    const px = Math.log10(tick / 0.03) * scale;
+    return [px - 12, px + 12] as [number, number];
+  };
 
-  it('keeps every tick when the labels have room', () => {
-    expect(thinLogTicks(ticks, at(40))).toEqual(ticks);
+  it('uses the evenly spaced 1-3 steps when their labels have room', () => {
+    expect(evenLogTicks(0.03, 10, at(80))).toEqual([0.03, 0.1, 0.3, 1, 3, 10]);
   });
 
-  it('keeps the powers of ten when neighbouring labels collide', () => {
-    expect(thinLogTicks(ticks, at(20))).toEqual([0.1, 1, 10]);
+  it('falls back to powers of ten when the 1-3 labels collide', () => {
+    expect(evenLogTicks(0.03, 10, at(40))).toEqual([0.1, 1, 10]);
   });
 
-  it('prefers a 5 to a 2 when only one of them fits', () => {
-    const spans: Record<number, [number, number]> = { 1: [0, 24], 2: [40, 64], 5: [60, 84] };
-    expect(thinLogTicks([1, 2, 5], (tick) => spans[tick])).toEqual([1, 5]);
+  it('checks spacing along the axis in either direction', () => {
+    const down = (tick: number) => {
+      const px = 300 - Math.log10(tick / 0.03) * 80;
+      return [px - 7, px + 7] as [number, number];
+    };
+    expect(evenLogTicks(0.03, 10, down)).toEqual([0.03, 0.1, 0.3, 1, 3, 10]);
   });
 });
 
@@ -60,6 +68,9 @@ describe('logDomain', () => {
   it('ignores zero and missing values', () => {
     expect(logDomain([0, Number.NaN, 1.47])).toEqual([1, 2]);
     expect(logDomain([])).toEqual([0.1, 10]);
+  });
+  it('snaps to other steps', () => {
+    expect(logDomain([0.06, 5.74], [1, 3])).toEqual([0.03, 10]);
   });
 });
 
@@ -114,6 +125,19 @@ describe('placeLabels', () => {
       }
     }
     expect(placed.size).toBeGreaterThan(1);
+  });
+
+  it('never puts a label nearer another mark than its own', () => {
+    const placed = placeLabels([label('a', 380, 100), label('b', 300, 104)], 400, 300);
+    const a = placed.get('a')!;
+    expect(a.anchor).toBe('end');
+    expect(a.y).not.toBe(100);
+    const distance = (x: number, y: number) =>
+      Math.hypot(
+        Math.max(a.box.left - x, 0, x - a.box.right),
+        Math.max(a.box.top - y, 0, y - a.box.bottom),
+      );
+    expect(distance(300, 104)).toBeGreaterThan(distance(380, 100));
   });
 
   it('keeps clear of obstacles', () => {

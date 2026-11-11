@@ -1,13 +1,21 @@
-import { useMemo, useRef, useState } from 'react';
+import {
+  type FocusEvent,
+  Fragment,
+  type MouseEvent,
+  type PointerEvent,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { fmt } from '@/i18n/fmt';
 import {
   clearOf,
+  EVEN_LOG_STEPS,
+  evenLogTicks,
   linearTicks,
   logDomain,
-  logTicks,
   placeLabels,
   scoreDomain,
-  thinLogTicks,
   type Box,
 } from '@/lib/charts';
 import { formatPrice } from '@/lib/format';
@@ -15,6 +23,7 @@ import { scoringConfig } from '@/lib/scoring.config';
 import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 import {
+  ChartFigure,
   ChartFooter,
   ChartTooltip,
   ExportButton,
@@ -47,14 +56,14 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
     return [models.filter(onAxis), models.filter((model) => !onAxis(model))];
   }, [models]);
 
-  const height = PAD.top + PAD.bottom + (width !== null && width < 560 ? 310 : 390);
+  const height = PAD.top + PAD.bottom + (width !== null && width < 560 ? 380 : 390);
   const layout = useMemo(() => {
     if (width === null) return null;
     const plotWidth = width - PAD.left - PAD.right;
     const plotHeight = height - PAD.top - PAD.bottom;
     const prices = plotted.map((model) => model.cost.blended!);
     const scores = plotted.map((model) => model.intelligence.score!);
-    const [xLo, xHi] = logDomain([...prices, SPLIT_PRICE]);
+    const [xLo, xHi] = logDomain([...prices, SPLIT_PRICE], EVEN_LOG_STEPS);
     const [yLo, yHi] = scoreDomain([...scores, SPLIT_SCORE]);
     const x = (price: number) =>
       PAD.left + ((Math.log(price) - Math.log(xLo)) / (Math.log(xHi) - Math.log(xLo))) * plotWidth;
@@ -83,13 +92,17 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
     const corner = (text: string, side: 'left' | 'right', edge: 'top' | 'bottom') => {
       const w = textWidth(text, LABEL_SIZE);
       const left = side === 'left' ? PAD.left + 6 : PAD.left + plotWidth - 6 - w;
-      const rows = [0, 1, 2, 3].map((row) => {
+      const split = y(SPLIT_SCORE);
+      const rows: Box[] = [];
+      for (let row = 0; ; row += 1) {
         const top =
           edge === 'top'
             ? PAD.top + 4 + row * LABEL_HEIGHT
             : PAD.top + plotHeight - 4 - (row + 1) * LABEL_HEIGHT;
-        return { left, top, right: left + w, bottom: top + LABEL_HEIGHT };
-      });
+        const inside = edge === 'top' ? top + LABEL_HEIGHT <= split - 2 : top >= split + 2;
+        if (row > 0 && !inside) break;
+        rows.push({ left, top, right: left + w, bottom: top + LABEL_HEIGHT });
+      }
       return { text, side, box: clearOf(rows, marks) };
     };
     const corners = [
@@ -119,32 +132,30 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
       ],
     );
 
-    const xTicks = logTicks(xLo, xHi);
-    const anchorOf = (index: number): 'start' | 'middle' | 'end' =>
-      index === 0 ? 'start' : index === xTicks.length - 1 ? 'end' : 'middle';
-    const shown = new Set(
-      thinLogTicks(xTicks, (tick, index) => {
-        const w = textWidth(formatPrice(tick), 11);
-        const at = x(tick);
-        const anchor = anchorOf(index);
-        return anchor === 'start'
-          ? [at, at + w]
-          : anchor === 'end'
-            ? [at - w, at]
-            : [at - w / 2, at + w / 2];
-      }),
-    );
-    const xLabels = xTicks
-      .map((tick, index) => ({ tick, anchor: anchorOf(index) }))
-      .filter((item) => shown.has(item.tick));
+    const anchorOf = (tick: number): 'start' | 'middle' | 'end' =>
+      tick <= xLo * (1 + 1e-9) ? 'start' : tick >= xHi * (1 - 1e-9) ? 'end' : 'middle';
+    const xTicks = evenLogTicks(xLo, xHi, (tick) => {
+      const w = textWidth(formatPrice(tick), 11);
+      const at = x(tick);
+      const anchor = anchorOf(tick);
+      return anchor === 'start'
+        ? [at, at + w]
+        : anchor === 'end'
+          ? [at - w, at]
+          : [at - w / 2, at + w / 2];
+    });
+    const xLabels = xTicks.map((tick) => ({ tick, anchor: anchorOf(tick) }));
+    const xLines = [...new Set([xLo, ...xTicks, xHi])];
+    const unlabelled = byScore.map((point) => point.model).filter((model) => !labels.has(model.id));
 
     return {
       plotWidth,
       plotHeight,
       x,
       y,
-      xTicks,
+      xLines,
       xLabels,
+      unlabelled,
       yTicks: linearTicks(yLo, yHi, 10),
       points,
       corners,
@@ -153,15 +164,44 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
   }, [width, height, plotted, chart.areas]);
 
   const activePoint = layout?.points.find((point) => point.model.id === active);
+  const [unlabelledBefore, unlabelledAfter] = chart.unlabelled.split('{names}');
+
+  const pointer = (id: string) => ({
+    onPointerDown: (event: PointerEvent<Element>) => {
+      lastPointer.current = event.pointerType;
+    },
+    onPointerEnter: (event: PointerEvent<Element>) => {
+      if (event.pointerType !== 'touch') setActive(id);
+    },
+    onPointerLeave: (event: PointerEvent<Element>) => {
+      if (event.pointerType !== 'touch') {
+        setActive((current) => (current === id ? null : current));
+      }
+    },
+    onFocus: (event: FocusEvent<Element>) => {
+      if (event.currentTarget.matches(':focus-visible')) setActive(id);
+    },
+    onBlur: () => setActive((current) => (current === id ? null : current)),
+    onClick: (event: MouseEvent<Element>) => {
+      if (lastPointer.current === 'touch' && active !== id) {
+        event.preventDefault();
+        setActive(id);
+      }
+    },
+  });
 
   return (
-    <figure className="bg-card rounded-xl border px-3 pt-3 pb-3 sm:px-4">
+    <ChartFigure>
       <figcaption className="mb-2 flex items-start justify-between gap-3">
         <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <span className="text-sm font-medium">{chart.quadrantCaption}</span>
           <span className="text-muted-foreground text-xs">{strings.rating.intelligence} ↑</span>
         </span>
-        <ExportButton name={['quadrant']} strings={chart} />
+        <ExportButton
+          name={['quadrant']}
+          strings={chart}
+          render={() => <QuadrantChart models={models} strings={strings} />}
+        />
       </figcaption>
       <div ref={ref} className="relative" style={{ height }}>
         {layout && width !== null && (
@@ -182,7 +222,7 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
                   y2={layout.y(tick)}
                 />
               ))}
-              {layout.xTicks.map((tick) => (
+              {layout.xLines.map((tick) => (
                 <line
                   key={`x${tick}`}
                   x1={layout.x(tick)}
@@ -307,29 +347,10 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
                   href={model.href}
                   aria-label={ratingSummary(model, strings)}
                   className="group/dot outline-none"
-                  onPointerDown={(event) => {
-                    lastPointer.current = event.pointerType;
-                  }}
-                  onPointerEnter={(event) => {
-                    if (event.pointerType !== 'touch') setActive(model.id);
-                  }}
-                  onPointerLeave={(event) => {
-                    if (event.pointerType !== 'touch') {
-                      setActive((current) => (current === model.id ? null : current));
-                    }
-                  }}
-                  onFocus={(event) => {
-                    if (event.currentTarget.matches(':focus-visible')) setActive(model.id);
-                  }}
-                  onBlur={() => setActive((current) => (current === model.id ? null : current))}
-                  onClick={(event) => {
-                    if (lastPointer.current === 'touch' && active !== model.id) {
-                      event.preventDefault();
-                      setActive(model.id);
-                    }
-                  }}
+                  {...pointer(model.id)}
                 >
                   <circle cx={x} cy={y} r={hit} fill="transparent" />
+                  {isActive && <circle cx={x} cy={y} r={DOT + 6} className="fill-quality/15" />}
                   <circle
                     cx={x}
                     cy={y}
@@ -356,10 +377,32 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
             price: formatPrice(SPLIT_PRICE),
           })}
         </p>
+        {layout && layout.unlabelled.length > 0 && (
+          <p data-unlabelled>
+            {unlabelledBefore}
+            {layout.unlabelled.map((model, index) => (
+              <Fragment key={model.id}>
+                {index > 0 && chart.nameSeparator}
+                <a
+                  href={model.href}
+                  className="text-foreground/80 hover:text-foreground decoration-muted-foreground/60 focus-visible:outline-ring rounded-sm underline decoration-dotted underline-offset-2 outline-offset-2 hover:decoration-solid focus-visible:outline-2"
+                  {...pointer(model.id)}
+                >
+                  {model.name}
+                </a>
+              </Fragment>
+            ))}
+            {unlabelledAfter}
+          </p>
+        )}
         {skipped.length > 0 && (
-          <p>{fmt(chart.notPlotted, { names: skipped.map((model) => model.name).join(', ') })}</p>
+          <p>
+            {fmt(chart.notPlotted, {
+              names: skipped.map((model) => model.name).join(chart.nameSeparator),
+            })}
+          </p>
         )}
       </ChartFooter>
-    </figure>
+    </ChartFigure>
   );
 }

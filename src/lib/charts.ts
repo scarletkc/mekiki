@@ -3,11 +3,13 @@ import type { HistoryEntry } from './history';
 export const CHART_METRICS = ['int', 'val', 'cost'] as const;
 export type ChartMetric = (typeof CHART_METRICS)[number];
 
-export function logTicks(lo: number, hi: number): number[] {
+export const EVEN_LOG_STEPS = [1, 3];
+
+export function logTicks(lo: number, hi: number, steps: number[] = [1, 2, 5]): number[] {
   if (!(lo > 0) || !(hi >= lo)) return [];
   const ticks: number[] = [];
   for (let exp = Math.floor(Math.log10(lo)); exp <= Math.ceil(Math.log10(hi)); exp += 1) {
-    for (const mantissa of [1, 2, 5]) {
+    for (const mantissa of steps) {
       const tick = Number((mantissa * 10 ** exp).toPrecision(12));
       if (tick >= lo * (1 - 1e-9) && tick <= hi * (1 + 1e-9)) ticks.push(tick);
     }
@@ -15,36 +17,28 @@ export function logTicks(lo: number, hi: number): number[] {
   return ticks;
 }
 
-export function thinLogTicks(
-  ticks: number[],
-  extent: (tick: number, index: number) => [number, number],
+export function evenLogTicks(
+  lo: number,
+  hi: number,
+  span: (tick: number) => [number, number],
   gap = 6,
 ): number[] {
-  const rank = (tick: number) => {
-    const mantissa = Number((tick / 10 ** Math.floor(Math.log10(tick) + 1e-9)).toPrecision(3));
-    return mantissa === 1 ? 0 : mantissa === 5 ? 1 : 2;
-  };
-  const kept: { index: number; left: number; right: number }[] = [];
-  const order = ticks
-    .map((tick, index) => ({ tick, index }))
-    .sort((a, b) => rank(a.tick) - rank(b.tick) || a.index - b.index);
-  for (const { tick, index } of order) {
-    const [left, right] = extent(tick, index);
-    if (kept.every((other) => left >= other.right + gap || right + gap <= other.left)) {
-      kept.push({ index, left, right });
-    }
+  for (const steps of [EVEN_LOG_STEPS, [1]]) {
+    const ticks = logTicks(lo, hi, steps);
+    const spans = ticks.map(span).sort((a, b) => a[0] - b[0]);
+    if (spans.every((current, i) => i === 0 || current[0] >= spans[i - 1][1] + gap)) return ticks;
   }
-  return kept.sort((a, b) => a.index - b.index).map((item) => ticks[item.index]);
+  return logTicks(lo, hi, [1]);
 }
 
-export function logDomain(values: number[]): [number, number] {
+export function logDomain(values: number[], steps: number[] = [1, 2, 5]): [number, number] {
   const positive = values.filter((value) => Number.isFinite(value) && value > 0);
   if (positive.length === 0) return [0.1, 10];
   const min = Math.min(...positive) / 1.15;
   const max = Math.max(...positive) * 1.15;
-  const steps = logTicks(min / 10, max * 10);
-  const lo = steps.filter((step) => step <= min).at(-1) ?? min;
-  const hi = steps.find((step) => step >= max) ?? max;
+  const candidates = logTicks(min / 10, max * 10, steps);
+  const lo = candidates.filter((step) => step <= min).at(-1) ?? min;
+  const hi = candidates.find((step) => step >= max) ?? max;
   return [lo, hi];
 }
 
@@ -109,15 +103,9 @@ export function placeLabels(
   height: number,
   obstacles: Box[] = [],
 ): Map<string, PlacedLabel> {
-  const marks = requests.map((item) => ({
-    id: item.id,
-    box: {
-      left: item.x - item.r,
-      top: item.y - item.r,
-      right: item.x + item.r,
-      bottom: item.y + item.r,
-    },
-  }));
+  const marks = requests.map((item) =>
+    box(item.x - item.r, item.y - item.r, item.r * 2, item.r * 2),
+  );
   const taken: Box[] = [...obstacles];
   const placed = new Map<string, PlacedLabel>();
 
@@ -155,15 +143,22 @@ export function placeLabels(
       { anchor: 'middle', x, y: y - gap - h / 2, box: box(x - w / 2, y - gap - h, w, h) },
       { anchor: 'middle', x, y: y + gap + h / 2, box: box(x - w / 2, y + gap, w, h) },
     ];
-    const fit = candidates.find(
-      (candidate) =>
+    const fit = candidates.find((candidate) => {
+      const own = distanceTo(candidate.box, x, y);
+      return (
         candidate.box.left >= 0 &&
         candidate.box.right <= width &&
         candidate.box.top >= 0 &&
         candidate.box.bottom <= height &&
         taken.every((other) => !overlaps(candidate.box, other)) &&
-        marks.every((mark) => mark.id === item.id || !overlaps(candidate.box, mark.box)),
-    );
+        requests.every(
+          (other, index) =>
+            other.id === item.id ||
+            (!overlaps(candidate.box, marks[index]) &&
+              distanceTo(candidate.box, other.x, other.y) > own),
+        )
+      );
+    });
     if (fit) {
       placed.set(item.id, fit);
       taken.push(fit.box);
@@ -177,6 +172,12 @@ export function clearOf(candidates: Box[], obstacles: Box[]): Box {
     candidates.find((candidate) => obstacles.every((other) => !overlaps(candidate, other))) ??
     candidates[0]
   );
+}
+
+function distanceTo(area: Box, x: number, y: number): number {
+  const dx = Math.max(area.left - x, 0, x - area.right);
+  const dy = Math.max(area.top - y, 0, y - area.bottom);
+  return Math.hypot(dx, dy);
 }
 
 function box(left: number, top: number, width: number, height: number): Box {

@@ -1,8 +1,16 @@
 import { Check, ImageDown, X } from 'lucide-react';
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 import type { Dictionary } from '@/i18n';
-import { chartImageName, exportChartImage } from '@/lib/chart-image';
+import {
+  chartImageName,
+  EXPORT_WIDTH,
+  exportChartImage,
+  settle,
+  withOffscreenHost,
+} from '@/lib/chart-image';
 import type { ChartMetric } from '@/lib/charts';
 import { formatPrice, formatScore } from '@/lib/format';
 import { LOGO_EYE, LOGO_RADIUS, LOGO_VIEWBOX } from '@/lib/logo';
@@ -15,6 +23,13 @@ export type ChartStrings = Pick<Dictionary, 'chart' | 'tier' | 'empty' | 'rating
 export function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [width, setWidth] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const style = getComputedStyle(element);
+    const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    setWidth(Math.floor(element.clientWidth - padding));
+  }, []);
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -148,26 +163,49 @@ export function ChartFooter({ children }: { children?: ReactNode }) {
   );
 }
 
+export function ChartFigure({ children }: { children: ReactNode }) {
+  return (
+    <div className="@container">
+      <figure className="bg-card rounded-xl border px-3 pt-3 pb-3 @xl:px-4">{children}</figure>
+    </div>
+  );
+}
+
 type ExportState = 'idle' | 'busy' | 'done' | 'failed';
+
+async function exportRendered(chart: ReactNode, filename: string): Promise<void> {
+  await withOffscreenHost(EXPORT_WIDTH.chart, async (host) => {
+    const root = createRoot(host);
+    try {
+      flushSync(() => root.render(chart));
+      await settle();
+      const figure = host.querySelector('figure');
+      if (!figure) throw new Error('The chart did not render');
+      await exportChartImage(figure, filename);
+    } finally {
+      root.unmount();
+    }
+  });
+}
 
 export function ExportButton({
   name,
   strings,
+  render,
 }: {
   name: string[];
   strings: ChartStrings['chart'];
+  render: () => ReactNode;
 }) {
   const [state, setState] = useState<ExportState>('idle');
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  const run = async (event: MouseEvent<HTMLButtonElement>) => {
-    const figure = event.currentTarget.closest('figure');
-    if (!figure) return;
+  const run = async () => {
     window.clearTimeout(timer.current);
     setState('busy');
     try {
-      await exportChartImage(figure, chartImageName(name));
+      await exportRendered(render(), chartImageName(name));
       setState('done');
     } catch {
       setState('failed');

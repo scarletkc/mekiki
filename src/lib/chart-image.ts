@@ -32,6 +32,48 @@ export async function chartImage(node: HTMLElement): Promise<Blob> {
   });
 }
 
+export const EXPORT_WIDTH = { chart: 1232, card: 610 };
+
+export async function withOffscreenHost<T>(
+  width: number,
+  work: (host: HTMLElement) => Promise<T>,
+): Promise<T> {
+  const host = document.createElement('div');
+  host.setAttribute('aria-hidden', 'true');
+  host.inert = true;
+  Object.assign(host.style, {
+    position: 'fixed',
+    top: '0',
+    left: '-100000px',
+    width: `${width}px`,
+    pointerEvents: 'none',
+  });
+  document.body.append(host);
+  try {
+    return await work(host);
+  } finally {
+    host.remove();
+  }
+}
+
+export async function settle(): Promise<void> {
+  await document.fonts.ready;
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+export async function exportClonedChart(
+  figure: HTMLElement,
+  width: number,
+  filename: string,
+): Promise<void> {
+  await withOffscreenHost(width, async (host) => {
+    const copy = figure.cloneNode(true) as HTMLElement;
+    host.append(copy);
+    await settle();
+    await exportChartImage(copy, filename);
+  });
+}
+
 export async function exportChartImage(node: HTMLElement, filename: string): Promise<void> {
   const url = URL.createObjectURL(await chartImage(node));
   const link = document.createElement('a');

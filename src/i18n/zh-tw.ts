@@ -93,6 +93,8 @@ export const zhTW: Dictionary = {
     },
     dividers: '分隔線標出「高」智慧（{score}）和「高」成本（混合價 {price}）的起點。',
     notPlotted: '未畫出（尚無價格或未評級）：{names}',
+    unlabelled: '圖中未標註：{names}',
+    nameSeparator: '、',
     barCaption: '各模型的{metric}',
     tierLines: '細線標出每個級距的起點。',
     trendCaption: '{metric}變化',

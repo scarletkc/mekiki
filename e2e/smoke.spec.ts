@@ -4,6 +4,7 @@ import { SITE_URL } from '../src/lib/dataset';
 import { giscusAttributes } from '../src/lib/giscus';
 import { giscusConfig } from '../src/lib/giscus.config';
 import { SITE_HOST } from '../src/lib/share';
+import { EXPORT_WIDTH } from '../src/lib/chart-image';
 
 const GISCUS = 'https://giscus.app';
 
@@ -223,26 +224,88 @@ test('the home page switches between the table and the charts', async ({ page })
   expect(problems).toEqual([]);
 });
 
-test('a chart carries the site watermark and exports as an image of itself', async ({ page }) => {
+test('a chart exports at the desktop width from any screen', async ({ page }) => {
   const problems = trackProblems(page);
-  for (const view of ['quadrant', 'bar']) {
-    await page.goto(`/?view=${view}`);
-    const figure = page.locator('figure').first();
-    await expect(figure.locator('[data-chart-watermark]')).toHaveText(SITE_HOST);
+  for (const width of [1300, 375]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const view of ['quadrant', 'bar']) {
+      await page.goto(`/?view=${view}`);
+      const figure = page.locator('figure').first();
+      await expect(figure.locator('[data-chart-watermark]')).toHaveText(SITE_HOST);
 
-    const box = await figure.boundingBox();
-    const pending = page.waitForEvent('download');
-    await figure.locator('[data-export-ignore] button').click();
-    const file = await pending;
-    expect(file.suggestedFilename()).toMatch(
-      new RegExp(`^mekiki-${view}-.*\\d{4}-\\d{2}-\\d{2}\\.png$`),
-    );
+      const box = await figure.boundingBox();
+      const pending = page.waitForEvent('download');
+      await figure.locator('[data-export-ignore] button').click();
+      const file = await pending;
+      expect(file.suggestedFilename()).toMatch(
+        new RegExp(`^mekiki-${view}-.*\\d{4}-\\d{2}-\\d{2}\\.png$`),
+      );
 
-    const image = await readFile(await file.path());
-    expect(image.subarray(1, 4).toString()).toBe('PNG');
-    expect(Math.abs(image.readUInt32BE(16) - (box?.width ?? 0) * 2)).toBeLessThanOrEqual(2);
-    expect(Math.abs(image.readUInt32BE(20) - (box?.height ?? 0) * 2)).toBeLessThanOrEqual(2);
+      const image = await readFile(await file.path());
+      expect(image.subarray(1, 4).toString()).toBe('PNG');
+      expect(Math.abs(image.readUInt32BE(16) - EXPORT_WIDTH.chart * 2)).toBeLessThanOrEqual(2);
+      if (box?.width === EXPORT_WIDTH.chart) {
+        expect(Math.abs(image.readUInt32BE(20) - box.height * 2)).toBeLessThanOrEqual(2);
+      } else {
+        expect(image.readUInt32BE(20)).toBeGreaterThan(400);
+      }
+      expect(await figure.boundingBox()).toEqual(box);
+      await expect(page.locator('body > [inert]')).toHaveCount(0);
+    }
   }
+  expect(problems).toEqual([]);
+});
+
+test('on a phone, every quadrant dot is named once, in the chart or under it', async ({ page }) => {
+  const problems = trackProblems(page);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/?view=quadrant');
+  const figure = page.locator('figure').first();
+  const dots = figure.locator('svg a[href]');
+  await expect(dots.first()).toBeAttached();
+
+  const names = await dots.evaluateAll((links) =>
+    links.map((link) => link.getAttribute('aria-label')!.split(': ')[0]),
+  );
+  const inChart = await figure.locator('svg text').allTextContents();
+  const listed = figure.locator('[data-unlabelled] a');
+  const underIt = await listed.allTextContents();
+  expect(underIt.length).toBeGreaterThan(0);
+  for (const name of names) {
+    expect([inChart.includes(name), underIt.includes(name)]).toContainEqual(true);
+    expect(inChart.includes(name) && underIt.includes(name)).toBe(false);
+  }
+
+  const overlaps = await figure.evaluate((node) => {
+    const boxes = [
+      ...[...node.querySelectorAll('svg text')].map((text) => text.getBoundingClientRect()),
+      ...[...node.querySelectorAll('svg a circle:not([fill="transparent"])')].map((dot) =>
+        dot.getBoundingClientRect(),
+      ),
+    ];
+    const texts = node.querySelectorAll('svg text').length;
+    let count = 0;
+    for (let i = 0; i < texts; i += 1) {
+      for (let j = i + 1; j < boxes.length; j += 1) {
+        const a = boxes[i];
+        const b = boxes[j];
+        if (
+          a.left < b.right - 0.5 &&
+          b.left < a.right - 0.5 &&
+          a.top < b.bottom - 0.5 &&
+          b.top < a.bottom - 0.5
+        ) {
+          count += 1;
+        }
+      }
+    }
+    return count;
+  });
+  expect(overlaps).toBe(0);
+
+  const first = listed.first();
+  await first.hover();
+  await expect(figure.locator('[role="presentation"]')).toContainText((await first.textContent())!);
   expect(problems).toEqual([]);
 });
 
@@ -320,6 +383,25 @@ test.describe('on a touch screen', () => {
     await expect(page.locator('figure [role="presentation"]')).toBeVisible();
     expect(page.url()).toBe(start);
     await dot.tap();
+    await expect(page).toHaveURL(/\/m\//);
+    expect(problems).toEqual([]);
+  });
+
+  test('a name under the quadrant shows its dot on the first tap and opens on the second', async ({
+    page,
+  }) => {
+    const problems = trackProblems(page);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/?view=quadrant');
+    const name = page.locator('figure [data-unlabelled] a').first();
+    await expect(name).toBeVisible();
+    const start = page.url();
+    await name.tap();
+    await expect(page.locator('figure [role="presentation"]')).toContainText(
+      (await name.textContent())!,
+    );
+    expect(page.url()).toBe(start);
+    await name.tap();
     await expect(page).toHaveURL(/\/m\//);
     expect(problems).toEqual([]);
   });

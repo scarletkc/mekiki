@@ -92,6 +92,8 @@ export const en = {
     dividers:
       'The lines mark where High intelligence ({score}) and High cost ({price} blended) begin.',
     notPlotted: 'Not plotted (no price or not rated): {names}',
+    unlabelled: 'Not labelled in the chart: {names}',
+    nameSeparator: ', ',
     barCaption: '{metric} by model',
     tierLines: 'Hairlines mark where each tier begins.',
     trendCaption: '{metric} over time',
