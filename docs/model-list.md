@@ -68,6 +68,9 @@ exclude:
 aliases:
   Moonshot: moonshotai           # maker name -> models.dev provider ID
 
+vendors:
+  xAI: SpaceXSI                  # vendor name as generated -> the name shown
+
 models:
   moonshotai/kimi-k3:
     status: legacy               # wins over the version rule
@@ -89,6 +92,9 @@ models:
   has a name and a vendor, which add the model by hand. The sync lists corrections that
   are waiting.
 - A model's ID is its models.dev ID, `<provider>/<model>`, kept as models.dev writes it.
+- `vendors` renames a vendor on every model it makes, including models discovered later,
+  so the version rule still compares them with each other. It changes only the name
+  shown, never the IDs. A model's own `vendor` correction wins.
 - A price override replaces the models.dev input and output prices. Without
   `cache_read`, the models.dev cache price is kept.
 - An invalid overrides file fails `pnpm test`, `pnpm build` and `pnpm sync` with the field

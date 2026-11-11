@@ -46,12 +46,18 @@ export const overridesSchema = z
   .object({
     exclude: z.array(z.string().min(1)).default([]),
     aliases: z.record(z.string(), z.string()).default({}),
+    vendors: z.record(z.string(), z.string().min(1)).default({}),
     models: z.record(z.string(), modelOverrideSchema).default({}),
   })
   .strict();
 export type ModelOverrides = z.infer<typeof overridesSchema>;
 
-export const EMPTY_OVERRIDES: ModelOverrides = { exclude: [], aliases: {}, models: {} };
+export const EMPTY_OVERRIDES: ModelOverrides = {
+  exclude: [],
+  aliases: {},
+  vendors: {},
+  models: {},
+};
 
 export function parseModelEntry(id: string, raw: unknown, where = id): ModelEntry {
   const parsed = modelSchema.safeParse(raw ?? {});
@@ -128,7 +134,8 @@ export function mergeModelList(
     const base = byId.get(id);
     const fix = overrides.models[id] ?? {};
     const name = fix.name ?? base?.name;
-    const vendor = fix.vendor ?? base?.vendor;
+    const vendor =
+      fix.vendor ?? (base ? (overrides.vendors[base.vendor] ?? base.vendor) : undefined);
     if (!name || !vendor) continue;
     const sources: Record<string, string> = { ...base?.sources };
     for (const [field, value] of Object.entries(fix.sources ?? {})) {

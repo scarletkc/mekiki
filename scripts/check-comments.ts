@@ -10,7 +10,7 @@ function trackedFiles(): string[] {
       encoding: 'utf8',
     },
   );
-  return output.split('\0').filter((file) => file !== '' && existsSync(file));
+  return [...new Set(output.split('\0'))].filter((file) => file !== '' && existsSync(file));
 }
 
 function position(text: string, offset: number): string {

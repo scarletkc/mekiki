@@ -1,7 +1,8 @@
 # Development
 
-Running mekiki locally, the project commands, and the changes that come up most: tuning
-the rating and adding a language. For the models on the site, see [the model list](model-list.md).
+Running mekiki locally, the project commands, the conventions the code follows, and the
+changes that come up most: tuning the rating and adding a language. For the models on the
+site, see [the model list](model-list.md).
 
 ## Run it locally
 
@@ -33,16 +34,32 @@ snapshots in `data/snapshots/`, so it works offline and needs no API key.
 | `pnpm report` | Print every model's scores and the tier distribution. |
 | `pnpm history` | Record today's ratings in `data/history.jsonl` from the files as they are. Never goes online. |
 
-Code carries no comments: `pnpm lint:comments` fails on any comment in `.ts`, `.tsx`, `.js`,
-`.mjs`, `.cjs`, `.astro` and `.css` files, except tool directives (`@ts-check`, `@ts-nocheck`,
-`@ts-expect-error`, `@ts-ignore`, `/// <reference>`, `biome-ignore` and JSX pragmas such as
-`@jsxImportSource`).
-
 `pnpm smoke` needs a Chromium build once:
 
 ```bash
 pnpm exec playwright install --only-shell chromium
 ```
+
+## Conventions
+
+- Intelligence scores come from leaderboards only. No score is entered or adjusted by hand.
+- The build never goes online. `pnpm sync` writes external data to committed snapshots in
+  `data/`, and the build reads local files only.
+- Secrets stay out of the front end and the repository. The Artificial Analysis key lives
+  in the `AA_API_KEY` secret (locally, in `.env`) and is read only by `pnpm sync`.
+- Every tunable number of the rating lives in `src/lib/scoring.config.ts`. The algorithm in
+  `src/lib/scoring.ts` is pure functions with unit tests.
+- Pages and the API read the same dataset, built by `src/lib/dataset.ts`.
+- Look at a real response from a source before writing its adapter and Zod schema.
+- Missing data is shown as missing ("Not rated", "No data", "No price"), never as a blank
+  or a 0.
+- In the JSON API, missing values are `null` and no field is omitted. Fields are only
+  added; a breaking change bumps `API_VERSION` in `src/lib/api.ts`.
+- API responses must carry `Access-Control-Allow-Origin: *`.
+- Code carries no comments. `pnpm lint:comments` fails on any comment in `.ts`, `.tsx`,
+  `.js`, `.mjs`, `.cjs`, `.astro` and `.css` files, except tool directives (`@ts-check`,
+  `@ts-nocheck`, `@ts-expect-error`, `@ts-ignore`, `/// <reference>`, `biome-ignore` and
+  JSX pragmas such as `@jsxImportSource`).
 
 ## Sync data locally
 
@@ -105,6 +122,7 @@ src/
   lib/logo.ts                            the mark; header, favicon and share images use it
   lib/og.tsx                             share images, rendered to PNG at build time
   lib/compare.ts                         compare page selection (?m=<id>,<id>)
+  lib/filters.ts                         home page filters and the counts around the list
   lib/history.ts, lib/changelog.ts       rating history and the changes derived from it
   lib/feed.ts                            RSS feeds
   lib/giscus.config.ts, lib/giscus.ts    discussion threads on model pages (giscus)

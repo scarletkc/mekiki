@@ -1,14 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  columnFilteringFeature,
   createColumnHelper,
-  createFilteredRowModel,
   createSortedRowModel,
   rowSortingFeature,
   sortFn_basic,
   tableFeatures,
   useTable,
-  type ColumnFiltersState,
   type SortingState,
 } from '@tanstack/react-table';
 import {
@@ -49,6 +46,7 @@ import type { Dictionary } from '@/i18n';
 import { fmt } from '@/i18n/fmt';
 import { CHART_METRICS, type ChartMetric } from '@/lib/charts';
 import { compareQuery } from '@/lib/compare';
+import { ALL, filterModels, NO_FILTERS, type Filters } from '@/lib/filters';
 import { formatPrice, formatScore } from '@/lib/format';
 import {
   COST_TIERS,
@@ -104,9 +102,7 @@ interface ModelTableProps {
 }
 
 const features = tableFeatures({
-  columnFilteringFeature,
   rowSortingFeature,
-  filteredRowModel: createFilteredRowModel(),
   sortedRowModel: createSortedRowModel(),
 });
 
@@ -123,7 +119,6 @@ const COLUMN_IDS = [
 ] as const;
 
 const DEFAULT_SORT: SortingState = [{ id: 'intelligence', desc: true }];
-const ALL = 'all';
 
 const VIEWS = ['table', 'quadrant', 'line', 'bar'] as const;
 type View = (typeof VIEWS)[number];
@@ -139,26 +134,6 @@ interface Display {
   metric: ChartMetric;
 }
 const DEFAULT_DISPLAY: Display = { view: 'table', metric: 'int' };
-
-interface Filters {
-  q: string;
-  vendor: string;
-  int: string;
-  cost: string;
-  val: string;
-  open: string;
-  legacy: boolean;
-}
-
-const NO_FILTERS: Filters = {
-  q: '',
-  vendor: ALL,
-  int: ALL,
-  cost: ALL,
-  val: ALL,
-  open: ALL,
-  legacy: false,
-};
 
 function readUrl(vendors: string[]): {
   filters: Filters;
@@ -447,7 +422,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
       [...new Set(models.map((model) => model.vendor))].sort((a, b) => a.localeCompare(b, lang)),
     [models, lang],
   );
-  const legacyCount = useMemo(() => models.filter((model) => model.legacy).length, [models]);
 
   useEffect(() => {
     const fromUrl = readUrl(vendors);
@@ -478,26 +452,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   );
   const pickValue = useMemo(() => ({ picked, toggle }), [picked, toggle]);
 
-  const data = useMemo(
-    () =>
-      models.filter((model) => {
-        if (model.legacy && !filters.legacy) return false;
-        if (filters.open === 'open') return model.openWeights === true;
-        if (filters.open === 'closed') return model.openWeights === false;
-        return true;
-      }),
-    [models, filters.legacy, filters.open],
-  );
-
-  const columnFilters = useMemo<ColumnFiltersState>(() => {
-    const active: ColumnFiltersState = [];
-    if (filters.q.trim()) active.push({ id: 'model', value: filters.q.trim().toLowerCase() });
-    if (filters.vendor !== ALL) active.push({ id: 'vendor', value: filters.vendor });
-    if (filters.int !== ALL) active.push({ id: 'intelligence', value: filters.int });
-    if (filters.cost !== ALL) active.push({ id: 'cost', value: filters.cost });
-    if (filters.val !== ALL) active.push({ id: 'value', value: filters.val });
-    return active;
-  }, [filters]);
+  const filtered = useMemo(() => filterModels(models, filters), [models, filters]);
 
   const columns = useMemo(() => {
     const collator = new Intl.Collator(lang, { numeric: true, sensitivity: 'base' });
@@ -520,9 +475,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         id: 'model',
         header: t.columns.model,
         ...text,
-        filterFn: (row, _id, query: string) =>
-          row.original.name.toLowerCase().includes(query) ||
-          row.original.id.toLowerCase().includes(query),
         cell: ({ row }) => {
           const model = row.original;
           return (
@@ -547,14 +499,12 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         id: 'vendor',
         header: t.columns.vendor,
         ...text,
-        filterFn: (row, _id, vendor: string) => row.original.vendor === vendor,
         cell: ({ row }) => <span className="whitespace-nowrap">{row.original.vendor}</span>,
       }),
       helper.accessor((row) => row.intelligence.score ?? undefined, {
         id: 'intelligence',
         header: t.columns.intelligence,
         ...figure,
-        filterFn: (row, _id, wanted: string) => row.original.intelligence.tier === wanted,
         cell: ({ row }) => (
           <TierMeter {...meterProps(row.original, { tier, empty }).intelligence} />
         ),
@@ -563,7 +513,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         id: 'cost',
         header: t.columns.cost,
         ...figure,
-        filterFn: (row, _id, wanted: string) => row.original.cost.tier === wanted,
         cell: ({ row }) => <TierMeter {...meterProps(row.original, { tier, empty }).cost} />,
       }),
       helper.accessor((row) => row.value.measuredPrice ?? undefined, {
@@ -576,7 +525,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         id: 'value',
         header: t.columns.value,
         ...figure,
-        filterFn: (row, _id, wanted: string) => row.original.value.tier === wanted,
         cell: ({ row }) => <TierMeter {...meterProps(row.original, { tier, empty }).value} />,
       }),
       helper.accessor((row) => row.cost.input ?? undefined, {
@@ -591,8 +539,8 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   const table = useTable({
     features,
     columns,
-    data,
-    state: { sorting, columnFilters },
+    data: filtered.rows,
+    state: { sorting },
     onSortingChange: setSorting,
     enableSortingRemoval: false,
     enableMultiSort: false,
@@ -701,7 +649,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
             strings={chart}
           />
           <p className="text-muted-foreground num text-sm" aria-live="polite">
-            {fmt(t.count, { shown: rows.length, total: data.length })}
+            {fmt(t.count, { shown: rows.length, total: filtered.total })}
           </p>
         </div>
         {(display.view === 'line' || display.view === 'bar') && (
@@ -929,7 +877,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
 
       <div className="text-muted-foreground mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
         <p>{t.priceNote}</p>
-        {legacyCount > 0 && (
+        {(filters.legacy || filtered.legacy > 0) && (
           <Button
             variant="outline"
             size="sm"
@@ -938,7 +886,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
             onClick={() => setFilter('legacy', !filters.legacy)}
           >
             <History aria-hidden="true" />
-            {filters.legacy ? t.hideLegacy : fmt(t.showLegacy, { n: legacyCount })}
+            {filters.legacy ? t.hideLegacy : fmt(t.showLegacy, { n: filtered.legacy })}
           </Button>
         )}
       </div>
