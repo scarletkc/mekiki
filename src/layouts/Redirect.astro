@@ -8,6 +8,7 @@ import {
   useTranslations,
 } from '../i18n';
 import { SITE_URL } from '../lib/dataset';
+import { LLMS_PATH, markdownPath } from '../lib/markdown';
 import { OG_HEIGHT, OG_WIDTH, SITE_IMAGE_PATH } from '../lib/share';
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 const path = pagePath(Astro.props.path);
 const fallbackTarget = localePath(DEFAULT_LOCALE, path);
 const locales = [...LOCALES];
+const markdown = markdownPath(DEFAULT_LOCALE, path);
 
 const t = useTranslations(DEFAULT_LOCALE);
 const { title, image = SITE_IMAGE_PATH, imageAlt } = Astro.props;
@@ -37,6 +39,8 @@ const description = Astro.props.description ?? t.meta.description;
     <meta name="robots" content="noindex" />
     <link rel="canonical" href={new URL(fallbackTarget, SITE_URL).href} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {markdown && <link rel="alternate" type="text/markdown" href={markdown} />}
+    <link rel="describedby" type="text/plain" href={LLMS_PATH} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />

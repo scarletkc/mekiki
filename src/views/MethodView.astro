@@ -1,20 +1,9 @@
 ---
-import { fmt, LOCALE_INFO, useTranslations, type Locale } from '../i18n';
+import { useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
-import { formatCount, formatDateTime, formatPercent } from '../lib/format';
-import {
-  COST_TIERS,
-  INTELLIGENCE_TIERS,
-  METRIC_KEYS,
-  VALUE_TIERS,
-  livebenchCategories,
-  livebenchKeptShare,
-  scoringConfig,
-} from '../lib/scoring.config';
-import { cacheHitPercent } from '../lib/scoring';
-import { computeBenchmark } from '../lib/scoring';
+import { formatDateTime } from '../lib/format';
+import { methodContent } from '../lib/method';
 import { getDataset } from '../lib/site-data';
-import { SOURCE_IDS, SOURCE_INFO } from '../lib/snapshots';
 
 interface Props {
   locale: Locale;
@@ -23,82 +12,17 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 const m = t.method;
-const dataset = await getDataset();
-const { intelligence, cost, value } = scoringConfig;
-
-const shares = computeBenchmark({}, {}).breakdown;
-const metrics = METRIC_KEYS.map((key) => {
-  const { source, floor } = intelligence.metrics[key];
-  return {
-    label: t.metric[key],
-    source: SOURCE_INFO[source].name,
-    weight: formatPercent(shares[key]?.weight ?? 0),
-    floor:
-      floor.type === 'absolute'
-        ? fmt(m.floorAbsolute, { value: floor.value })
-        : fmt(m.floorBelowFrontier, { gap: floor.gap }),
-  };
-});
-const list = new Intl.ListFormat(LOCALE_INFO[locale].tag, { type: 'conjunction' });
-const livebenchNote = fmt(m.livebenchBody, {
-  kept: list.format(Object.keys(livebenchCategories.kept)),
-  dropped: list.format(Object.keys(livebenchCategories.dropped)),
-  share: formatPercent(livebenchKeptShare),
-});
-
-const tierRows = [
-  {
-    rating: t.rating.intelligence,
-    tiers: INTELLIGENCE_TIERS.map((key) => ({
-      key,
-      label: t.tier.intelligence[key],
-      rule: key === 'very_low' ? `< ${intelligence.tiers.low}` : `≥ ${intelligence.tiers[key]}`,
-    })),
-  },
-  {
-    rating: `${t.rating.cost} (${m.blendedShort})`,
-    tiers: COST_TIERS.map((key) => ({
-      key,
-      label: t.tier.cost[key],
-      rule: key === 'very_high' ? `≥ $${cost.tiers.high}` : `< $${cost.tiers[key]}`,
-    })),
-  },
-  {
-    rating: t.rating.value,
-    tiers: VALUE_TIERS.map((key) => ({
-      key,
-      label: t.tier.value[key],
-      rule: key === 'very_low' ? `< ${value.tiers.low}` : `≥ ${value.tiers[key]}`,
-    })),
-  },
-];
-
-const typicalTokenUse = dataset.run_cost.typical_token_use;
-const measured = 'run_cost ÷ typical_token_use';
-const effectivePriceFormula =
-  value.runCostWeight >= 1
-    ? `effective_price = ${measured}`
-    : value.runCostWeight <= 0
-      ? 'effective_price = blended'
-      : `effective_price = blended^${Number((1 - value.runCostWeight).toFixed(2))} × (${measured})^${value.runCostWeight}`;
-
-const sourceUse = {
-  modelsdev: m.useModelsdev,
-  aa: m.useAa,
-  arena: m.useArena,
-  livebench: m.useLivebench,
-};
-const unlicensed = {
-  modelsdev: m.licenseNone,
-  aa: m.licenseAa,
-  arena: m.licenseNone,
-  livebench: m.licenseNone,
-};
-const sources = SOURCE_IDS.map((id) => ({
-  ...dataset.sources[id],
-  use: sourceUse[id],
-  licenseText: dataset.sources[id].license ?? unlicensed[id],
-}));
+const {
+  metrics,
+  livebenchNote,
+  tierRows,
+  formulas,
+  costBody,
+  costIndexBody,
+  valueRunCostBody,
+  valueBody,
+  sources,
+} = methodContent(await getDataset(), locale);
 ---
 
 <Base locale={locale} path="/method" title={m.title}>
@@ -112,7 +36,7 @@ const sources = SOURCE_IDS.map((id) => ({
 
     <h2 id="intelligence">{m.intelligenceTitle}</h2>
     <p>{m.intelligenceBody}</p>
-    <pre><code>n = clamp(100 × (x − floor) ÷ (frontier − floor), 0, 100)</code></pre>
+    <pre><code>{formulas.normalize}</code></pre>
     <p>{m.benchmarkBody}</p>
     <div class="table-wrap">
       <table class="data-table">
@@ -142,36 +66,15 @@ const sources = SOURCE_IDS.map((id) => ({
     <p>{livebenchNote}</p>
 
     <h2 id="cost">{m.costTitle}</h2>
-    <p>
-      {
-        fmt(m.costBody, {
-          cache: cost.cacheReadWeight,
-          input: cost.inputWeight,
-          output: cost.outputWeight,
-          total: cost.cacheReadWeight + cost.inputWeight + cost.outputWeight,
-          hit: cacheHitPercent(cost),
-        })
-      }
-    </p>
-    <p>{fmt(m.costIndexBody, { floor: cost.indexFloorPrice, ceil: cost.indexCeilPrice })}</p>
-    <pre><code>cost_index(price) = clamp(100 × log10(price ÷ {cost.indexFloorPrice}) ÷ log10({cost.indexCeilPrice} ÷ {cost.indexFloorPrice}), 0, 100)</code></pre>
+    <p>{costBody}</p>
+    <p>{costIndexBody}</p>
+    <pre><code>{formulas.costIndex}</code></pre>
 
     <h2 id="value">{m.valueTitle}</h2>
-    <p>
-      {m.valueRunCostBody}
-      {typicalTokenUse !== null && ` ${fmt(m.valueRunCostNow, { typical: formatCount(typicalTokenUse) })}`}
-    </p>
-    <pre><code>{effectivePriceFormula}</code></pre>
-    <p>
-      {
-        fmt(m.valueBody, {
-          a: value.intelligenceExponent,
-          b: value.affordabilityExponent,
-          min: value.minAffordability,
-        })
-      }
-    </p>
-    <pre><code>value = intelligence^{value.intelligenceExponent} × max(100 − cost_index(effective_price), {value.minAffordability})^{value.affordabilityExponent}</code></pre>
+    <p>{valueRunCostBody}</p>
+    <pre><code>{formulas.effectivePrice}</code></pre>
+    <p>{valueBody}</p>
+    <pre><code>{formulas.value}</code></pre>
 
     <h2 id="tiers">{m.tiersTitle}</h2>
     <div class="table-wrap">

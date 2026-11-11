@@ -16,7 +16,7 @@ export const COMPARE_MAX = 4;
 export function modelShareText(
   model: Pick<ModelRecord, 'name' | 'vendor' | 'rating'>,
   t: Pick<Dictionary, 'meta' | 'rating' | 'tier' | 'empty'>,
-): { description: string; imageAlt: string } {
+): { description: string; imageAlt: string; summary: string } {
   const { intelligence, cost, value } = model.rating;
   const parts = [
     `${t.rating.intelligence} ${
@@ -36,5 +36,6 @@ export function modelShareText(
   return {
     description: `${model.name} (${model.vendor}): ${t.meta.tagline}`,
     imageAlt: `${model.name} · ${parts.join(' · ')}`,
+    summary: parts.join(' · '),
   };
 }

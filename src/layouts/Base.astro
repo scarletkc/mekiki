@@ -25,9 +25,10 @@ import {
   useTranslations,
   type Locale,
 } from '../i18n';
-import { latestSync, SITE_URL } from '../lib/dataset';
+import { latestSync, REPO_URL, SITE_URL } from '../lib/dataset';
 import { feedPath } from '../lib/feed';
 import { formatDateTime } from '../lib/format';
+import { LLMS_PATH, markdownPath } from '../lib/markdown';
 import { OG_HEIGHT, OG_WIDTH, SITE_IMAGE_PATH } from '../lib/share';
 import { getDataset } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
@@ -52,6 +53,7 @@ const pageTitle = title ? `${title} | mekiki` : `mekiki | ${t.meta.tagline}`;
 const pageDescription = description ?? t.meta.description;
 const canonical = new URL(localePath(locale, path), SITE_URL).href;
 const imageUrl = new URL(image, SITE_URL).href;
+const markdown = noindex ? null : markdownPath(locale, path);
 
 const nav = [
   { href: localePath(locale, '/'), label: t.nav.models, key: '/', icon: LayoutList },
@@ -98,7 +100,6 @@ const headerButton = {
   }),
 };
 
-const REPO_URL = 'https://github.com/scarletkc/mekiki';
 const FEEDBACK_URL = `${REPO_URL}/issues/new/choose`;
 const SPONSOR_URL = 'https://github.com/sponsors/scarletkc';
 const footerLink =
@@ -149,6 +150,8 @@ const attribution = [
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="alternate" type="application/json" href="/api.json" title="mekiki API" />
     <link rel="alternate" type="application/rss+xml" href={feedPath(locale)} title={t.changelog.feedTitle} />
+    {markdown && <link rel="alternate" type="text/markdown" href={markdown} />}
+    <link rel="describedby" type="text/plain" href={LLMS_PATH} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDescription} />
     <meta property="og:type" content="website" />
