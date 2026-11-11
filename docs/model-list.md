@@ -112,8 +112,8 @@ the effect.
 
 - **Intelligence needs no upkeep.** Every score is normalised to the current leader on
   each sync, so nothing needs revisiting when a new model takes the lead.
-- **A model missing from a leaderboard is rated on the rest**, and the model page says
-  how many it is on.
+- **A model missing from a leaderboard is rated on the rest**, and the model page's
+  breakdown table shows which ones it is on.
 - **The list moves everyone's value a little.** Value measures token use against the
   median of the listed models, so a model joining or
   leaving the list nudges the others.

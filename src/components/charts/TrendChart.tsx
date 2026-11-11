@@ -15,6 +15,7 @@ import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 import {
+  ChartCaption,
   ChartFigure,
   ChartFooter,
   ChartTooltip,
@@ -191,7 +192,11 @@ export function TrendChart({
   return (
     <ChartFigure>
       <figcaption className="mb-2 flex items-start justify-between gap-3">
-        <span className="text-sm font-medium">{fmt(chart.trendCaption, { metric: label })}</span>
+        <ChartCaption
+          text={fmt(chart.trendCaption, { metric: label })}
+          link={strings.method}
+          section="changes"
+        />
         <ExportButton
           name={['trend', metric]}
           strings={chart}
@@ -406,9 +411,7 @@ export function TrendChart({
           );
         })}
       </ul>
-      <ChartFooter>
-        <p>{chart.trendNote}</p>
-      </ChartFooter>
+      <ChartFooter />
     </ChartFigure>
   );
 }

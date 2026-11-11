@@ -8,8 +8,7 @@ import { formatDateTime, formatPercent, formatPrice, formatScore } from './forma
 import { utcDate, type HistoryEntry } from './history';
 import { methodContent } from './method';
 import { modelDetail } from './model-detail';
-import { changelogConfig } from './scoring.config';
-import { usageBadge, usageCitation, usageDetail, usagePeriod, type UsagePeriod } from './usage';
+import { usageCitation, usageDetail, usagePeriod } from './usage';
 
 export const LLMS_PATH = '/llms.txt';
 
@@ -70,11 +69,10 @@ function ratingText(model: ModelRecord, t: Dictionary) {
   };
 }
 
-function badges(model: ModelRecord, t: Dictionary, period: UsagePeriod | null): string[] {
+function badges(model: ModelRecord, t: Dictionary): string[] {
   return [
     model.status === 'legacy' ? t.badge.legacy : null,
     model.facts.open_weights === true ? t.badge.openWeights : null,
-    usageBadge(model, period, t)?.label ?? null,
   ].filter((badge) => badge !== null);
 }
 
@@ -110,7 +108,7 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
     const rating = ratingText(model, t);
     const name = link(model.name, markdownUrl(locale, `/m/${model.id}`));
     return [
-      [name, ...badges(model, t, null).map((badge) => `(${badge})`)].join(' '),
+      [name, ...badges(model, t).map((badge) => `(${badge})`)].join(' '),
       model.vendor,
       rating.intelligence,
       rating.cost,
@@ -132,7 +130,7 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
     '# mekiki',
     `> ${t.meta.description}`,
     `## ${t.home.title}`,
-    t.home.intro,
+    link(t.usage.about, markdownUrl(locale, '/method')),
     table(
       [
         columns.model,
@@ -161,7 +159,8 @@ export function modelMarkdown(
   const t = useTranslations(locale);
   const d = t.detail;
   const { intelligence, value } = model.rating;
-  const detail = modelDetail(model, dataset, t);
+  const detail = modelDetail(model, t);
+  const about = link(t.usage.about, markdownUrl(locale, '/method'));
   const rating = ratingText(model, t);
   const none = t.empty.noData;
   const period = usagePeriod(dataset);
@@ -181,11 +180,11 @@ export function modelMarkdown(
 
   return compose([
     `# ${model.name}`,
-    [model.vendor, `\`${model.id}\``, ...badges(model, t, period)].join(' · '),
+    [model.vendor, `\`${model.id}\``, ...badges(model, t)].join(' · '),
     [
       `- ${t.rating.intelligence}: ${rating.intelligence}`,
-      `- ${t.rating.cost}: ${rating.cost} (${detail.costNote})`,
-      `- ${t.rating.value}: ${rating.value} (${detail.valueNote})`,
+      `- ${t.rating.cost}: ${rating.cost}${detail.costNote ? ` (${detail.costNote})` : ''}`,
+      `- ${t.rating.value}: ${rating.value}`,
     ].join('\n'),
     `## ${d.breakdown}`,
     table(
@@ -199,10 +198,13 @@ export function modelMarkdown(
       ]),
       [1, 2, 3, 4],
     ),
-    detail.scoreNote,
-    `## ${d.facts}`,
-    detail.facts.map((fact) => `- ${fact.label}: ${fact.value ?? fact.empty}`).join('\n'),
-    detail.priceNotes.join('\n\n'),
+    about,
+    ...detail.groups.flatMap((group) => [
+      `## ${group.title}`,
+      group.facts.map((fact) => `- ${fact.label}: ${fact.value ?? fact.empty}`).join('\n'),
+      ...group.notes,
+      group.method !== null && about,
+    ]),
     usage && `## ${t.usage.title}`,
     usage &&
       (usage.notFound ??
@@ -218,7 +220,7 @@ export function modelMarkdown(
             .map((point) => [point.date, score(point.intelligence), score(point.value)]),
           [1, 2],
         ),
-    series.length >= 2 && d.historyNote,
+    about,
     `### ${d.changes}`,
     changes.length === 0
       ? fmt(d.noChanges, { date: history.changelog.start ?? historyStart })
@@ -267,6 +269,9 @@ export function methodMarkdown(dataset: Dataset, locale: Locale): string {
           `- ${row.rating}: ${row.tiers.map((tier) => `\`${tier.key}\` ${tier.label} ${tier.rule}`).join('; ')}`,
       )
       .join('\n'),
+    content.tiersCharts,
+    `## ${m.changesTitle}`,
+    content.changesBody,
     `## ${m.usageTitle}`,
     content.usage.body,
     content.usage.citation,
@@ -326,7 +331,8 @@ export function changelogMarkdown(changelog: Changelog, dataset: Dataset, locale
   const linkable = new Set(dataset.models.map((model) => model.id));
   return compose([
     `# ${c.title}`,
-    fmt(c.intro, { delta: changelogConfig.scoreDelta }),
+    c.intro,
+    link(t.usage.about, markdownUrl(locale, '/method')),
     link(c.feed, absoluteUrl(feedPath(locale))),
     changelog.start === null && c.empty,
     changelog.start !== null && changelog.days.length === 0 && c.none,

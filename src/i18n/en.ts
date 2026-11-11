@@ -108,16 +108,11 @@ export const en = {
       basicCheap: 'Affordable, less smart',
       basicPricey: 'Expensive, less smart',
     },
-    dividers:
-      'The lines mark where High intelligence ({score}) and High cost ({price} blended) begin.',
     notPlotted: 'Not plotted (no price or not rated): {names}',
     unlabelled: 'Not labelled in the chart: {names}',
     nameSeparator: ', ',
     barCaption: '{metric} by model',
-    tierLines: 'Hairlines mark where each tier begins.',
     trendCaption: '{metric} over time',
-    trendNote:
-      'As recorded each day; a figure holds until the next recorded change. Point at a line or pick a model below to follow it.',
     trendEmpty: 'The trend appears once a second day has been recorded.',
     follow: 'Follow {name}',
     export: 'Export image',
@@ -132,21 +127,15 @@ export const en = {
     frontier: 'Leader',
     normalized: 'Normalised',
     weight: 'Weight',
-    scoreNote: 'Intelligence is the weighted mean of the normalised leaderboard scores above.',
-    coverageNote:
-      'This model is on {n} of the {total} leaderboards. The ones it is not on are left out of the mean, not counted as 0.',
-    unratedNote: "This model isn't on any of these leaderboards yet, so it isn't rated.",
     notMapped: 'Not listed',
     notFound: 'Not in the snapshot',
     facts: 'Facts',
-    price: 'Price',
+    price: 'Price, USD per 1M tokens',
     input: 'Input',
     output: 'Output',
     cacheRead: 'Cache read',
     blended: 'Blended',
     blendedUnit: 'Blended, USD per 1M tokens',
-    priceNote:
-      'Prices are in USD per 1M tokens. The blended price mixes cache reads, input and output {cache}:{input}:{output}, so about {hit}% of input tokens count as cache hits.',
     priceOverride: 'Price entered by hand; the models.dev figure is not used.',
     context: 'Context window',
     tokens: '{n} tokens',
@@ -159,16 +148,11 @@ export const en = {
     modalityOut: 'Out',
     indexCost: 'Cost to run the AA Intelligence Index',
     effectivePrice: 'Price counted in value',
-    valueFromRunCost: 'Counted at {price} per 1M tokens, from the measured run cost',
-    valueFromListPrice: 'From the blended price; no run cost measured',
-    runCostNote:
-      'Value uses that run cost, not the price list: divided by {typical} million tokens, the typical use among the models listed here, it gives the price counted in value.',
     links: 'Source data',
     linkModelsdev: 'models.dev',
     linkAa: 'Artificial Analysis model page',
     linkJson: "This model's JSON",
     history: 'History',
-    historyNote: 'Scores as recorded each day; a score holds until the next recorded change.',
     historyStart:
       'History for this model starts on {date}. The chart appears once a second day is recorded.',
     historyData: 'Recorded scores',
@@ -177,7 +161,6 @@ export const en = {
     noChanges: 'No changes since {date}.',
     allChanges: 'All changes',
     discussion: 'Discussion',
-    discussionNote: 'Comments are GitHub Discussions; you need a GitHub account to post.',
   },
   metric: {
     aa_intelligence: 'AA Intelligence Index',
@@ -223,6 +206,11 @@ export const en = {
     tierRating: 'Rating',
     tierConditions: 'Tiers and conditions',
     blendedShort: 'blended',
+    tiersCharts:
+      "On the home page charts, the quadrant's dividing lines sit where High intelligence ({score}) and High cost ({price} blended) begin, and the hairlines in the bars mark where each tier begins.",
+    changesTitle: 'Changes and history',
+    changesBody:
+      'Ratings are recorded once a day, after the data sync, and a recorded figure holds until the next recorded change: that is how the history and trend charts draw it. The Changes page lists only changes that matter: tiers, prices, new leaders, models added or removed, and scores that moved {delta} points or more since they were last listed.',
     usageTitle: 'OpenRouter usage',
     usageBody:
       "Model pages, and an optional column on the home page, show how much each model was used through OpenRouter. The figures come from OpenRouter's rankings dataset, for the 7 whole UTC days before each sync. Tokens are summed per model, and the rank is the model's place by that total among every model in the dataset. A rank is shown only for models in OpenRouter's daily top 50 on every one of those days, since a model missing some days is undercounted. Each model is matched to exactly one OpenRouter build. Usage is shown for reference and is not part of any rating.",
@@ -287,14 +275,11 @@ export const en = {
   },
   compare: {
     title: 'Compare models',
-    intro:
-      'Up to {n} models side by side. The address keeps the selection, so the page can be shared.',
     add: 'Add a model',
     remove: 'Remove {name}',
     empty: 'Pick a model to start comparing.',
     full: 'Showing the maximum of {n} models.',
     best: 'best',
-    bestNote: 'The best figure in each row is in bold.',
     ratings: 'Ratings',
     leaderboards: 'Leaderboards',
     prices: 'Price, USD per 1M tokens',
@@ -312,8 +297,7 @@ export const en = {
   },
   changelog: {
     title: 'Changes',
-    intro:
-      'What changed in the ratings. They are recorded once a day after the data sync, and only changes that matter are listed: tiers, prices, new leaders, models added or removed, and scores that moved {delta} points or more since they were last listed.',
+    intro: 'What changed in the ratings.',
     start: 'History starts on {date}.',
     empty: 'Nothing has been recorded yet.',
     none: 'No changes yet.',

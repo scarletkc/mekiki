@@ -1,0 +1,22 @@
+---
+import Info from '@lucide/astro/icons/info';
+import { localePath, useTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+  section?: string;
+}
+
+const { locale, section } = Astro.props;
+const t = useTranslations(locale);
+const href = `${localePath(locale, '/method')}${section ? `#${section}` : ''}`;
+---
+
+<a
+  href={href}
+  class="text-muted-foreground hover:text-foreground inline-flex shrink-0 transition-colors"
+  aria-label={t.usage.about}
+  title={t.usage.about}
+>
+  <Info class="size-4" />
+</a>

@@ -6,10 +6,9 @@ interface Props {
   term: string;
   lang: string;
   heading: string;
-  note: string;
 }
 
-const { term, lang, heading, note } = Astro.props;
+const { term, lang, heading } = Astro.props;
 const attributes = giscusAttributes(giscusConfig, { term, lang });
 const origin = GISCUS_ORIGIN;
 const themes = GISCUS_THEMES;
@@ -19,11 +18,10 @@ const themes = GISCUS_THEMES;
 {
   attributes && (
     <section aria-labelledby="discussion" class="mt-10">
-      <h2 id="discussion" class="mb-1 text-lg font-semibold tracking-tight">
+      <h2 id="discussion" class="text-lg font-semibold tracking-tight">
         {heading}
       </h2>
-      <p class="text-muted-foreground max-w-[68ch] text-sm">{note}</p>
-      <div class="giscus mt-4" />
+      <div class="giscus mt-3" />
       <script is:inline define:vars={{ attributes, origin, themes }}>
         var root = document.documentElement;
         var container = document.querySelector('.giscus');

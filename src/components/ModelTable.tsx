@@ -101,6 +101,7 @@ interface ModelTableProps {
   strings: ModelTableStrings;
   lang: string;
   compareHref: string;
+  methodHref: string;
   trend: TrendData;
   usageAvailable: boolean;
 }
@@ -449,6 +450,7 @@ export function ModelTable({
   strings,
   lang,
   compareHref,
+  methodHref,
   trend,
   usageAvailable,
 }: ModelTableProps) {
@@ -604,8 +606,14 @@ export function ModelTable({
   const rows = table.getRowModel().rows;
   const shown = useMemo(() => rows.map((row) => row.original), [rows]);
   const chartStrings = useMemo(
-    () => ({ chart, tier, empty, rating: strings.rating }),
-    [chart, tier, empty, strings.rating],
+    () => ({
+      chart,
+      tier,
+      empty,
+      rating: strings.rating,
+      method: { href: methodHref, label: u.about },
+    }),
+    [chart, tier, empty, strings.rating, methodHref, u.about],
   );
   const filtersActive =
     filters.q.trim() !== '' ||
