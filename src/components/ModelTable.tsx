@@ -102,7 +102,7 @@ interface ModelTableProps {
   lang: string;
   compareHref: string;
   trend: TrendData;
-  usageNote: { citation: string; href: string; about: string; aboutHref: string } | null;
+  usageAvailable: boolean;
 }
 
 const features = tableFeatures({
@@ -450,7 +450,7 @@ export function ModelTable({
   lang,
   compareHref,
   trend,
-  usageNote,
+  usageAvailable,
 }: ModelTableProps) {
   const { table: t, tier, empty, badge, compare, chart, usage: u } = strings;
 
@@ -466,12 +466,12 @@ export function ModelTable({
   );
 
   useEffect(() => {
-    const fromUrl = readUrl(vendors, usageNote !== null);
+    const fromUrl = readUrl(vendors, usageAvailable);
     setFilters(fromUrl.filters);
     setSorting(fromUrl.sorting);
     setDisplay(fromUrl.display);
     setUrlRead(true);
-  }, [vendors, usageNote]);
+  }, [vendors, usageAvailable]);
 
   useEffect(() => {
     if (urlRead) writeUrl(filters, sorting, display);
@@ -707,7 +707,7 @@ export function ModelTable({
           <p className="text-muted-foreground num text-sm" aria-live="polite">
             {fmt(t.count, { shown: rows.length, total: filtered.total })}
           </p>
-          {usageNote && display.view === 'table' && (
+          {usageAvailable && display.view === 'table' && (
             <Button
               variant="outline"
               size="sm"
@@ -966,20 +966,6 @@ export function ModelTable({
           </Button>
         )}
       </div>
-      {usageNote && display.usage && display.view === 'table' && (
-        <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
-          <a className="hover:text-foreground underline underline-offset-4" href={usageNote.href}>
-            {usageNote.citation}
-          </a>
-          <span aria-hidden="true"> · </span>
-          <a
-            className="hover:text-foreground underline underline-offset-4"
-            href={usageNote.aboutHref}
-          >
-            {usageNote.about}
-          </a>
-        </p>
-      )}
     </div>
   );
 }

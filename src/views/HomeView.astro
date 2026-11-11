@@ -6,8 +6,7 @@ import Base from '../layouts/Base.astro';
 import { trendSeries } from '../lib/charts';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
-import { SOURCE_INFO } from '../lib/snapshots';
-import { usageCell, usageCitation, usagePeriod } from '../lib/usage';
+import { usageCell, usagePeriod } from '../lib/usage';
 
 interface Props {
   locale: Locale;
@@ -17,15 +16,8 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 const dataset = await getDataset();
 const period = usagePeriod(dataset);
-const usageNote =
-  period && dataset.models.some((model) => model.openrouter?.rank != null)
-    ? {
-        citation: usageCitation(period, t),
-        href: SOURCE_INFO.openrouter.url,
-        about: t.usage.about,
-        aboutHref: `${localePath(locale, '/method')}#usage`,
-      }
-    : null;
+const usageAvailable =
+  period !== null && dataset.models.some((model) => model.openrouter?.rank != null);
 
 const rows: ModelRow[] = dataset.models.map((model) => ({
   id: model.id,
@@ -104,6 +96,6 @@ const strings = {
     lang={LOCALE_INFO[locale].tag}
     compareHref={localePath(locale, '/compare')}
     trend={trend}
-    usageNote={usageNote}
+    usageAvailable={usageAvailable}
   />
 </Base>

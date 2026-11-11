@@ -4,6 +4,7 @@ import ArrowRight from '@lucide/astro/icons/arrow-right';
 import Braces from '@lucide/astro/icons/braces';
 import Columns2 from '@lucide/astro/icons/columns-2';
 import ExternalLink from '@lucide/astro/icons/external-link';
+import Info from '@lucide/astro/icons/info';
 import ShareButton from '../components/ShareButton.astro';
 import ChangeText from '../components/ChangeText.astro';
 import Giscus from '../components/Giscus.astro';
@@ -22,7 +23,6 @@ import { scoringConfig } from '../lib/scoring.config';
 import { modelImagePath, modelShareText } from '../lib/share';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
-import { SOURCE_INFO } from '../lib/snapshots';
 import { usageBadge, usageDetail, usagePeriod } from '../lib/usage';
 
 interface Props {
@@ -326,7 +326,17 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       {
         usage && (
           <section aria-labelledby="usage">
-            <h2 id="usage" class="mt-8 mb-3 text-lg font-semibold tracking-tight">{t.usage.title}</h2>
+            <h2 id="usage" class="mt-8 mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight">
+              {t.usage.title}
+              <a
+                href={`${localePath(locale, '/method')}#usage`}
+                class="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={t.usage.about}
+                title={t.usage.about}
+              >
+                <Info class="size-4" />
+              </a>
+            </h2>
             {usage.notFound ? (
               <p class="text-muted-foreground">{usage.notFound}</p>
             ) : (
@@ -339,11 +349,6 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
                 ))}
               </dl>
             )}
-            <p class="text-muted-foreground mt-3 text-xs leading-relaxed">
-              <a class="hover:text-foreground underline underline-offset-4" href={SOURCE_INFO.openrouter.url}>{usage.citation}</a>
-              <span aria-hidden="true"> · </span>
-              <a class="hover:text-foreground underline underline-offset-4" href={`${localePath(locale, '/method')}#usage`}>{t.usage.about}</a>
-            </p>
           </section>
         )
       }
