@@ -8,7 +8,7 @@ import { formatDateTime, formatPercent, formatPrice, formatScore } from './forma
 import { utcDate, type HistoryEntry } from './history';
 import { methodContent } from './method';
 import { modelDetail } from './model-detail';
-import { usageBadge, usageCitation, usageDetail, usagePeriod, type UsagePeriod } from './usage';
+import { usageCitation, usageDetail, usagePeriod } from './usage';
 
 export const LLMS_PATH = '/llms.txt';
 
@@ -69,11 +69,10 @@ function ratingText(model: ModelRecord, t: Dictionary) {
   };
 }
 
-function badges(model: ModelRecord, t: Dictionary, period: UsagePeriod | null): string[] {
+function badges(model: ModelRecord, t: Dictionary): string[] {
   return [
     model.status === 'legacy' ? t.badge.legacy : null,
     model.facts.open_weights === true ? t.badge.openWeights : null,
-    usageBadge(model, period, t)?.label ?? null,
   ].filter((badge) => badge !== null);
 }
 
@@ -109,7 +108,7 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
     const rating = ratingText(model, t);
     const name = link(model.name, markdownUrl(locale, `/m/${model.id}`));
     return [
-      [name, ...badges(model, t, null).map((badge) => `(${badge})`)].join(' '),
+      [name, ...badges(model, t).map((badge) => `(${badge})`)].join(' '),
       model.vendor,
       rating.intelligence,
       rating.cost,
@@ -181,7 +180,7 @@ export function modelMarkdown(
 
   return compose([
     `# ${model.name}`,
-    [model.vendor, `\`${model.id}\``, ...badges(model, t, period)].join(' · '),
+    [model.vendor, `\`${model.id}\``, ...badges(model, t)].join(' · '),
     [
       `- ${t.rating.intelligence}: ${rating.intelligence}`,
       `- ${t.rating.cost}: ${rating.cost}${detail.costNote ? ` (${detail.costNote})` : ''}`,

@@ -23,7 +23,7 @@ import { scoringConfig } from '../lib/scoring.config';
 import { modelImagePath, modelShareText } from '../lib/share';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
-import { usageBadge, usageDetail, usagePeriod } from '../lib/usage';
+import { usageDetail, usagePeriod } from '../lib/usage';
 
 interface Props {
   locale: Locale;
@@ -38,7 +38,6 @@ const { metrics, links, costNote, groups } = modelDetail(model, t);
 
 const period = usagePeriod(dataset);
 const usage = period ? usageDetail(model, period, t) : null;
-const usageTag = usageBadge(model, period, t);
 
 const badgeClass = badgeVariants({
   variant: 'outline',
@@ -88,7 +87,6 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         <h1 class="text-2xl font-semibold tracking-tight break-words sm:text-3xl">{model.name}</h1>
         {model.status === 'legacy' && <span class={badgeClass}>{t.badge.legacy}</span>}
         {model.facts.open_weights === true && <span class={badgeClass}>{t.badge.openWeights}</span>}
-        {usageTag && <span class={`${badgeClass} num`} title={usageTag.title}>{usageTag.label}</span>}
       </div>
       <p class="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         {model.vendor}
@@ -133,10 +131,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       {costNote && <dd class="text-muted-foreground mt-1 text-xs">{costNote}</dd>}
     </div>
     <div class="bg-card rounded-xl border px-4 py-3.5">
-      <dt class="text-muted-foreground flex items-center gap-1.5 text-xs">
-        {t.rating.value}
-        <MethodLink locale={locale} section="value" small />
-      </dt>
+      <dt class="text-muted-foreground text-xs">{t.rating.value}</dt>
       <dd class="mt-1.5 text-base">
         <TierMeter
           kind="value"
