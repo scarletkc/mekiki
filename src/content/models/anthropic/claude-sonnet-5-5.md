@@ -7,5 +7,6 @@ sources:
   aa: claude-sonnet-5-5
   arena_text: "Claude Sonnet 5.5 (xHigh)"
   arena_webdev: "Claude Sonnet 5.5 (xHigh)"
+  arena_agent: "Claude Sonnet 5.5 (Max)"
   livebench: claude-sonnet-5.5
 ---

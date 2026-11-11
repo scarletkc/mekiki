@@ -389,10 +389,11 @@ describe('metric weights', () => {
   it('counts each leaderboard once and LiveBench for the categories it keeps', () => {
     expect(livebenchKeptShare).toBeCloseTo(5.5 / 9, 12);
     const { breakdown } = computeBenchmark({}, {});
-    expect(breakdown.aa_intelligence?.weight).toBe(0.2769);
-    expect(breakdown.arena_text?.weight).toBe(0.2769);
-    expect(breakdown.arena_webdev?.weight).toBe(0.2769);
-    expect(breakdown.livebench?.weight).toBe(0.1692);
+    expect(breakdown.aa_intelligence?.weight).toBe(0.2169);
+    expect(breakdown.arena_text?.weight).toBe(0.2169);
+    expect(breakdown.arena_webdev?.weight).toBe(0.2169);
+    expect(breakdown.arena_agent?.weight).toBe(0.2169);
+    expect(breakdown.livebench?.weight).toBe(0.1325);
   });
 });
 

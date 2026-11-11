@@ -130,6 +130,7 @@ export const zhCN: Dictionary = {
     livebench: 'LiveBench',
     arena_text: 'Arena 文本榜',
     arena_webdev: 'Arena WebDev 榜',
+    arena_agent: 'Arena Agent 榜',
   },
   method: {
     title: '评分方法',
@@ -137,7 +138,7 @@ export const zhCN: Dictionary = {
       '每个模型有三个评级：智能、成本、性价比。下面的权重和阈值都直接读自评分配置，改了配置这里会跟着变。',
     intelligenceTitle: '智能',
     intelligenceBody:
-      '每个榜单指标先归一化到 0–100，100 表示该指标当前的榜首。AA 智能指数从 0 起算。其余指标只取榜首往下固定的一段，范围见下表：Elo 分没有有意义的零点，LiveBench 的分数又挤得太近，从 0 算拉不开差距。',
+      '每个榜单指标先归一化到 0–100，100 表示该指标当前的榜首。AA 智能指数从 0 起算。其余指标只取榜首往下固定的一段，范围见下表：Elo 分和 Agent 榜的分数都没有有意义的零点，LiveBench 的分数又挤得太近，从 0 算拉不开差距。',
     benchmarkBody:
       '分数是模型已有指标的加权平均。模型缺某个榜时按其余榜单计算，一个榜单都没上的模型不评级。每个榜单只算一次：AA 智能指数已经包含的榜单（如 Terminal-Bench、FrontierCode）不采用，和它部分重叠的榜单只计不重叠的部分。',
     livebenchBody:
@@ -172,7 +173,7 @@ export const zhCN: Dictionary = {
     sourceUpdated: '数据更新于',
     useModelsdev: '价格、上下文长度、发布日期、是否开源权重、模态',
     useAa: '智能指数、评测总花费',
-    useArena: '文本榜和 WebDev 榜的分数',
+    useArena: '文本榜、WebDev 榜和 Agent 榜的分数',
     useLivebench: 'AA 没有测的那几个分类的得分',
     licenseAa: '按其条款署名',
     licenseNone: '未声明许可，注明来源',

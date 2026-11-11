@@ -130,6 +130,7 @@ export const zhTW: Dictionary = {
     livebench: 'LiveBench',
     arena_text: 'Arena 文字榜',
     arena_webdev: 'Arena WebDev 榜',
+    arena_agent: 'Arena Agent 榜',
   },
   method: {
     title: '評分方法',
@@ -137,7 +138,7 @@ export const zhTW: Dictionary = {
       '每個模型有三個評級：智慧、成本、性價比。下面的權重和門檻都直接讀自評分設定，設定改了這裡會跟著變。',
     intelligenceTitle: '智慧',
     intelligenceBody:
-      '每個榜單指標先正規化到 0–100，100 代表該指標目前的榜首。AA 智慧指數從 0 起算。其餘指標只取榜首往下固定的一段，範圍見下表：Elo 分沒有有意義的零點，LiveBench 的分數又擠得太近，從 0 算拉不開差距。',
+      '每個榜單指標先正規化到 0–100，100 代表該指標目前的榜首。AA 智慧指數從 0 起算。其餘指標只取榜首往下固定的一段，範圍見下表：Elo 分和 Agent 榜的分數都沒有有意義的零點，LiveBench 的分數又擠得太近，從 0 算拉不開差距。',
     benchmarkBody:
       '分數是模型已有指標的加權平均。模型缺某個榜時依其餘榜單計算，一個榜單都沒上的模型不評級。每個榜單只算一次：AA 智慧指數已經包含的榜單（如 Terminal-Bench、FrontierCode）不採用，和它部分重疊的榜單只計不重疊的部分。',
     livebenchBody:
@@ -172,7 +173,7 @@ export const zhTW: Dictionary = {
     sourceUpdated: '資料更新於',
     useModelsdev: '價格、上下文長度、發布日期、是否開放權重、模態',
     useAa: '智慧指數、評測總花費',
-    useArena: '文字榜和 WebDev 榜的分數',
+    useArena: '文字榜、WebDev 榜和 Agent 榜的分數',
     useLivebench: 'AA 沒有測的那幾個分類的得分',
     licenseAa: '依其條款標示來源',
     licenseNone: '未聲明授權，標示來源',

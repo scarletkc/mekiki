@@ -103,8 +103,18 @@ const snapshots: Snapshots = {
     fetched_at: '2026-11-10T12:00:00.000Z',
     frontier: { arena_text: 1500, arena_webdev: 1800 },
     models: {
-      'Flagship (High)': { arena_text: 1490, arena_webdev: null, published: '2026-11-09' },
-      'Flagship (Max)': { arena_text: null, arena_webdev: 1790, published: '2026-11-09' },
+      'Flagship (High)': {
+        arena_text: 1490,
+        arena_webdev: null,
+        arena_agent: null,
+        published: '2026-11-09',
+      },
+      'Flagship (Max)': {
+        arena_text: null,
+        arena_webdev: 1790,
+        arena_agent: null,
+        published: '2026-11-09',
+      },
     },
   },
   livebench: null,
@@ -224,6 +234,7 @@ describe('buildDataset', () => {
       aa: 'flagship',
       arena_text: 'Flagship (High)',
       arena_webdev: 'Flagship (Max)',
+      arena_agent: null,
       livebench: null,
     });
     expect(first?.matched).toEqual({
@@ -442,6 +453,7 @@ describe('buildDataset', () => {
       livebench: null,
       arena_text: null,
       arena_webdev: null,
+      arena_agent: null,
     });
     expect(latestSync(empty)).toBeNull();
   });
@@ -460,7 +472,7 @@ describe('scoring config', () => {
   it('reads every metric from a snapshot the model files can map to', () => {
     const everything = entry(
       'a/b',
-      'name: B\nvendor: A\nsources:\n  aa: x\n  arena_text: x\n  arena_webdev: x\n  livebench: x',
+      'name: B\nvendor: A\nsources:\n  aa: x\n  arena_text: x\n  arena_webdev: x\n  arena_agent: x\n  livebench: x',
     );
     const mappings = Object.keys(everything.data.sources);
     for (const key of METRIC_KEYS) {
@@ -496,6 +508,7 @@ describe('JSON API', () => {
           arena_text: { raw: 1490, normalized: 96.7, weight: 0.3 },
           arena_webdev: { raw: 1790, normalized: 96.7, weight: 0.2 },
           // Metrics the config in use here does not have are reported empty.
+          arena_agent: { raw: null, normalized: null, weight: 0 },
           livebench: { raw: null, normalized: null, weight: 0 },
         },
       },

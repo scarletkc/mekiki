@@ -1,65 +1,83 @@
 {
   "source": "arena",
-  "fetched_at": "2026-11-10T17:40:53.455Z",
+  "fetched_at": "2026-11-11T08:07:23.479Z",
   "total": 421,
   "frontier": {
     "arena_text": 1538.28,
-    "arena_webdev": 1817.7
+    "arena_webdev": 1835.76,
+    "arena_agent": 0.1996
   },
   "models": {
     "Claude Haiku 5.5 (High)": {
       "arena_text": 1398.7,
-      "arena_webdev": 1595.12,
+      "arena_webdev": 1593.84,
+      "arena_agent": 0.0043,
       "published": "2026-11-09"
     },
     "Claude Opus 5 (Max)": {
       "arena_text": 1506.32,
-      "arena_webdev": 1690.84,
+      "arena_webdev": 1690.97,
+      "arena_agent": 0.075,
       "published": "2026-11-09"
     },
     "Claude Opus 5.5 (High)": {
       "arena_text": 1513,
       "arena_webdev": null,
+      "arena_agent": null,
       "published": "2026-11-09"
     },
     "Claude Opus 5.5 (Max)": {
       "arena_text": null,
-      "arena_webdev": 1817.7,
-      "published": "2026-11-09"
+      "arena_webdev": 1814.28,
+      "arena_agent": 0.1996,
+      "published": "2026-11-10"
+    },
+    "Claude Sonnet 5.5 (Max)": {
+      "arena_text": null,
+      "arena_webdev": null,
+      "arena_agent": 0.1599,
+      "published": "2026-11-08"
     },
     "Claude Sonnet 5.5 (xHigh)": {
       "arena_text": 1468.82,
-      "arena_webdev": 1774.26,
+      "arena_webdev": 1772.54,
+      "arena_agent": null,
       "published": "2026-11-09"
     },
     "DeepSeek-V4-Pro (High, 20260813)": {
       "arena_text": 1444.95,
-      "arena_webdev": 1581.19,
+      "arena_webdev": 1581.15,
+      "arena_agent": null,
       "published": "2026-11-09"
     },
     "Gemini 3.8 Flash (High)": {
       "arena_text": 1500.41,
-      "arena_webdev": 1583.8,
+      "arena_webdev": 1582.65,
+      "arena_agent": 0.0238,
       "published": "2026-11-09"
     },
     "Gemini 4 Argon (High)": {
       "arena_text": 1530.16,
-      "arena_webdev": 1682.59,
+      "arena_webdev": 1682.06,
+      "arena_agent": 0.1083,
       "published": "2026-11-09"
     },
     "GPT-6.1 Sol (Max)": {
       "arena_text": 1445.94,
-      "arena_webdev": 1742.84,
+      "arena_webdev": 1743.02,
+      "arena_agent": 0.1253,
       "published": "2026-11-09"
     },
     "GPT-6.1 Terra (Max)": {
       "arena_text": null,
-      "arena_webdev": 1678.73,
-      "published": "2026-11-09"
+      "arena_webdev": 1678.5,
+      "arena_agent": 0.121,
+      "published": "2026-11-10"
     },
     "Grok 4.7 (xHigh)": {
       "arena_text": 1398.47,
-      "arena_webdev": 1639.36,
+      "arena_webdev": 1640.95,
+      "arena_agent": 0.0265,
       "published": "2026-11-09"
     }
   }

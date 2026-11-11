@@ -118,6 +118,12 @@ describe('Arena adapter', () => {
     category,
     leaderboard_publish_date: '2026-11-09',
   });
+  const agentRow = (name: string, score: number) => ({
+    model_name: name,
+    score,
+    category: 'overall',
+    leaderboard_publish_date: '2026-11-08',
+  });
   const raw = {
     arena_text: [
       row('Gemini 4 Carbon (High)', 1538.2768191996465),
@@ -131,6 +137,11 @@ describe('Arena adapter', () => {
       row('Claude Opus 5 (Max)', 1700.4),
       row('Claude Opus 5 (Max)', 1650, 'webdev-react'),
     ],
+    // The agent board has a `score` column instead of `rating`.
+    arena_agent: [
+      agentRow('Claude Opus 5.5 (Max)', 0.1995562589597002),
+      agentRow('Claude Opus 5 (Max)', 0.07495110951590737),
+    ],
   };
 
   it('reads each board through its own mapping and takes the frontier from the full board', () => {
@@ -138,19 +149,41 @@ describe('Arena adapter', () => {
       tracked('anthropic/claude-opus-5-5', 'Claude Opus 5.5', {
         arena_text: 'Claude Opus 5.5 (High)',
         arena_webdev: 'Claude Opus 5.5 (Max)',
+        arena_agent: 'Claude Opus 5.5 (Max)',
       }),
       tracked('anthropic/claude-opus-5', 'Claude Opus 5', {
         arena_text: 'Claude Opus 5 (Max)',
         arena_webdev: 'Claude Opus 5 (Max)',
+        arena_agent: 'Claude Opus 5 (Max)',
       }),
     ]);
     expect(snapshot.total).toBe(4);
-    expect(snapshot.frontier).toEqual({ arena_text: 1538.28, arena_webdev: 1817.7 });
+    // Agent scores keep four decimals; ratings keep two.
+    expect(snapshot.frontier).toEqual({
+      arena_text: 1538.28,
+      arena_webdev: 1817.7,
+      arena_agent: 0.1996,
+    });
     expect(snapshot.models).toEqual({
-      'Claude Opus 5.5 (High)': { arena_text: 1513, arena_webdev: null, published: '2026-11-09' },
-      'Claude Opus 5.5 (Max)': { arena_text: null, arena_webdev: 1817.7, published: '2026-11-09' },
-      // Same name on both boards: one entry carrying both ratings.
-      'Claude Opus 5 (Max)': { arena_text: 1506.3, arena_webdev: 1700.4, published: '2026-11-09' },
+      'Claude Opus 5.5 (High)': {
+        arena_text: 1513,
+        arena_webdev: null,
+        arena_agent: null,
+        published: '2026-11-09',
+      },
+      'Claude Opus 5.5 (Max)': {
+        arena_text: null,
+        arena_webdev: 1817.7,
+        arena_agent: 0.1996,
+        published: '2026-11-09',
+      },
+      // Same name on every board: one entry carrying all the ratings.
+      'Claude Opus 5 (Max)': {
+        arena_text: 1506.3,
+        arena_webdev: 1700.4,
+        arena_agent: 0.075,
+        published: '2026-11-09',
+      },
     });
     expect(unmatched).toEqual([]);
     expect(snapshotSchemas.arena.safeParse(withTimestamp(snapshot)).success).toBe(true);
@@ -164,6 +197,7 @@ describe('Arena adapter', () => {
     expect(unmatched.map(({ field, value }) => ({ field, value }))).toEqual([
       { field: 'sources.arena_text', value: 'claude opus 5 (high)' },
       { field: 'sources.arena_webdev', value: null },
+      { field: 'sources.arena_agent', value: null },
     ]);
     expect(unmatched[0]?.candidates.slice(0, 2).sort()).toEqual([
       'Claude Opus 5 (High)',
@@ -176,6 +210,16 @@ describe('Arena adapter', () => {
     expect(() => arenaAdapter.transform(raw.arena_text, [])).toThrow();
     expect(() => arenaAdapter.transform({ arena_text: raw.arena_text }, [])).toThrow();
     expect(() => arenaAdapter.transform({ ...raw, arena_webdev: [] }, [])).toThrow();
+    // An agent row read by the rating column would have no score.
+    expect(() =>
+      arenaAdapter.transform(
+        {
+          ...raw,
+          arena_agent: raw.arena_agent.map(({ score, ...rest }) => ({ ...rest, rating: score })),
+        },
+        [],
+      ),
+    ).toThrow();
     expect(() =>
       arenaAdapter.transform(
         { ...raw, arena_webdev: [{ nope: 1 }, { nope: 2 }, raw.arena_webdev[0]] },

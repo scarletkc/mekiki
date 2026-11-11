@@ -7,5 +7,6 @@ sources:
   aa: claude-opus-5
   arena_text: "Claude Opus 5 (Max)"
   arena_webdev: "Claude Opus 5 (Max)"
+  arena_agent: "Claude Opus 5 (Max)"
   livebench:
 ---

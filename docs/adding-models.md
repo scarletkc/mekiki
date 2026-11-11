@@ -17,6 +17,7 @@ Adding a model means adding one Markdown file. Nothing else needs to change.
      aa: gpt-6-1-sol                       # slug on Artificial Analysis
      arena_text: "GPT-6.1 Sol (Max)"       # exact name on the Arena text leaderboard
      arena_webdev: "GPT-6.1 Sol (Max)"     # exact name on the Arena WebDev leaderboard
+     arena_agent: "GPT-6.1 Sol (Max)"      # exact name on the Arena Agent leaderboard
      livebench: gpt-6.1-sol                # model ID on LiveBench
    ---
    ```
@@ -39,8 +40,8 @@ Adding a model means adding one Markdown file. Nothing else needs to change.
 
 - **Mappings are always explicit.** Names differ between leaderboards, and the same model
   is often listed once per reasoning level. Nothing is matched by guessing: choose the
-  entry for the level you actually use. The two Arena boards list different levels, so
-  each has its own field.
+  entry for the level you actually use. The Arena boards list different levels, so each
+  has its own field.
 - On Artificial Analysis, the base slug without a suffix (`gpt-6-1-sol`, not
   `gpt-6-1-sol-high`) is usually the model's top reasoning level. Pick a suffixed slug to
   rate a different level.

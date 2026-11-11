@@ -19,8 +19,9 @@ mekiki rates a short list of AI models on how smart they are, what they cost, an
 intelligence you get for the money. The numbers come from public leaderboards and
 official prices, and refresh every day.
 
-- **No hand-entered scores.** Intelligence combines four public leaderboards: the
-  Artificial Analysis Intelligence Index, Arena's text and WebDev boards, and LiveBench.
+- **No hand-entered scores.** Intelligence combines five public leaderboards: the
+  Artificial Analysis Intelligence Index, Arena's text, WebDev and Agent boards, and
+  LiveBench.
   Every weight and threshold is published on the Method page.
 - **Value counts the tokens a model burns.** Two models with the same price per token can
   cost very different amounts to use. Value is priced on what it actually cost to run each
@@ -50,9 +51,10 @@ official prices, and refresh every day.
 
 ## How the ratings work
 
-**Intelligence** is one score blended from four leaderboards, and each one counts once.
+**Intelligence** is one score blended from five leaderboards, and each one counts once.
 A leaderboard the Artificial Analysis Intelligence Index already contains, such as
-Terminal-Bench, is not used. The index and Arena's text and WebDev boards count the same;
+Terminal-Bench, is not used. The index and Arena's text, WebDev and Agent boards count the
+same;
 LiveBench counts only for the categories the index does not test, which carry 61% of
 LiveBench's own weights. Each leaderboard is normalised so its current leader scores 100,
 and a model is rated on the leaderboards it is on. A model on none of them is shown as not
@@ -105,7 +107,7 @@ file, and [adding a model](docs/adding-models.md) walks through it.
 | Source | Used for |
 | --- | --- |
 | [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index, and what it cost to run the index on each model |
-| [Arena](https://arena.ai/leaderboard) | Text and WebDev leaderboard ratings, from the [`lmarena-ai/leaderboard-dataset`](https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset) dataset (CC BY 4.0) |
+| [Arena](https://arena.ai/leaderboard) | Text and WebDev ratings and Agent Arena scores, from the [`lmarena-ai/leaderboard-dataset`](https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset) dataset (CC BY 4.0) |
 | [LiveBench](https://livebench.ai/) | Score across the categories the AA index does not test |
 | [models.dev](https://models.dev) | Prices, context window, release date, open weights and modalities |
 

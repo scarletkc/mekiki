@@ -9,7 +9,7 @@
 export type BenchmarkSource = 'aa' | 'arena' | 'livebench';
 
 /** The field under `sources` in a model file that names the model for a metric. */
-export type MappingField = 'aa' | 'arena_text' | 'arena_webdev' | 'livebench';
+export type MappingField = 'aa' | 'arena_text' | 'arena_webdev' | 'arena_agent' | 'livebench';
 
 /**
  * How the 0 point of a metric is chosen when normalising to 0–100.
@@ -148,6 +148,16 @@ const metrics = {
     weight: 1,
     floor: { type: 'below_frontier', gap: 450 },
     url: 'https://arena.ai/leaderboard/webdev',
+  },
+  // How a model does on real agent sessions rather than in votes: an IPS
+  // score, about −0.25 to 0.2 with 0 near the middle. A gap of 0.25 leaves
+  // about 70% of the board above the zero point (measured on 2026-11-11).
+  arena_agent: {
+    source: 'arena',
+    mapping: 'arena_agent',
+    weight: 1,
+    floor: { type: 'below_frontier', gap: 0.25 },
+    url: 'https://arena.ai/leaderboard/agent',
   },
   // The weighted mean of the categories AA does not already test. Those
   // scores sit close together (most models between 60 and 87), so counting

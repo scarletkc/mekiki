@@ -69,6 +69,8 @@ export const arenaModelSchema = z.object({
   arena_text: nullableNumber.default(null),
   /** Rating on the WebDev board. */
   arena_webdev: nullableNumber.default(null),
+  /** IPS score on the agent board (Agent Arena). */
+  arena_agent: nullableNumber.default(null),
   /** Date of the leaderboard release these ratings come from. */
   published: z.string().nullable(),
 });

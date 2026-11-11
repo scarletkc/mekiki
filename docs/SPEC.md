@@ -113,6 +113,7 @@ sources:                     # the model's ID in each source; omit what doesn't 
   aa: gpt-6-1-sol                  # Artificial Analysis slug
   arena_text: "GPT-6.1 Sol (Max)"  # exact name on the Arena text board
   arena_webdev: "GPT-6.1 Sol (Max)" # exact name on the Arena WebDev board
+  arena_agent: "GPT-6.1 Sol (Max)"  # exact name on the Arena Agent board
   livebench: gpt-6.1-sol           # model ID on LiveBench
 overrides:                   # optional
   price: { input: 5, output: 25 }  # USD per 1M tokens; cache_read optional
@@ -123,7 +124,7 @@ overrides:                   # optional
   nothing is matched by guessing. `pnpm sync` lists the mappings that did not match,
   with the closest names in that source; candidates are printed, never written.
 - Artificial Analysis and Arena often list one model once per reasoning level. A mapping
-  points at the level the maintainer actually uses. The two Arena boards list different
+  points at the level the maintainer actually uses. The Arena boards list different
   levels, so each has its own field.
 - A price override replaces the models.dev input and output prices. Without
   `cache_read`, the models.dev cache price is kept.
@@ -135,7 +136,7 @@ overrides:                   # optional
 | --- | --- | --- | --- |
 | [models.dev](https://models.dev) | Price (input, output, cache read), context window, release date, open weights, modalities | `GET https://models.dev/api.json`, no key | MIT. Data is grouped by provider and prices follow the provider, so `sources.modelsdev` carries the provider prefix |
 | [Artificial Analysis](https://artificialanalysis.ai/) | Intelligence Index; what it cost to run the index | Free API, key in the `x-api-key` header | Attribution required on every tier; the key never reaches the front end |
-| [Arena](https://arena.ai/leaderboard) | Text and WebDev board ratings | Hugging Face dataset `lmarena-ai/leaderboard-dataset`, configs `text` and `webdev`, split `latest`, no key | CC BY 4.0, attributed per the licence |
+| [Arena](https://arena.ai/leaderboard) | Text and WebDev board ratings; Agent Arena scores | Hugging Face dataset `lmarena-ai/leaderboard-dataset`, configs `text`, `webdev` and `agent`, split `latest`, no key | CC BY 4.0, attributed per the licence |
 | [LiveBench](https://livebench.ai/) | Score across the categories the AA Intelligence Index does not test | `data/<release>/table.csv` and `categories.json` on the site, no key | No licence stated for the scores (the code is Apache-2.0); attributed (§9) |
 
 - Artificial Analysis is read from `GET /api/v2/language/models/free?page=N`, the only
@@ -179,8 +180,11 @@ One file per source, for example `data/snapshots/aa.json`:
 - `models` keeps only the tracked models. `frontier` holds the best score of each metric
   across the source's whole leaderboard, not just the tracked models. Diffs stay small,
   and nobody else's full dataset is copied into the repository.
-- `arena.json` holds both boards, keyed by model name; each entry has `arena_text` and
-  `arena_webdev`, `null` when the model is not on that board.
+- `arena.json` holds the three boards, keyed by model name; each entry has `arena_text`,
+  `arena_webdev` and `arena_agent`, `null` when the model is not on that board. Agent
+  Arena does not rate by votes: each real agent session goes to a randomly chosen model,
+  and the score is an IPS estimate of the model's effect on the session's outcome
+  signals, about −0.25 to 0.2 with 0 near the middle.
 - `livebench.json` is keyed by model ID.
 - `edition` names the release of a leaderboard that has releases: LiveBench's release
   date.
@@ -257,9 +261,10 @@ n_s = clamp(100 × (x − floor_s) / (frontier_s − floor_s), 0, 100)
 - `floor_s` is a fixed raw score (`absolute`) only for the AA Intelligence Index, which
   starts at 0. The other metrics use `frontier_s − gap_s` (`below_frontier`), with a gap
   that leaves about 70% of the board above zero (measured on 2026-11-11). Elo ratings
-  have no meaningful zero, and the WebDev board is spread wider than the text board, so
-  it gets a wider gap. LiveBench's kept categories put most models between 60 and 87, so
-  counting from 0 would hardly tell them apart; its gap is 17.
+  and Agent Arena scores have no meaningful zero, and the WebDev board is spread wider
+  than the text board, so it gets a wider gap. LiveBench's kept categories put most
+  models between 60 and 87, so counting from 0 would hardly tell them apart; its gap
+  is 17.
 
 The score is the weighted mean of the metrics the model has:
 
@@ -268,15 +273,15 @@ intelligence = Σ(w_s × n_s) / Σ(w_s)    over the metrics the model has
 ```
 
 - **Each leaderboard counts once** (§9). One the AA Intelligence Index already contains,
-  such as Terminal-Bench or FrontierCode, is not used. The AA Intelligence Index, Arena
-  text and Arena WebDev weigh 1 each.
+  such as Terminal-Bench or FrontierCode, is not used. The AA Intelligence Index and
+  Arena's text, WebDev and Agent boards weigh 1 each.
 - **LiveBench counts only where it does not overlap with the index.** Its Coding (bug
   fixes in a real repository) and Long Agentic (long-running coding work) categories test
   the same kind of task as the index's FrontierCode and Terminal-Bench, so they are left
   out. The LiveBench score is the weighted mean of the other five (Reasoning, Data
   Analysis, Research, Browser, Design), and LiveBench weighs the share of its own
   category weights they carry: 5.5 of 9, about 0.61. With every metric present the shares
-  are 27.7% for each of the other three and 16.9% for LiveBench.
+  are 21.7% for each of the other four and 13.3% for LiveBench.
 - A missing metric is left out and the remaining weights are re-normalised.
 - A model on none of the leaderboards is not rated (`null`) and sorts last.
 - Every sync re-normalises to the current leader, so when a new model takes the lead,
@@ -431,10 +436,10 @@ Static files generated at build time (Astro static endpoints):
       "vendor": "...",
       "status": "active",
       "intelligence": {
-        "score": 95.1, "tier": "top", "label": "Top",
+        "score": 94.6, "tier": "top", "label": "Top",
         "labels": { "en": "Top", "zh-CN": "最高", "zh-TW": "最高" },
         "breakdown": {
-          "aa_intelligence": { "raw": 59.1, "normalized": 91.5, "weight": 0.2769 }
+          "aa_intelligence": { "raw": 59.1, "normalized": 91.5, "weight": 0.2169 }
         }
       },
       "cost": {
@@ -622,8 +627,8 @@ leaderboards. It was removed because:
   re-scored at every generation;
 - the alternatives fell short: normalising hand scores to the highest one still needs
   fine-grained numbers, coarse tiers can't follow new generations, and on-site voting
-  draws few votes, is easy to game and goes stale too. Arena's text and WebDev boards
-  are large-scale votes already and make up half the intelligence weight.
+  draws few votes, is easy to game and goes stale too. Arena's boards are large-scale
+  human signals already and make up most of the intelligence weight.
 
 A `subjective` block left in a model file is ignored. The API dropped
 `intelligence.basis`, `intelligence.subjective` and `intelligence.benchmark` (which had
