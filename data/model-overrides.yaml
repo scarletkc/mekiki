@@ -19,6 +19,19 @@ vendors:
   xAI: SpaceXSI
 
 models:
+  # Not discovered: DeepSeek's API sells V4.1 Flash 1017 as `deepseek-flash`, so
+  # its official price does not match the boards' "DeepSeek-V4.1-Flash" by name.
+  # 1017 and 0910 are different models: the text board has only 0910, so this
+  # model is not on it.
+  deepseek/deepseek-flash:
+    name: DeepSeek V4.1 Flash 1017
+    vendor: DeepSeek
+    sources:
+      aa: deepseek-v4-1-flash-1017
+      arena_text: null
+      arena_webdev: 'DeepSeek-V4.1-Flash-20261017 (Max)'
+      arena_agent: 'DeepSeek-V4.1-Flash-20261017 (Max)'
+      livebench: deepseek-v4.1-flash-1017
   # Superseded by Kimi K3.1 Pro, which the version rule cannot tell from the
   # name ("Pro" makes it another family).
   moonshotai/kimi-k3:
