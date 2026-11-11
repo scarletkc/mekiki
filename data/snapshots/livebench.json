@@ -1,6 +1,6 @@
 {
   "source": "livebench",
-  "fetched_at": "2026-11-11T10:02:21.054Z",
+  "fetched_at": "2026-11-11T13:57:27.450Z",
   "total": 34,
   "edition": "2026-11-06",
   "frontier": {
@@ -21,6 +21,9 @@
     },
     "claude-sonnet-5.5": {
       "livebench": 81.88
+    },
+    "deepseek-v4.1-flash-1017": {
+      "livebench": 78.93
     },
     "gemini-3.8-flash": {
       "livebench": 67.7

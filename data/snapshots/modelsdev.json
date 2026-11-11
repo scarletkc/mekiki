@@ -1,7 +1,7 @@
 {
   "source": "modelsdev",
-  "fetched_at": "2026-11-11T10:02:21.026Z",
-  "total": 9000,
+  "fetched_at": "2026-11-11T13:57:27.423Z",
+  "total": 8991,
   "frontier": {},
   "models": {
     "anthropic/claude-fable-5-1": {
@@ -112,6 +112,24 @@
           "text",
           "image",
           "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "deepseek/deepseek-flash": {
+      "name": "DeepSeek V4.1 Flash 1017",
+      "input": 0.15,
+      "output": 0.6,
+      "cache_read": 0.003,
+      "context": 1048576,
+      "release_date": "2026-10-17",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text",
+          "image"
         ],
         "output": [
           "text"

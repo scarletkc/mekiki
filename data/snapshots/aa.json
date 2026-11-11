@@ -1,6 +1,6 @@
 {
   "source": "aa",
-  "fetched_at": "2026-11-11T10:02:21.032Z",
+  "fetched_at": "2026-11-11T13:57:27.429Z",
   "total": 734,
   "frontier": {
     "aa_intelligence": 64.6
@@ -35,6 +35,11 @@
       "name": "Claude Sonnet 5.5 (Max, Default Fallback)",
       "aa_intelligence": 54.5,
       "index_cost_usd": 7980.63
+    },
+    "deepseek-v4-1-flash-1017": {
+      "name": "DeepSeek V4.1 Flash 1017 (Max)",
+      "aa_intelligence": 32.6,
+      "index_cost_usd": 520.63
     },
     "deepseek-v4-pro": {
       "name": "DeepSeek V4 Pro 0813 (Max)",

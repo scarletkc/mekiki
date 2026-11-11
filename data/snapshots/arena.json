@@ -1,6 +1,6 @@
 {
   "source": "arena",
-  "fetched_at": "2026-11-11T10:02:21.051Z",
+  "fetched_at": "2026-11-11T13:57:27.446Z",
   "total": 421,
   "frontier": {
     "arena_text": 1538.28,
@@ -61,6 +61,12 @@
       "arena_webdev": 1581.15,
       "arena_agent": null,
       "published": "2026-11-09"
+    },
+    "DeepSeek-V4.1-Flash-20261017 (Max)": {
+      "arena_text": null,
+      "arena_webdev": 1663.65,
+      "arena_agent": 0.0207,
+      "published": "2026-11-10"
     },
     "Gemini 3.1 Flash-Lite Preview": {
       "arena_text": 1415.98,
