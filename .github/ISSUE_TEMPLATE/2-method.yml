@@ -1,0 +1,42 @@
+name: The method seems unreasonable
+description: Weights, thresholds, formulas or data sources that seem wrong or unfair.
+labels: ['method']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The [Method page](https://mekiki.fog.moe/method) shows the formulas, weights and thresholds in use, read straight from the scoring config. The reasons behind them are in the [design document](https://github.com/scarletkc/mekiki/blob/main/docs/SPEC.md).
+
+        English or Chinese are both fine.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part
+      options:
+        - Intelligence score
+        - Cost
+        - Value
+        - Tiers and thresholds
+        - Data sources
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What seems unreasonable
+      description: What the method does, and why it is a problem. Models it rates badly make the case clearer.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would be better
+      description: Optional. A different weight, threshold, formula or source, and what it would change.
+  - type: checkboxes
+    id: read
+    attributes:
+      label: Before you submit
+      options:
+        - label: I have read the Method page.
+          required: true

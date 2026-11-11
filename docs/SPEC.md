@@ -628,8 +628,9 @@ build, so a rebuild does not look like news. Pages advertise their language's fe
 - Dark and light, following the system by default, with a manual switch.
 - Usable at 380 px wide: the table scrolls sideways with the first column pinned.
 - The footer carries the source attribution (Artificial Analysis, Arena, LiveBench,
-  models.dev),
-  the last sync time and a link to the repository.
+  models.dev), the last sync time, a feedback link and a link to the repository. The
+  site has no feedback form of its own: the link opens the repository's issue forms
+  (`.github/ISSUE_TEMPLATE`), so all feedback is kept in one place.
 - The mark is a vermilion seal with an eye on it, whose square pupil is cut out so the
   seal shows through. It is defined once in `src/lib/logo.ts`; the header, the favicon,
   the touch icon and the share images draw it from there.

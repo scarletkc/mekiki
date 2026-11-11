@@ -319,6 +319,7 @@ export const en = {
     never: 'never',
     built: 'Page built',
     repo: 'Source',
+    feedback: 'Feedback',
     listSeparator: ', ',
     fullStop: '. ',
   },
