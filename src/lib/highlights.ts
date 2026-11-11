@@ -76,7 +76,7 @@ export function buildHighlights(
   const frontierPrice = modelPrice(frontier);
   used.add(frontier.id);
 
-  let frontierContrast = h.frontier.unpriced;
+  let frontierContrast = t.empty.noPrice;
   if (
     frontier.facts.index_cost_usd !== null &&
     frontier.rating.value.cost_basis === 'run_cost' &&
@@ -87,7 +87,7 @@ export function buildHighlights(
       price: formatPrice(frontier.rating.value.effective_price),
     });
   } else if (frontier.rating.cost.free) {
-    frontierContrast = h.frontier.free;
+    frontierContrast = t.empty.free;
   } else if (frontier.rating.cost.blended !== null) {
     frontierContrast = fmt(h.frontier.blended, {
       price: formatPrice(frontier.rating.cost.blended),
@@ -143,7 +143,6 @@ export function buildHighlights(
       contrast = fmt(h.value.cheaper, {
         intel: intelPct,
         multiple: formatMultiple(frontierPrice / price),
-        price: formatPrice(price),
       });
     } else if (price !== null) {
       contrast = fmt(h.value.fallback, {
@@ -229,7 +228,6 @@ export function buildHighlights(
         : price !== null
           ? formatPrice(price)
           : t.empty.noPrice;
-      const tier = t.tier.value[sleeper.rating.value.tier];
       const rank = sleeper.openrouter?.rank;
       cards.push({
         kind: 'sleeper',
@@ -238,8 +236,8 @@ export function buildHighlights(
         stat: { value: formatScore(sleeper.rating.value.score), label: t.rating.value },
         contrast:
           rank != null
-            ? fmt(h.sleeper.ranked, { tier, rank, price: priceText })
-            : fmt(h.sleeper.unranked, { tier, price: priceText }),
+            ? fmt(h.sleeper.ranked, { rank, price: priceText })
+            : fmt(h.sleeper.unranked, { price: priceText }),
       });
       return cards;
     }
