@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { parseModelFile } from '../scripts/lib/content';
+import { parseModelEntry } from '@/lib/model-list';
 import { buildChangelog, changesFor, leaderOf, modelSeries, type Change } from '@/lib/changelog';
 import { buildDataset } from '@/lib/dataset';
 import {
@@ -69,10 +69,11 @@ const day = (date: string, models: Record<string, HistoryModel>): HistoryEntry =
 
 describe('history entries', () => {
   it('records what the dataset shows, keyed by model ID', () => {
-    const entry = parseModelFile(
-      '---\nname: Flagship\nvendor: Acme\noverrides:\n  price: { input: 1.25, output: 10 }\n---\n',
-      'acme/flagship.md',
-    );
+    const entry = parseModelEntry('acme/flagship', {
+      name: 'Flagship',
+      vendor: 'Acme',
+      overrides: { price: { input: 1.25, output: 10 } },
+    });
     const noSnapshots = Object.fromEntries(
       SOURCE_IDS.map((id) => [id, null]),
     ) as unknown as Snapshots;

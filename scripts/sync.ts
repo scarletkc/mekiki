@@ -1,15 +1,16 @@
 /**
- * `pnpm sync`: runs every source adapter and refreshes data/snapshots/.
+ * `pnpm sync`: fetches every source, rebuilds the model list and refreshes
+ * data/snapshots/.
  *
  *   pnpm sync                 all sources
  *   pnpm sync --only=arena    one source (repeatable, comma-separated)
  *   pnpm sync --dry-run       fetch and report, write nothing
  *
- * After the snapshots, today's ratings are recorded in data/history.jsonl
- * (see scripts/lib/history.ts), which the changelog, the RSS feeds and the
- * trend charts are built from. When every source was fetched, the run also
- * reports which models discovery would list (scripts/lib/discover.ts);
- * nothing is written for that yet.
+ * When every source was fetched, the model list (data/models.json) is
+ * rebuilt from them (scripts/lib/discover.ts); otherwise the previous list
+ * is kept. The snapshots then keep only the listed models. After that,
+ * today's ratings are recorded in data/history.jsonl once recording is on
+ * (see scripts/lib/history.ts).
  *
  * A source that fails, returns invalid data or returns suspiciously few
  * models keeps its old snapshot. The command still exits 0 so a broken
@@ -25,12 +26,24 @@ import {
   snapshotPath,
   type SourceId,
 } from '../src/lib/snapshots';
-import { readModelEntries } from './lib/content';
 import {
+  MODEL_LIST_FILE,
+  mergeModelList,
+  readGeneratedList,
+  readOverrides,
+  serializeModelList,
+  waitingOverrides,
+  type GeneratedModel,
+  type ModelOverrides,
+} from '../src/lib/model-list';
+import type { ModelEntry } from '../src/lib/model-schema';
+import {
+  PROVIDER_ALIASES,
   aaEntries,
   arenaEntries,
   discoverModels,
   discoveryReport,
+  generatedList,
   livebenchIds,
   modelsdevEntries,
 } from './lib/discover';
@@ -107,32 +120,32 @@ function describeError(error: unknown): string {
   return String(error);
 }
 
-async function syncSource<S extends SourceId>(
-  source: S,
-  entries: ReturnType<typeof readModelEntries>,
-  dryRun: boolean,
-  raws: Partial<Record<SourceId, unknown>>,
-): Promise<SourceReport> {
-  const adapter = adapters[source];
-  const report: SourceReport = {
-    source,
-    outcome: { status: 'failed', reason: 'unknown' },
-    unmatched: [],
-    warnings: [],
-  };
-
+/** Fetch one source. Returns its raw payload, or null with the reason in the report. */
+async function fetchSource(source: SourceId, report: SourceReport): Promise<unknown> {
   try {
-    const fetched = await adapter.fetch({ env: process.env });
+    const fetched = await adapters[source].fetch({ env: process.env });
     if ('skip' in fetched) {
       report.outcome = { status: 'skipped', reason: fetched.skip };
-      return report;
+      return null;
     }
-    raws[source] = fetched.raw;
+    return fetched.raw;
+  } catch (error) {
+    report.outcome = { status: 'failed', reason: describeError(error) };
+    return null;
+  }
+}
 
-    const { snapshot, unmatched, warnings } = adapter.transform(
-      fetched.raw,
-      trackedModels(entries),
-    );
+/** Trim one fetched payload to the listed models and write its snapshot. */
+function writeSource<S extends SourceId>(
+  source: S,
+  raw: unknown,
+  entries: ModelEntry[],
+  dryRun: boolean,
+  report: SourceReport,
+): void {
+  const adapter = adapters[source];
+  try {
+    const { snapshot, unmatched, warnings } = adapter.transform(raw, trackedModels(entries));
     report.unmatched = unmatched;
     report.warnings = warnings;
 
@@ -173,7 +186,6 @@ async function syncSource<S extends SourceId>(
   } catch (error) {
     report.outcome = { status: 'failed', reason: describeError(error) };
   }
-  return report;
 }
 
 function statusLine({ source, outcome }: SourceReport, dryRun: boolean): string {
@@ -190,10 +202,15 @@ function statusLine({ source, outcome }: SourceReport, dryRun: boolean): string 
   }
 }
 
+/**
+ * Mappings that name an entry the source does not have. An empty mapping
+ * is not reported: it means the model is not on that leaderboard.
+ */
 function unmatchedLines(report: SourceReport): string[] {
   const lines: string[] = [];
   for (const { model, field, value, candidates } of report.unmatched) {
-    const problem = value === null ? `${field} is empty` : `${field} "${value}" not found`;
+    if (value === null) continue;
+    const problem = `${field} "${value}" not found`;
     const hint =
       candidates.length > 0
         ? `candidates: ${candidates.map((name) => `"${name}"`).join(', ')}`
@@ -211,7 +228,7 @@ function printConsole(reports: SourceReport[], dryRun: boolean) {
     const lines = unmatchedLines(report);
     if (lines.length === 0) continue;
     console.log(
-      `\nUnmatched in ${SOURCE_INFO[report.source].name} (set the field in the model file):`,
+      `\nUnmatched in ${SOURCE_INFO[report.source].name} (fix it in data/model-overrides.yaml):`,
     );
     for (const line of lines) console.log(`  ${line}`);
   }
@@ -224,26 +241,59 @@ function printConsole(reports: SourceReport[], dryRun: boolean) {
   console.log('');
 }
 
-/** What discovery would list, from the payloads just fetched. Report only. */
-function discovery(
+/**
+ * Rebuild the generated model list from the payloads just fetched, and
+ * write it when it changed. Keeps the previous list when a source is
+ * missing, discovery fails, or the list shrinks below half its size.
+ * Returns the list to use and the report lines.
+ */
+function updateModelList(
   raws: Partial<Record<SourceId, unknown>>,
-  entries: ReturnType<typeof readModelEntries>,
-): string[] {
+  overrides: ModelOverrides,
+  dryRun: boolean,
+): { list: GeneratedModel[]; lines: string[] } {
+  const previous = readGeneratedList();
+  const keep = (reason: string) => ({
+    list: previous,
+    lines: [`Model list: kept as it was (${previous.length} models). ${reason}`],
+  });
   const missing = SOURCE_IDS.filter((source) => raws[source] === undefined);
   if (missing.length > 0) {
     const names = missing.map((source) => SOURCE_INFO[source].name).join(', ');
-    return [`Discovery: skipped; it needs every source (not fetched: ${names}).`];
+    return keep(`Discovery needs every source; not fetched: ${names}.`);
   }
   try {
-    const result = discoverModels({
-      aa: aaEntries(raws.aa),
-      arena: arenaEntries(raws.arena),
-      livebench: livebenchIds(raws.livebench),
-      modelsdev: modelsdevEntries(raws.modelsdev),
-    });
-    return discoveryReport(result, entries);
+    const result = discoverModels(
+      {
+        aa: aaEntries(raws.aa),
+        arena: arenaEntries(raws.arena),
+        livebench: livebenchIds(raws.livebench),
+        modelsdev: modelsdevEntries(raws.modelsdev),
+      },
+      { ...PROVIDER_ALIASES, ...overrides.aliases },
+    );
+    const list = generatedList(result);
+    if (list.length === 0 || list.length < previous.length * MIN_SHARE_OF_PREVIOUS) {
+      return keep(`Discovery found only ${list.length} models.`);
+    }
+    // Validate before writing: a malformed entry keeps the previous list.
+    mergeModelList(list, overrides);
+    const changed = serializeModelList(list) !== serializeModelList(previous);
+    if (changed && !dryRun) writeFileSync(MODEL_LIST_FILE, serializeModelList(list));
+    const verb = changed ? (dryRun ? 'would be updated' : 'updated') : 'no change';
+    const waiting = waitingOverrides(list, overrides);
+    return {
+      list,
+      lines: [
+        `Model list: ${verb} (${list.length} models).`,
+        ...discoveryReport(result, mergeModelList(previous)),
+        ...(waiting.length > 0
+          ? [`  Overrides waiting for a model that is not listed: ${waiting.join(', ')}`]
+          : []),
+      ],
+    };
   } catch (error) {
-    return [`Discovery: FAILED. ${describeError(error)}`];
+    return keep(`Discovery FAILED: ${describeError(error)}`);
   }
 }
 
@@ -268,8 +318,8 @@ function writeJobSummary(
       lines.push(...report.warnings.map((line) => `- ${line}`));
     }
   }
+  lines.push('', '### Model list', '', '```', ...found, '```');
   lines.push('', `History: ${history}`);
-  lines.push('', '### Discovery', '', '```', ...found, '```');
   appendFileSync(file, `${lines.join('\n')}\n`);
 }
 
@@ -282,14 +332,37 @@ async function main() {
   }
 
   const { sources, dryRun } = parseArgs(process.argv.slice(2));
-  const entries = readModelEntries();
-  console.log(`Tracking ${entries.length} models.`);
+  const overrides = readOverrides();
 
+  // 1. Fetch every source once (Artificial Analysis allows 100 requests a day).
   const reports: SourceReport[] = [];
   const raws: Partial<Record<SourceId, unknown>> = {};
-  for (const source of sources) reports.push(await syncSource(source, entries, dryRun, raws));
+  for (const source of sources) {
+    const report: SourceReport = {
+      source,
+      outcome: { status: 'failed', reason: 'unknown' },
+      unmatched: [],
+      warnings: [],
+    };
+    reports.push(report);
+    const raw = await fetchSource(source, report);
+    if (raw !== null) raws[source] = raw;
+  }
+
+  // 2. Rebuild the model list from what was fetched.
+  const { list, lines: found } = updateModelList(raws, overrides, dryRun);
+  const entries = mergeModelList(list, overrides);
+  console.log(`Listing ${entries.length} models.`);
+
+  // 3. Trim each payload to the listed models and write the snapshots.
+  for (const report of reports) {
+    if (report.source in raws) {
+      writeSource(report.source, raws[report.source], entries, dryRun, report);
+    }
+  }
 
   printConsole(reports, dryRun);
+  console.log(`${found.join('\n')}\n`);
 
   // Record what the site will show, from the snapshots just written. A
   // failure here must not fail the sync either.
@@ -300,13 +373,11 @@ async function main() {
     history = `FAILED, nothing recorded. ${describeError(error)}`;
   }
   console.log(`History: ${history}\n`);
-  const found = discovery(raws, entries);
-  console.log(`${found.join('\n')}\n`);
   writeJobSummary(reports, history, dryRun, found);
 }
 
 main().catch((error) => {
-  // Only programming or content errors land here (e.g. invalid frontmatter).
+  // Only programming or content errors land here (e.g. an invalid overrides file).
   console.error(describeError(error));
   process.exitCode = 1;
 });

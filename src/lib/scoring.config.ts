@@ -8,7 +8,7 @@
 /** Snapshot file (data/snapshots/<source>.json) a metric is read from. */
 export type BenchmarkSource = 'aa' | 'arena' | 'livebench';
 
-/** The field under `sources` in a model file that names the model for a metric. */
+/** The field under `sources` in the model list that names the model for a metric. */
 export type MappingField = 'aa' | 'arena_text' | 'arena_webdev' | 'arena_agent' | 'livebench';
 
 /**

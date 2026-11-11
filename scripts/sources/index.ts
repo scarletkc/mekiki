@@ -14,7 +14,7 @@ export const adapters: { [S in SourceId]: SourceAdapter<S> } = {
   livebench: livebenchAdapter,
 };
 
-/** The model files as the adapters see them. */
+/** The listed models as the adapters see them. */
 export function trackedModels(entries: ModelEntry[]): TrackedModel[] {
   return entries.map((entry) => ({
     id: entry.id,

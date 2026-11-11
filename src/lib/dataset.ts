@@ -1,5 +1,5 @@
 /**
- * Merges the model files with the source snapshots into the one dataset
+ * Merges the model list with the source snapshots into the one dataset
  * that pages, the JSON API and `pnpm report` all read, so every consumer
  * shows the same numbers (docs/SPEC.md §2).
  *
@@ -46,7 +46,7 @@ export interface ModelRecord {
     /** USD spent running the full AA Intelligence Index. */
     index_cost_usd: number | null;
   };
-  /** The model's ID in each source, as mapped in its frontmatter. */
+  /** The model's ID in each source, as mapped in the model list. */
   source_ids: { modelsdev: string } & Record<MappingField, string | null>;
   /** Whether the model was found in each source's snapshot. */
   matched: Record<SourceId, boolean>;

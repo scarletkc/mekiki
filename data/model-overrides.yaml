@@ -1,0 +1,21 @@
+# Hand-written corrections to the generated model list (data/models.json,
+# written by `pnpm sync`). See docs/model-list.md.
+#
+# exclude:   model IDs never to list, even when discovery finds them
+# aliases:   maker name -> models.dev provider ID, where the two differ
+# models:    per-model corrections, keyed by model ID (`<provider>/<model>`):
+#              name, vendor     replace the generated value
+#              status           active or legacy; wins over the automatic rule
+#              sources          replace a mapping; null means "not on that board"
+#              price            { input, output, cache_read } in USD per 1M tokens
+#            An ID discovery did not find is added; it then needs a name and a vendor.
+
+exclude: []
+
+aliases: {}
+
+models:
+  # Superseded by Kimi K3.1 Pro, which the version rule cannot tell from the
+  # name ("Pro" makes it another family).
+  moonshotai/kimi-k3:
+    status: legacy

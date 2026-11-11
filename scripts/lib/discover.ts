@@ -1,6 +1,7 @@
 /**
- * Model discovery: the models the site would list if the list came from the
- * sources instead of the hand-written model files.
+ * Model discovery: builds the list of models the site shows from the sources
+ * themselves. `pnpm sync` writes the result to data/models.json; hand-written
+ * corrections live in data/model-overrides.yaml (src/lib/model-list.ts).
  *
  * A model is listed when it has an Artificial Analysis Intelligence Index,
  * is on at least one Arena board, and has an official price on models.dev,
@@ -14,11 +15,9 @@
  * a digit: "GPT-6.1 Sol (Max)", `gpt-6-1-sol` and `gpt-6.1-sol` all become
  * `gpt-6-1-sol`. Artificial Analysis is keyed by its slug, because its names
  * carry extras ("DeepSeek V4 Pro 0813 (Max)").
- *
- * For now `pnpm sync` only reports what discovery finds; the site still
- * reads the model files.
  */
 import { z } from 'astro/zod';
+import type { GeneratedModel } from '../../src/lib/model-list';
 import type { ModelEntry } from '../../src/lib/model-schema';
 
 /** The mapping fields discovery fills, in the order they are reported. */
@@ -207,6 +206,8 @@ export function discoverModels(
 ): DiscoveryResult {
   const rejects: Reject[] = [];
   const ambiguous: DiscoveryResult['ambiguous'] = [];
+  const alias = new Map(Object.entries(aliases).map(([maker, id]) => [compact(maker), id]));
+  const providerOf = (maker: string) => alias.get(compact(maker)) ?? compact(maker);
 
   // Artificial Analysis: the base slug, or else the highest level listed.
   const aa = new Map<string, AaEntry>();
@@ -250,7 +251,7 @@ export function discoverModels(
     // The maker, as Artificial Analysis and then Arena name it.
     const makers = [aaEntry.creator, ...ARENA_FIELDS.map((field) => boards[field]?.org ?? null)]
       .filter((maker): maker is string => maker !== null && maker.trim() !== '')
-      .map((maker) => aliases[compact(maker)] ?? compact(maker));
+      .map(providerOf);
     const offers = modelsdev.get(key) ?? [];
     const own = offers.filter((offer) => makers.includes(compact(offer.provider)) && offer.priced);
     if (own.length === 0) {
@@ -271,7 +272,11 @@ export function discoverModels(
     models.push({
       id: `${offer.provider}/${offer.id}`,
       name: offer.name ?? aaEntry.name ?? key,
-      vendor: offer.providerName ?? aaEntry.creator ?? offer.provider,
+      // "MiniMax (minimax.io)" → "MiniMax".
+      vendor: (offer.providerName ?? aaEntry.creator ?? offer.provider).replace(
+        /\s*\([^)]*\)$/,
+        '',
+      ),
       release_date: offer.release,
       sources: {
         modelsdev: `${offer.provider}/${offer.id}`,
@@ -284,9 +289,34 @@ export function discoverModels(
     });
   }
 
+  // On an Arena board with an official price, but with no AA entry under the
+  // same name: either AA has no index for it, or the names differ.
+  for (const [key, boards] of arena) {
+    if (aa.has(key)) continue;
+    const makers = ARENA_FIELDS.map((field) => boards[field]?.org ?? null)
+      .filter((maker): maker is string => maker !== null && maker.trim() !== '')
+      .map(providerOf);
+    const priced = (modelsdev.get(key) ?? []).some(
+      (offer) => makers.includes(compact(offer.provider)) && offer.priced,
+    );
+    if (priced) rejects.push({ key, reason: 'no AA Intelligence Index under this name' });
+  }
+
   models.sort((a, b) => a.id.localeCompare(b.id));
   rejects.sort((a, b) => a.key.localeCompare(b.key));
   return { models, rejects, ambiguous };
+}
+
+/** The discovered models as written to data/models.json: empty mappings left out. */
+export function generatedList(result: DiscoveryResult): GeneratedModel[] {
+  return result.models.map((model) => ({
+    id: model.id,
+    name: model.name,
+    vendor: model.vendor,
+    sources: Object.fromEntries(
+      Object.entries(model.sources).filter((entry): entry is [string, string] => entry[1] !== null),
+    ),
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -391,8 +421,8 @@ export function modelsdevEntries(raw: unknown): ModelsdevEntry[] {
 // ---------------------------------------------------------------------------
 // Reporting.
 
-/** How the discovered list differs from the model files: added, dropped, and changed mappings. */
-export function compareWithFiles(found: DiscoveredModel[], files: ModelEntry[]) {
+/** How the discovered list differs from a previous list: added, dropped, and changed fields. */
+export function compareWithList(found: DiscoveredModel[], files: ModelEntry[]) {
   const byId = new Map(found.map((model) => [model.id, model]));
   const fileIds = new Set(files.map((entry) => entry.id));
   const added = found.filter((model) => !fileIds.has(model.id)).map((model) => model.id);
@@ -418,22 +448,22 @@ export function compareWithFiles(found: DiscoveredModel[], files: ModelEntry[]) 
   return { added, dropped, changed };
 }
 
-/** The discovery report printed by `pnpm sync`, one line per finding. */
-export function discoveryReport(result: DiscoveryResult, files: ModelEntry[]): string[] {
-  const { added, dropped, changed } = compareWithFiles(result.models, files);
-  const lines = [
-    `Discovery (report only): ${result.models.length} models would be listed; ${files.length} model files today.`,
-  ];
+/**
+ * The discovery report printed by `pnpm sync`, one line per finding, against
+ * the previous generated list (overrides not applied).
+ */
+export function discoveryReport(result: DiscoveryResult, previous: ModelEntry[]): string[] {
+  const { added, dropped, changed } = compareWithList(result.models, previous);
+  const lines: string[] = [];
   const show = (value: string | null) => (value === null ? '(none)' : `"${value}"`);
   if (changed.length > 0) {
-    lines.push('  Mappings that differ from the model files:');
+    lines.push('  Changed since the previous list:');
     for (const c of changed)
-      lines.push(`    ${c.id} ${c.field}: file ${show(c.file)}, found ${show(c.found)}`);
+      lines.push(`    ${c.id} ${c.field}: was ${show(c.file)}, now ${show(c.found)}`);
   }
-  if (dropped.length > 0)
-    lines.push(`  Model files discovery would not list: ${dropped.join(', ')}`);
+  if (dropped.length > 0) lines.push(`  Removed: ${dropped.join(', ')}`);
   if (added.length > 0) {
-    lines.push('  Models discovery would add:');
+    lines.push('  Added:');
     for (const id of added) {
       const model = result.models.find((m) => m.id === id)!;
       const boards = ARENA_FIELDS.filter((field) => model.sources[field]).length;
@@ -443,7 +473,7 @@ export function discoveryReport(result: DiscoveryResult, files: ModelEntry[]): s
     }
   }
   if (result.rejects.length > 0) {
-    lines.push('  On AA and Arena but left out:');
+    lines.push('  Left out:');
     for (const r of result.rejects) lines.push(`    ${r.key}: ${r.reason}`);
   }
   if (result.ambiguous.length > 0) {

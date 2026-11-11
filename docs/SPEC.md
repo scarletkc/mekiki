@@ -5,7 +5,7 @@ The rules, data model, rating algorithm and API contract behind
 document in the same commit.
 
 How-to guides live elsewhere: [development](development.md),
-[adding a model](adding-models.md) and [deployment](deployment.md). The current
+[the model list](model-list.md) and [deployment](deployment.md). The current
 weights and thresholds are not repeated here: they live in `scoringConfig` in
 [`src/lib/scoring.config.ts`](../src/lib/scoring.config.ts), and the site's Method page
 is generated from that file.
@@ -46,7 +46,7 @@ Non-goals:
    lives in the GitHub Actions secret `AA_API_KEY` and is read only by `pnpm sync`.
 4. **Every tunable number lives in one config file** (`src/lib/scoring.config.ts`), and
    the algorithm is pure functions with unit tests (`src/lib/scoring.ts`).
-5. **Pages and the API read the same dataset.** `src/lib/dataset.ts` merges model files
+5. **Pages and the API read the same dataset.** `src/lib/dataset.ts` merges the model list
    and snapshots once per build, so a model shows the same numbers everywhere.
 6. **Look at a real response before writing an adapter.** Upstream field names drift;
    fetch once, then write the Zod schema.
@@ -70,19 +70,21 @@ Non-goals:
 Data flows one way:
 
 ```text
-src/content/models/**.md ─┐
-                          ├─> src/lib/dataset.ts ─> pages, JSON API, pnpm report
-data/snapshots/*.json ────┘
+data/models.json ──────────┐
+data/model-overrides.yaml ─┤
+                           ├─> src/lib/dataset.ts ─> pages, JSON API, pnpm report
+data/snapshots/*.json ─────┘
       ▲
-      └── pnpm sync (scripts/sources/, one adapter per source)
+      └── pnpm sync (scripts/sources/, one adapter per source;
+                     scripts/lib/discover.ts builds the model list)
 ```
 
 - After the snapshots, `pnpm sync` records the day's ratings in `data/history.jsonl`
   (§4.5), once recording is on. The changelog, the RSS feeds and the trend charts are
   built from that file.
 - The model schema (`src/lib/model-schema.ts`) and snapshot schemas
-  (`src/lib/snapshots.ts`) use Astro's own Zod (`astro/zod`), so the content collection
-  and the Node scripts share one schema and one Zod version.
+  (`src/lib/snapshots.ts`) use Astro's own Zod (`astro/zod`), so the build and the Node
+  scripts share one schema and one Zod version.
 - Only one Latin font is bundled (Instrument Sans via `@fontsource-variable`); Chinese
   text uses system fonts. The build makes no remote requests.
 - The share images use the static `@fontsource/instrument-sans` package at build time,
@@ -92,43 +94,56 @@ data/snapshots/*.json ────┘
 
 | Kind | Source | Location | Maintained by |
 | --- | --- | --- | --- |
-| Model list and mappings | Hand-written | `src/content/models/**.md` | The maintainer |
+| Model list and mappings | `pnpm sync` (discovery) | `data/models.json` | The daily workflow |
+| Corrections to the list | Hand-written | `data/model-overrides.yaml` | The maintainer |
 | External snapshots | `pnpm sync` | `data/snapshots/*.json` | The daily workflow |
 | Rating history | `pnpm sync`, once a day | `data/history.jsonl` | The daily workflow |
 | Rating parameters | Config | `src/lib/scoring.config.ts` | The maintainer |
 
-### 4.1 Model files
+### 4.1 Model list
 
-The path is the ID: `src/content/models/<provider>/<model>.md` has the canonical ID
-`<provider>/<model>`, following models.dev's naming. The file is frontmatter only; any
-body is ignored.
+The list is built from the sources (`scripts/lib/discover.ts`) and written by `pnpm sync`
+to `data/models.json`. Hand-written corrections live in `data/model-overrides.yaml`.
+`src/lib/model-list.ts` merges the two; the build and the scripts read the result.
 
-```markdown
----
-name: GPT-6.1 Sol            # display name
-vendor: OpenAI
-status: active               # active | legacy (legacy is collapsed on the home page)
-sources:                     # the model's ID in each source; omit what doesn't exist
-  modelsdev: openai/gpt-6.1-sol   # defaults to the canonical ID
-  aa: gpt-6-1-sol                  # Artificial Analysis slug
-  arena_text: "GPT-6.1 Sol (Max)"  # exact name on the Arena text board
-  arena_webdev: "GPT-6.1 Sol (Max)" # exact name on the Arena WebDev board
-  arena_agent: "GPT-6.1 Sol (Max)"  # exact name on the Arena Agent board
-  livebench: gpt-6.1-sol           # model ID on LiveBench
-overrides:                   # optional
-  price: { input: 5, output: 25 }  # USD per 1M tokens; cache_read optional
----
+```json
+{
+  "id": "openai/gpt-6.1-sol",
+  "name": "GPT-6.1 Sol",
+  "vendor": "OpenAI",
+  "sources": {
+    "modelsdev": "openai/gpt-6.1-sol",
+    "aa": "gpt-6-1-sol",
+    "arena_text": "GPT-6.1 Sol (Max)",
+    "arena_webdev": "GPT-6.1 Sol (Max)",
+    "arena_agent": "GPT-6.1 Sol (Max)",
+    "livebench": "gpt-6.1-sol"
+  }
+}
 ```
 
-- **Mappings are always explicit.** A model's name differs between leaderboards, and
-  nothing is matched by guessing. `pnpm sync` lists the mappings that did not match,
-  with the closest names in that source; candidates are printed, never written.
-- Artificial Analysis and Arena often list one model once per reasoning level. A mapping
-  points at the level the maintainer actually uses. The Arena boards list different
-  levels, so each has its own field.
+- **Who is listed.** A model with an AA Intelligence Index, on at least one Arena board,
+  and with an official models.dev price: a price from the provider that makes the model.
+  The maker comes from Artificial Analysis, then Arena; a maker whose name differs from
+  its models.dev provider ID needs an alias.
+- **One row per model.** Where a source lists a model once per reasoning level, the
+  highest level is used, then the latest build. An entry in a special setup ("Codex
+  Harness") is used only when the board has nothing else, and then the field is left
+  to a human.
+- **Exact matching.** Names are matched by a normalised key (parentheses, dated build
+  suffixes and anything but letters and digits dropped), never by similarity.
+  Artificial Analysis is matched on its slug.
+- **The ID is the models.dev ID**, `<provider>/<model>`, kept verbatim.
+- **Legacy by version.** A model is `legacy` when the list has a newer version of it:
+  same vendor, same name without the version number, higher version. "Preview" and
+  similar words are ignored. An override's status wins.
+- **Corrections**: models to exclude or add, replaced names, vendors and mappings (`null`
+  for "not on that board"), statuses, price overrides and maker aliases. A correction
+  for a model that is not listed waits until it is. How to write them:
+  [the model list](model-list.md).
 - A price override replaces the models.dev input and output prices. Without
   `cache_read`, the models.dev cache price is kept.
-- Invalid frontmatter fails `pnpm test` and `pnpm build` with the file and the field.
+- An invalid list or overrides file fails `pnpm test`, `pnpm build` and `pnpm sync`.
 
 ### 4.2 Sources
 
@@ -206,11 +221,13 @@ nothing).
 - Without `AA_API_KEY`, Artificial Analysis is skipped.
 - After the sources, today's ratings are recorded in the history (§4.5), once recording
   is on. A failure there doesn't fail the sync either.
-- When every source was fetched, the sync also reports which models discovery would
-  list (`scripts/lib/discover.ts`): models with an AA Intelligence Index, on at least one
-  Arena board and with an official models.dev price, one row per model at its highest
-  reasoning level, matched by exact normalised name. It is a report for now; the site
-  still reads the model files.
+- The sources are fetched first. When all of them were, the model list is rebuilt
+  (§4.1) before the snapshots are written, so the snapshots keep exactly the listed
+  models. When one is missing, discovery fails, or the list shrinks below half its size,
+  the previous list is kept. The changes, the models left out and why, and the board
+  entries left to a human go to the console and the job summary.
+- A mapping that names an entry the source does not have is reported. An empty mapping
+  is not: it means the model is not on that leaderboard.
 
 ### 4.5 History
 
@@ -229,13 +246,13 @@ baseline (§7).
 
 - It records what the site showed at the time, not a recomputation: every listed model's
   name, status, scores, tiers and prices, taken from the dataset (`src/lib/history.ts`).
-  A change to the config or a model file shows up as changes in the next recording.
+  A change to the config or the model list shows up as changes in the next recording.
 - `pnpm sync` records today after writing the snapshots; `pnpm history` records from the
   files as they are, without going online. A push to `main` does not sync, so it records
   nothing: a config change reaches the history with the next daily sync, up to a day
   later.
 - Whether a day changed is decided by comparing it with the previous line, not by
-  whether a snapshot changed: a config or model file change moves the scores while the
+  whether a snapshot changed: a config or model list change moves the scores while the
   snapshots stay the same.
 - A day identical to the previous one is not written, so a missing day means "same as
   before" and a quiet day makes no commit. Re-running on the same day replaces that
@@ -644,7 +661,7 @@ The custom domain is set by `public/CNAME` (`mekiki.fog.moe`) and `site` in
 ## 9. Decisions
 
 **No text reviews.** Short verdicts, pros and cons, best-for lists, long reviews and
-review dates were removed. Model files have no such fields, pages don't show them, and
+review dates were removed. The model list has no such fields, pages don't show them, and
 the API has no `verdict`, `best_for` or `reviewed_at`.
 
 **No subjective score.** Intelligence used to blend a hand-entered score with the
@@ -659,10 +676,20 @@ leaderboards. It was removed because:
   draws few votes, is easy to game and goes stale too. Arena's boards are large-scale
   human signals already and make up most of the intelligence weight.
 
-A `subjective` block left in a model file is ignored. The API dropped
+The model list has no subjective score. The API dropped
 `intelligence.basis`, `intelligence.subjective` and `intelligence.benchmark` (which had
 become identical to `score`). Like the text-review fields before them, they were removed
 without bumping `version`.
+
+**The model list is built from the sources.** The list started as ten hand-written
+model files, each mapping the model to every source. On 2026-11-11 it became generated:
+a model with an AA Intelligence Index, on an Arena board and with an official price is
+listed, at its highest reasoning level, matched by exact normalised name. Hand-written
+mappings had said "nothing is matched by guessing"; exact keys keep that promise, and
+the overrides file handles the rest. Run against the ten files with live data, discovery
+produced the same mappings for all of them. Superseded models are marked `legacy` from
+their version numbers rather than release dates, which cannot tell a newer model from a
+newer version.
 
 **Each leaderboard counts once.** Intelligence started with three leaderboards weighted
 0.5, 0.3 and 0.2. LiveBench and Terminal-Bench were then added, grouped by subject

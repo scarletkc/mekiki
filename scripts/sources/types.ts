@@ -10,18 +10,18 @@
 import type { ModelFrontmatter } from '../../src/lib/model-schema';
 import type { SnapshotOf, SourceId } from '../../src/lib/snapshots';
 
-/** A model file, as the adapters see it. */
+/** A listed model, as the adapters see it. */
 export interface TrackedModel {
   /** Canonical mekiki ID, `<provider>/<model>`. */
   id: string;
   name: string;
-  /** The model's ID in each source, from its frontmatter. */
+  /** The model's ID in each source, from the model list. */
   sources: ModelFrontmatter['sources'];
 }
 
 export interface Unmatched {
   model: TrackedModel;
-  /** The frontmatter field to fix, e.g. `sources.arena_text`. */
+  /** The mapping field to fix, e.g. `sources.arena_text`. */
   field: string;
   /** The value that was looked up; null when the field is empty. */
   value: string | null;

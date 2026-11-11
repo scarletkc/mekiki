@@ -1,7 +1,7 @@
 /**
  * Suggests likely names in a source for a model that has no working
  * mapping. Suggestions are only ever printed for a human to copy into the
- * model's frontmatter; nothing is matched automatically (docs/SPEC.md §4.1).
+ * overrides file; suggestions are never applied (docs/SPEC.md §4.1).
  */
 
 function tokens(text: string): string[] {
@@ -25,7 +25,7 @@ function similarity(wanted: string[], candidate: string[]): number {
 }
 
 export interface Candidate {
-  /** What to paste into the frontmatter. */
+  /** What to paste into the overrides file. */
   id: string;
   /** Extra text to match against (display name, vendor…). */
   text?: string;

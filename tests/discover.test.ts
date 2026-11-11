@@ -4,7 +4,7 @@ import {
   aaBase,
   aaEntries,
   arenaEntries,
-  compareWithFiles,
+  compareWithList,
   discoverModels,
   livebenchIds,
   modelKey,
@@ -253,7 +253,7 @@ describe('reading the payloads', () => {
   });
 });
 
-describe('compareWithFiles', () => {
+describe('compareWithList', () => {
   it('lists added and dropped models and every field that differs', () => {
     const file = (id: string, sources: Record<string, string>): ModelEntry => ({
       id,
@@ -272,7 +272,7 @@ describe('compareWithFiles', () => {
       ],
     }).models;
     expect(
-      compareWithFiles(found, [
+      compareWithList(found, [
         file('acme/a', { aa: 'a', arena_text: 'A (High)' }),
         file('acme/gone', {}),
       ]),

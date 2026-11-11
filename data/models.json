@@ -1,0 +1,130 @@
+{
+  "models": [
+    {
+      "id": "anthropic/claude-haiku-5-5",
+      "name": "Claude Haiku 5.5",
+      "vendor": "Anthropic",
+      "sources": {
+        "modelsdev": "anthropic/claude-haiku-5-5",
+        "aa": "claude-haiku-5-5",
+        "arena_text": "Claude Haiku 5.5 (High)",
+        "arena_webdev": "Claude Haiku 5.5 (High)",
+        "arena_agent": "Claude Haiku 5.5 (High)",
+        "livebench": "claude-haiku-5.5"
+      }
+    },
+    {
+      "id": "anthropic/claude-opus-5",
+      "name": "Claude Opus 5",
+      "vendor": "Anthropic",
+      "sources": {
+        "modelsdev": "anthropic/claude-opus-5",
+        "aa": "claude-opus-5",
+        "arena_text": "Claude Opus 5 (Max)",
+        "arena_webdev": "Claude Opus 5 (Max)",
+        "arena_agent": "Claude Opus 5 (Max)"
+      }
+    },
+    {
+      "id": "anthropic/claude-opus-5-5",
+      "name": "Claude Opus 5.5",
+      "vendor": "Anthropic",
+      "sources": {
+        "modelsdev": "anthropic/claude-opus-5-5",
+        "aa": "claude-opus-5-5",
+        "arena_text": "Claude Opus 5.5 (High)",
+        "arena_webdev": "Claude Opus 5.5 (Max)",
+        "arena_agent": "Claude Opus 5.5 (Max)",
+        "livebench": "claude-opus-5.5"
+      }
+    },
+    {
+      "id": "anthropic/claude-sonnet-5-5",
+      "name": "Claude Sonnet 5.5",
+      "vendor": "Anthropic",
+      "sources": {
+        "modelsdev": "anthropic/claude-sonnet-5-5",
+        "aa": "claude-sonnet-5-5",
+        "arena_text": "Claude Sonnet 5.5 (xHigh)",
+        "arena_webdev": "Claude Sonnet 5.5 (xHigh)",
+        "arena_agent": "Claude Sonnet 5.5 (Max)",
+        "livebench": "claude-sonnet-5.5"
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-pro",
+      "name": "DeepSeek V4 Pro",
+      "vendor": "DeepSeek",
+      "sources": {
+        "modelsdev": "deepseek/deepseek-v4-pro",
+        "aa": "deepseek-v4-pro",
+        "arena_text": "DeepSeek-V4-Pro (High, 20260813)",
+        "arena_webdev": "DeepSeek-V4-Pro (High, 20260813)"
+      }
+    },
+    {
+      "id": "google/gemini-3.8-flash",
+      "name": "Gemini 3.8 Flash",
+      "vendor": "Google",
+      "sources": {
+        "modelsdev": "google/gemini-3.8-flash",
+        "aa": "gemini-3-8-flash",
+        "arena_text": "Gemini 3.8 Flash (High)",
+        "arena_webdev": "Gemini 3.8 Flash (High)",
+        "arena_agent": "Gemini 3.8 Flash (High)",
+        "livebench": "gemini-3.8-flash"
+      }
+    },
+    {
+      "id": "google/gemini-4-argon",
+      "name": "Gemini 4 Argon",
+      "vendor": "Google",
+      "sources": {
+        "modelsdev": "google/gemini-4-argon",
+        "aa": "gemini-4-argon",
+        "arena_text": "Gemini 4 Argon (High)",
+        "arena_webdev": "Gemini 4 Argon (High)",
+        "arena_agent": "Gemini 4 Argon (High)",
+        "livebench": "gemini-4-argon"
+      }
+    },
+    {
+      "id": "openai/gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
+      "vendor": "OpenAI",
+      "sources": {
+        "modelsdev": "openai/gpt-6.1-sol",
+        "aa": "gpt-6-1-sol",
+        "arena_text": "GPT-6.1 Sol (Max)",
+        "arena_webdev": "GPT-6.1 Sol (Max)",
+        "arena_agent": "GPT-6.1 Sol (Max)",
+        "livebench": "gpt-6.1-sol"
+      }
+    },
+    {
+      "id": "openai/gpt-6.1-terra",
+      "name": "GPT-6.1 Terra",
+      "vendor": "OpenAI",
+      "sources": {
+        "modelsdev": "openai/gpt-6.1-terra",
+        "aa": "gpt-6-1-terra",
+        "arena_webdev": "GPT-6.1 Terra (Max)",
+        "arena_agent": "GPT-6.1 Terra (Max)",
+        "livebench": "gpt-6.1-terra"
+      }
+    },
+    {
+      "id": "xai/grok-4.7",
+      "name": "Grok 4.7",
+      "vendor": "xAI",
+      "sources": {
+        "modelsdev": "xai/grok-4.7",
+        "aa": "grok-4-7",
+        "arena_text": "Grok 4.7 (xHigh)",
+        "arena_webdev": "Grok 4.7 (xHigh)",
+        "arena_agent": "Grok 4.7 (xHigh)",
+        "livebench": "grok-4.7"
+      }
+    }
+  ]
+}

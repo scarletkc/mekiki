@@ -1,27 +1,15 @@
 /**
- * Frontmatter schema of `src/content/models/<provider>/<model>.md`
- * (docs/SPEC.md §4.1), shared by the Astro content collection and the
- * Node scripts. Must not import `astro:*` modules.
+ * Schema of one model in the list the site shows (docs/SPEC.md §4.1), after
+ * the generated list and the overrides are merged (src/lib/model-list.ts).
+ * Shared by the build and the Node scripts. Must not import `astro:*`
+ * modules.
+ *
+ * A model's ID is its models.dev ID, `<provider>/<model>`, kept verbatim
+ * (dots and upper case included).
  */
 import { z } from 'astro/zod';
 
-/** Directory of the model files, relative to the repository root. */
-export const MODELS_DIR = 'src/content/models';
-
-/**
- * Canonical model ID from a path relative to MODELS_DIR:
- * `openai/gpt-6.1-sol.md` → `openai/gpt-6.1-sol`. The ID is taken verbatim
- * (dots and upper case are kept) because it has to match models.dev.
- */
-export function modelIdFromPath(relativePath: string): string {
-  return relativePath
-    .replace(/\\/g, '/')
-    .replace(/^\.?\//, '')
-    .replace(/\.md$/i, '');
-}
-
-// YAML turns an empty value (`score:`) into null and an empty string is
-// just as empty, so both mean "not filled in".
+// An empty value and an empty string both mean "not filled in".
 const blankToUndefined = (value: unknown) =>
   value === null || (typeof value === 'string' && value.trim() === '') ? undefined : value;
 
@@ -35,7 +23,7 @@ export const modelSchema = z.object({
   vendor: z.string().trim().min(1),
   /** `legacy` models are collapsed on the home page by default. */
   status: z.enum(['active', 'legacy']).default('active'),
-  /** This model's ID in each data source. Always explicit, never fuzzy-matched. */
+  /** This model's ID in each data source, matched exactly, never by similarity. */
   sources: z
     .preprocess(
       (value) => value ?? {},
@@ -77,7 +65,7 @@ export const modelSchema = z.object({
 
 export type ModelFrontmatter = z.infer<typeof modelSchema>;
 
-/** One model file after validation. */
+/** One model of the list, after validation. */
 export interface ModelEntry {
   /** Canonical ID, `<provider>/<model>`. */
   id: string;

@@ -40,25 +40,26 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # A source that is down keeps its old snapshot and the step still
-      # succeeds; details are written to the job summary. The sync also
-      # records today's ratings in data/history.jsonl once recording is on
+      # succeeds; details are written to the job summary. When every source
+      # was fetched, the sync also rebuilds the model list (data/models.json).
+      # It records today's ratings in data/history.jsonl once recording is on
       # (changelogConfig.recordHistory; off until the site is published).
-      - name: Sync snapshots and history
+      - name: Sync the model list, snapshots and history
         if: github.event_name != 'push'
         run: pnpm sync
         env:
           AA_API_KEY: ${{ secrets.AA_API_KEY }}
 
-      - name: Commit changed snapshots and history
+      - name: Commit the changed model list, snapshots and history
         if: github.event_name != 'push'
         run: |
-          if [ -z "$(git status --porcelain -- data/snapshots data/history.jsonl)" ]; then
-            echo "Snapshots and history unchanged."
+          if [ -z "$(git status --porcelain -- data/models.json data/snapshots data/history.jsonl)" ]; then
+            echo "Model list, snapshots and history unchanged."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/snapshots data/history.jsonl
+          git add data/models.json data/snapshots data/history.jsonl
           git commit -m "chore(data): sync snapshots"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"

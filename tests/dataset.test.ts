@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { parseModelFile, readModelEntries } from '../scripts/lib/content';
+import { parse as parseYaml } from 'yaml';
+import { readModelEntries } from '../scripts/lib/content';
 import { toApiFull, toApiIndex, toApiModel } from '@/lib/api';
 import { buildDataset, latestSync } from '@/lib/dataset';
 import { DEFAULT_LOCALE, localePath, stripLocale } from '@/i18n';
-import { modelIdFromPath, type ModelEntry } from '@/lib/model-schema';
+import { parseModelEntry } from '@/lib/model-list';
+import type { ModelEntry } from '@/lib/model-schema';
 import { METRIC_KEYS, scoringConfig, type ScoringConfig } from '@/lib/scoring.config';
 import type { Snapshots } from '@/lib/snapshots';
 
@@ -53,8 +55,9 @@ const config: ScoringConfig = {
   },
 };
 
-function entry(id: string, frontmatter: string, body = ''): ModelEntry {
-  return parseModelFile(`---\n${frontmatter}\n---\n${body}`, `${id}.md`);
+/** A model as the list would carry it, written as YAML for brevity. */
+function entry(id: string, yaml: string): ModelEntry {
+  return parseModelEntry(id, parseYaml(yaml));
 }
 
 const snapshots: Snapshots = {
@@ -147,13 +150,8 @@ const blank = entry(
   ].join('\n'),
 );
 
-describe('model files', () => {
-  it('keeps dots and upper case in the ID', () => {
-    expect(modelIdFromPath('openai/gpt-6.1-sol.md')).toBe('openai/gpt-6.1-sol');
-    expect(modelIdFromPath('minimax\\MiniMax-M3.1-Flash.md')).toBe('minimax/MiniMax-M3.1-Flash');
-  });
-
-  it('treats empty YAML values as not filled in', () => {
+describe('model entries', () => {
+  it('treats empty values as not filled in', () => {
     expect(blank.data.sources).toEqual({});
     expect(blank.data.overrides).toEqual({});
   });
@@ -170,7 +168,6 @@ describe('model files', () => {
     const old = entry(
       'a/b',
       'name: B\nvendor: A\nsubjective:\n  score: 70\n  verdict: Great\n  pros: [fast]\nreviewed_at: 2026-11-01',
-      'A long review.',
     );
     expect(Object.keys(old.data).sort()).toEqual([
       'name',
@@ -181,13 +178,12 @@ describe('model files', () => {
     ]);
   });
 
-  it('rejects invalid frontmatter with the file name in the message', () => {
-    expect(() => entry('a/b', 'name: B')).toThrow(/a\/b\.md/);
+  it('rejects an invalid model with its ID in the message', () => {
+    expect(() => entry('a/b', 'name: B')).toThrow(/a\/b/);
     expect(() => entry('a/b', 'name: B\nvendor: A\nstatus: retired')).toThrow();
-    expect(() => parseModelFile('no frontmatter', 'a/b.md')).toThrow(/frontmatter/);
   });
 
-  it('every file in src/content/models is valid', () => {
+  it('the model list is valid', () => {
     const entries = readModelEntries();
     expect(entries.length).toBeGreaterThan(0);
     expect(new Set(entries.map((item) => item.id)).size).toBe(entries.length);

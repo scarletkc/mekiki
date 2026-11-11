@@ -15,7 +15,7 @@
 
 </div>
 
-mekiki rates a short list of AI models on how smart they are, what they cost, and how much
+mekiki rates current AI models on how smart they are, what they cost, and how much
 intelligence you get for the money. The numbers come from public leaderboards and
 official prices, and refresh every day.
 
@@ -92,14 +92,15 @@ example.
 ## Missing a model?
 
 [Open an issue](https://github.com/scarletkc/mekiki/issues) with its
-[models.dev](https://models.dev) ID. Or add it yourself: a model is a single Markdown
-file, and [adding a model](docs/adding-models.md) walks through it.
+[models.dev](https://models.dev) ID. The list is built from the sources every day
+([the model list](docs/model-list.md) explains who gets in); a model left out can be
+added by hand in `data/model-overrides.yaml`.
 
 ## Documentation
 
 - [Method](https://mekiki.fog.moe/method): formulas, current weights and thresholds, and when each source last changed
 - [API reference](https://mekiki.fog.moe/api): every field, with a live example
-- [Adding a model](docs/adding-models.md): the model file, mapping it to each leaderboard, and price overrides
+- [The model list](docs/model-list.md): who gets listed, how names are matched, and corrections
 - [Development guide](docs/development.md): running locally, commands, tuning the ratings, and adding a language
 - [Deployment](docs/deployment.md): the daily workflow and one-time setup
 - [Design](docs/SPEC.md): rules, data model, rating algorithm, and the API contract

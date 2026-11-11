@@ -1,6 +1,6 @@
 /**
  * `pnpm history`: records today's ratings in data/history.jsonl from the
- * model files and snapshots as they are. It never goes online; `pnpm sync`
+ * model list and snapshots as they are. It never goes online; `pnpm sync`
  * does the same after refreshing the snapshots.
  *
  *   pnpm history              record today (UTC)
@@ -20,7 +20,7 @@ try {
   console.log(`History: ${result.message}`);
   if (result.outcome === 'invalid' || result.outcome === 'skipped') process.exitCode = 1;
 } catch (error) {
-  // Only content errors land here (e.g. invalid frontmatter).
+  // Only content errors land here (e.g. an invalid overrides file).
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
 }

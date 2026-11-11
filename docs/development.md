@@ -1,7 +1,7 @@
 # Development
 
 Running mekiki locally, the project commands, and the changes that come up most: tuning
-the rating and adding a language. To add a model, see [adding a model](adding-models.md).
+the rating and adding a language. For the models on the site, see [the model list](model-list.md).
 The rules these guides rely on are in the [design](SPEC.md).
 
 ## Run it locally
@@ -29,7 +29,7 @@ snapshots in `data/snapshots/`, so it works offline and needs no API key.
 | `pnpm lint` | Lint and check formatting with [Biome](https://biomejs.dev), as CI does. |
 | `pnpm format` | Format with Biome. Markdown files are left alone. |
 | `pnpm smoke` | Browser smoke test of the built site (Playwright). Run `pnpm build` first. |
-| `pnpm sync` | Fetch the data sources and update `data/snapshots/`. |
+| `pnpm sync` | Fetch the data sources, rebuild `data/models.json` and update `data/snapshots/`. |
 | `pnpm report` | Print every model's scores and the tier distribution. |
 | `pnpm history` | Record today's ratings in `data/history.jsonl` from the files as they are. Never goes online. |
 
@@ -92,7 +92,7 @@ unprefixed URLs pick a language is in [design §7](SPEC.md#7-site).
 
 ```text
 src/
-  content/models/<provider>/<model>.md   one file per model
+  lib/model-list.ts                      reads the model list and applies the overrides
   lib/scoring.config.ts                  every weight and threshold
   lib/scoring.ts                         rating algorithm (pure functions)
   lib/dataset.ts                         merges models and snapshots for pages, API and report
@@ -106,6 +106,8 @@ src/
   views/                                 page bodies, shared by all languages
   pages/                                 routes, JSON endpoints, share images, sitemap.xml
   components/                            table and compare islands, share button, tier meter, shadcn/ui
+data/models.json                         the model list, written by pnpm sync
+data/model-overrides.yaml                hand-written corrections to the list
 data/snapshots/                          one JSON file per data source
 data/history.jsonl                       the ratings, one line per recorded day
 scripts/sync.ts, scripts/report.ts       pnpm sync, pnpm report
