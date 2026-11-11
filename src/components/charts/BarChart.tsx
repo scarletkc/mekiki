@@ -70,10 +70,10 @@ export function BarChart({
     return { ranked, missing, hi: axis.hi, ticks: axis.ticks, tiers };
   }, [models, metric, strings]);
 
-  const tierNames = useMemo(() => {
-    if (trackWidth === null) return [];
+  const showTiers = useMemo(() => {
+    if (trackWidth === null) return false;
     const span = trackWidth - FIGURE_ROOM;
-    return tiers.filter((tier, index) => {
+    return tiers.every((tier, index) => {
       const next = tiers[index + 1];
       const end = next ? span * (next.value / hi) - 6 : trackWidth;
       return span * (tier.value / hi) + 4 + textWidth(tier.label, 11) <= end;
@@ -82,7 +82,7 @@ export function BarChart({
 
   const grid =
     'grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-3 @xl:grid-cols-[11rem_minmax(0,1fr)]';
-  const hairlines = (
+  const hairlines = showTiers && (
     <span aria-hidden="true" className="pointer-events-none absolute inset-0">
       {tiers.slice(1).map((tier) => (
         <span
@@ -107,8 +107,8 @@ export function BarChart({
 
       <div className={grid} aria-hidden="true">
         <span />
-        <span ref={trackRef} className="relative h-4">
-          {tierNames.map((tier) => (
+        <span ref={trackRef} className={cn('relative', showTiers && 'h-4')}>
+          {(showTiers ? tiers : []).map((tier) => (
             <span
               key={tier.value}
               className="text-muted-foreground absolute top-0 pl-1 text-[0.6875rem] leading-none whitespace-nowrap"
