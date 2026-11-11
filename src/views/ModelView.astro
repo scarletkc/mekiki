@@ -51,7 +51,7 @@ const metrics = METRIC_KEYS.map((key) => {
     frontier: null,
   };
   const mapped = model.source_ids[config.mapping];
-  // Say why a figure is missing: no mapping, not in the snapshot, or simply no score.
+  // Say why a figure is missing: not on that leaderboard (no mapping), not in the snapshot, or no score.
   const missing =
     mapped === null ? t.detail.notMapped : item.raw === null ? t.detail.notFound : t.empty.noData;
   return { key, label: t.metric[key], ...item, mapped, missing, url: 'url' in config ? config.url : null };

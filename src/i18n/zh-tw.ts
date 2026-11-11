@@ -85,7 +85,7 @@ export const zhTW: Dictionary = {
     weight: '權重',
     scoreNote: '智慧分是上面各榜單正規化分的加權平均。',
     unratedNote: '這個模型還沒有上任何一個榜單，暫不評級。',
-    notMapped: '未填對應',
+    notMapped: '未上榜',
     notFound: '快照裡沒有這個模型',
     facts: '基本資訊',
     price: '價格',

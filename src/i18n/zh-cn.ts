@@ -85,7 +85,7 @@ export const zhCN: Dictionary = {
     weight: '权重',
     scoreNote: '智能分是上面各榜单归一化分的加权平均。',
     unratedNote: '这个模型还没有上任何一个榜单，暂不评级。',
-    notMapped: '未填映射',
+    notMapped: '未上榜',
     notFound: '快照里没有这个模型',
     facts: '基本信息',
     price: '价格',

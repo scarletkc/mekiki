@@ -87,7 +87,7 @@ export const en = {
     weight: 'Weight',
     scoreNote: 'Intelligence is the weighted mean of the normalised leaderboard scores above.',
     unratedNote: "This model isn't on any of these leaderboards yet, so it isn't rated.",
-    notMapped: 'No mapping set',
+    notMapped: 'Not listed',
     notFound: 'Not in the snapshot',
     facts: 'Facts',
     price: 'Price',
