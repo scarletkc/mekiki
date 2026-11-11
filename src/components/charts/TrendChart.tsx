@@ -322,7 +322,9 @@ export function TrendChart({
               fill="transparent"
               onPointerMove={track}
               onPointerDown={track}
-              onPointerLeave={() => {
+              onPointerLeave={(event) => {
+                // On touch the readout stays after the finger lifts.
+                if (event.pointerType === 'touch') return;
                 setCursor(null);
                 setHovered(null);
               }}
@@ -363,8 +365,12 @@ export function TrendChart({
                 aria-pressed={pinned === model.id}
                 title={fmt(chart.follow, { name: model.name })}
                 onClick={() => setPinned((current) => (current === model.id ? null : model.id))}
-                onPointerEnter={() => setHovered(model.id)}
-                onPointerLeave={() => setHovered(null)}
+                onPointerEnter={(event) => {
+                  if (event.pointerType !== 'touch') setHovered(model.id);
+                }}
+                onPointerLeave={(event) => {
+                  if (event.pointerType !== 'touch') setHovered(null);
+                }}
                 onFocus={() => setHovered(model.id)}
                 onBlur={() => setHovered(null)}
                 className={cn(

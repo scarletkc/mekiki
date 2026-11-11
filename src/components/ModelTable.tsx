@@ -604,7 +604,8 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   });
 
   const rows = table.getRowModel().rows;
-  // The charts show the same models as the table, in the table's order.
+  // The charts show the same models as the table. Quadrant labels and the
+  // trend's default line follow the table's order; the bars rank by metric.
   const shown = useMemo(() => rows.map((row) => row.original), [rows]);
   const chartStrings = useMemo(
     () => ({ chart, tier, empty, rating: strings.rating }),
@@ -749,11 +750,18 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         </div>
       </div>
 
-      {display.view === 'quadrant' && <QuadrantChart models={shown} strings={chartStrings} />}
-      {display.view === 'bar' && (
+      {display.view !== 'table' && shown.length === 0 && (
+        <p className="bg-card text-muted-foreground rounded-xl border px-4 py-10 text-center text-sm">
+          {t.noResults}
+        </p>
+      )}
+      {display.view === 'quadrant' && shown.length > 0 && (
+        <QuadrantChart models={shown} strings={chartStrings} />
+      )}
+      {display.view === 'bar' && shown.length > 0 && (
         <BarChart models={shown} metric={display.metric} strings={chartStrings} />
       )}
-      {display.view === 'line' && (
+      {display.view === 'line' && shown.length > 0 && (
         <TrendChart models={shown} metric={display.metric} data={trend} strings={chartStrings} />
       )}
 

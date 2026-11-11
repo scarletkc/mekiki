@@ -259,6 +259,13 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
             viewBox={`0 0 ${width} ${height}`}
             className="absolute inset-0 overflow-visible"
             aria-label={chart.quadrantCaption}
+            // A tap on an empty part of the plot, or Escape, closes the details.
+            onClick={(event) => {
+              if (event.target === event.currentTarget) setActive(null);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setActive(null);
+            }}
           >
             {layout.points.map(({ model, x, y, hit }) => {
               const isActive = active === model.id;
@@ -271,11 +278,20 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
                   onPointerDown={(event) => {
                     lastPointer.current = event.pointerType;
                   }}
-                  onPointerEnter={() => setActive(model.id)}
-                  onPointerLeave={() =>
-                    setActive((current) => (current === model.id ? null : current))
-                  }
-                  onFocus={() => setActive(model.id)}
+                  // Touch has no hover: lifting the finger fires a leave before
+                  // the click, so touch is left to the click handler below.
+                  onPointerEnter={(event) => {
+                    if (event.pointerType !== 'touch') setActive(model.id);
+                  }}
+                  onPointerLeave={(event) => {
+                    if (event.pointerType !== 'touch') {
+                      setActive((current) => (current === model.id ? null : current));
+                    }
+                  }}
+                  // Only keyboard focus: a tap focuses the dot before its click.
+                  onFocus={(event) => {
+                    if (event.currentTarget.matches(':focus-visible')) setActive(model.id);
+                  }}
                   onBlur={() => setActive((current) => (current === model.id ? null : current))}
                   onClick={(event) => {
                     // On touch, the first tap shows the details, the second opens the page.

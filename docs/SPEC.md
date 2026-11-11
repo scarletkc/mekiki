@@ -527,17 +527,18 @@ column shows a tier badge and the score.
 - Legacy models are collapsed by default.
 - Each row has a checkbox. Ticking up to four models shows a bar with a Compare button.
 
-A switch above the table shows the same models as charts instead (`view`): the filters,
-the legacy toggle and the table's order apply to every chart. The charts are drawn in
-the browser at their real width, with no chart library; the prerendered page is the
-table.
+A switch above the table shows the same models as charts instead (`view`): the filters
+and the legacy toggle apply to every chart, and a filter that leaves no model shows the
+same note as the table. The charts are drawn in the browser at their real width, with
+no chart library; the prerendered page is the table.
 
 - **Quadrant** (`quadrant`): intelligence against blended price, one dot per model, with
   price on a log axis. Two lines split the plot where the High intelligence and High
   cost tiers begin (`scoringConfig`), so a quadrant means the same thing whatever the
   filters show. Models without a price, free ones or unrated ones are listed under the
-  chart instead. Names sit beside their dots wherever they fit; a dot shows all three
-  ratings on hover, keyboard focus or a first tap, and opens the model page.
+  chart instead. Names sit beside their dots wherever they fit, the most intelligent
+  first; a dot shows all three ratings on hover, keyboard focus or a first tap, and
+  opens the model page (on touch, with a second tap).
 - **Trend** (`line`): each model's intelligence, value or blended price (`metric`:
   `int`, `val`, `cost`) over the recorded history (§4.5), as step lines ending on
   today's figures. Every line is drawn quietly and one is picked out: the one pointed

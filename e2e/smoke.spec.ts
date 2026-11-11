@@ -160,3 +160,23 @@ test('the home page switches between the table and the charts', async ({ page })
   expect(new URL(page.url()).searchParams.get('view')).toBeNull();
   expect(problems).toEqual([]);
 });
+
+test.describe('on a touch screen', () => {
+  test.use({ hasTouch: true });
+
+  test('a quadrant dot shows its ratings on the first tap and opens on the second', async ({
+    page,
+  }) => {
+    const problems = trackProblems(page);
+    await page.goto('/?view=quadrant');
+    const dot = page.locator('figure svg a[href]').first();
+    await expect(dot).toBeAttached();
+    const start = page.url();
+    await dot.tap();
+    await expect(page.locator('figure [role="presentation"]')).toBeVisible();
+    expect(page.url()).toBe(start);
+    await dot.tap();
+    await expect(page).toHaveURL(/\/m\//);
+    expect(problems).toEqual([]);
+  });
+});
