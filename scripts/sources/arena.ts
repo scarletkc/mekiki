@@ -117,7 +117,8 @@ export const arenaAdapter: SourceAdapter<'arena'> = {
       const file = await getBytes(arenaParquetUrl(config));
       raw[board] = await parquetReadObjects({
         file,
-        columns: ['model_name', column, 'category', 'leaderboard_publish_date'],
+        // `organization` is not used here; model discovery reads it (scripts/lib/discover.ts).
+        columns: ['model_name', 'organization', column, 'category', 'leaderboard_publish_date'],
       });
     }
     return { raw };

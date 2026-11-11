@@ -206,6 +206,11 @@ nothing).
 - Without `AA_API_KEY`, Artificial Analysis is skipped.
 - After the sources, today's ratings are recorded in the history (§4.5), once recording
   is on. A failure there doesn't fail the sync either.
+- When every source was fetched, the sync also reports which models discovery would
+  list (`scripts/lib/discover.ts`): models with an AA Intelligence Index, on at least one
+  Arena board and with an official models.dev price, one row per model at its highest
+  reasoning level, matched by exact normalised name. It is a report for now; the site
+  still reads the model files.
 
 ### 4.5 History
 

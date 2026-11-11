@@ -7,7 +7,9 @@
  *
  * After the snapshots, today's ratings are recorded in data/history.jsonl
  * (see scripts/lib/history.ts), which the changelog, the RSS feeds and the
- * trend charts are built from.
+ * trend charts are built from. When every source was fetched, the run also
+ * reports which models discovery would list (scripts/lib/discover.ts);
+ * nothing is written for that yet.
  *
  * A source that fails, returns invalid data or returns suspiciously few
  * models keeps its old snapshot. The command still exits 0 so a broken
@@ -24,6 +26,14 @@ import {
   type SourceId,
 } from '../src/lib/snapshots';
 import { readModelEntries } from './lib/content';
+import {
+  aaEntries,
+  arenaEntries,
+  discoverModels,
+  discoveryReport,
+  livebenchIds,
+  modelsdevEntries,
+} from './lib/discover';
 import { recordHistory } from './lib/history';
 import { adapters, trackedModels } from './sources';
 import { SourceDataError, type Unmatched } from './sources/types';
@@ -101,6 +111,7 @@ async function syncSource<S extends SourceId>(
   source: S,
   entries: ReturnType<typeof readModelEntries>,
   dryRun: boolean,
+  raws: Partial<Record<SourceId, unknown>>,
 ): Promise<SourceReport> {
   const adapter = adapters[source];
   const report: SourceReport = {
@@ -116,6 +127,7 @@ async function syncSource<S extends SourceId>(
       report.outcome = { status: 'skipped', reason: fetched.skip };
       return report;
     }
+    raws[source] = fetched.raw;
 
     const { snapshot, unmatched, warnings } = adapter.transform(
       fetched.raw,
@@ -212,7 +224,35 @@ function printConsole(reports: SourceReport[], dryRun: boolean) {
   console.log('');
 }
 
-function writeJobSummary(reports: SourceReport[], history: string, dryRun: boolean) {
+/** What discovery would list, from the payloads just fetched. Report only. */
+function discovery(
+  raws: Partial<Record<SourceId, unknown>>,
+  entries: ReturnType<typeof readModelEntries>,
+): string[] {
+  const missing = SOURCE_IDS.filter((source) => raws[source] === undefined);
+  if (missing.length > 0) {
+    const names = missing.map((source) => SOURCE_INFO[source].name).join(', ');
+    return [`Discovery: skipped; it needs every source (not fetched: ${names}).`];
+  }
+  try {
+    const result = discoverModels({
+      aa: aaEntries(raws.aa),
+      arena: arenaEntries(raws.arena),
+      livebench: livebenchIds(raws.livebench),
+      modelsdev: modelsdevEntries(raws.modelsdev),
+    });
+    return discoveryReport(result, entries);
+  } catch (error) {
+    return [`Discovery: FAILED. ${describeError(error)}`];
+  }
+}
+
+function writeJobSummary(
+  reports: SourceReport[],
+  history: string,
+  dryRun: boolean,
+  found: string[],
+) {
   const file = process.env.GITHUB_STEP_SUMMARY;
   if (!file) return;
   const lines = ['## Snapshot sync', ''];
@@ -229,6 +269,7 @@ function writeJobSummary(reports: SourceReport[], history: string, dryRun: boole
     }
   }
   lines.push('', `History: ${history}`);
+  lines.push('', '### Discovery', '', '```', ...found, '```');
   appendFileSync(file, `${lines.join('\n')}\n`);
 }
 
@@ -245,7 +286,8 @@ async function main() {
   console.log(`Tracking ${entries.length} models.`);
 
   const reports: SourceReport[] = [];
-  for (const source of sources) reports.push(await syncSource(source, entries, dryRun));
+  const raws: Partial<Record<SourceId, unknown>> = {};
+  for (const source of sources) reports.push(await syncSource(source, entries, dryRun, raws));
 
   printConsole(reports, dryRun);
 
@@ -258,7 +300,9 @@ async function main() {
     history = `FAILED, nothing recorded. ${describeError(error)}`;
   }
   console.log(`History: ${history}\n`);
-  writeJobSummary(reports, history, dryRun);
+  const found = discovery(raws, entries);
+  console.log(`${found.join('\n')}\n`);
+  writeJobSummary(reports, history, dryRun, found);
 }
 
 main().catch((error) => {
