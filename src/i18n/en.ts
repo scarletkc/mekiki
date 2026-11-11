@@ -59,6 +59,37 @@ export const en = {
     intro:
       'Every model gets three ratings. Intelligence comes from public leaderboards; cost follows from the price list, and value from intelligence and what the model costs to actually run.',
   },
+  highlights: {
+    title: 'Spotlights',
+    frontier: {
+      kicker: 'Frontier crown',
+      runCost: '{runCost} benchmark bill · {price}/1M measured',
+      blended: '{price}/1M blended',
+      free: 'Free to call',
+      unpriced: 'Intelligence leader',
+    },
+    value: {
+      kicker: 'Giant slayer',
+      cheaper: '{intel}% of #1 intelligence · {multiple}× cheaper ({price}/1M)',
+      free: '{intel}% of #1 intelligence · Free',
+      fallback: 'Intelligence {intel} · {price}/1M',
+    },
+    burner: {
+      kicker: 'Sticker shock',
+      unit: 'vs list',
+      contrast: '{list} list → {measured}/1M after token burn',
+    },
+    sleeper: {
+      kicker: 'Hidden gem',
+      ranked: '{tier} value · only #{rank} on OpenRouter ({price}/1M)',
+      unranked: '{tier} value · unranked on OpenRouter ({price}/1M)',
+    },
+    frugal: {
+      kicker: 'Token saver',
+      unit: 'vs list',
+      contrast: '{list} list → {measured}/1M measured',
+    },
+  },
   table: {
     columns: {
       model: 'Model',

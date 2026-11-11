@@ -38,6 +38,7 @@ function trackProblems(page: Page): string[] {
 test('the home page renders the model table', async ({ page }) => {
   const problems = trackProblems(page);
   await page.goto('/');
+  await expect(page.locator('[data-highlights] a[href*="/m/"]').first()).toBeVisible();
   await expect(page.locator('table tbody tr').first()).toBeVisible();
   await expect(page.locator('footer')).toBeVisible();
   expect(problems).toEqual([]);

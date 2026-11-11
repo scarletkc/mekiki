@@ -1,9 +1,11 @@
 ---
 import type { TrendData } from '../components/charts/TrendChart';
+import Highlights from '../components/Highlights.astro';
 import { ModelTable, type ModelRow } from '../components/ModelTable';
 import { LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import { trendSeries } from '../lib/charts';
+import { buildHighlights } from '../lib/highlights';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
 import { usageCell, usagePeriod } from '../lib/usage';
@@ -82,10 +84,12 @@ const strings = {
     limit: t.compare.limit,
   },
 };
+const highlights = buildHighlights(dataset, t);
 ---
 
 <Base locale={locale} path="/">
-  <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">{t.home.title}</h1>
+  <h1 class="mb-5 text-2xl font-semibold tracking-tight sm:text-3xl">{t.home.title}</h1>
+  <Highlights locale={locale} title={t.highlights.title} cards={highlights} />
   <ModelTable
     client:load
     models={rows}

@@ -311,6 +311,38 @@
     .data-table :where(.num) {
         text-align: end;
     }
+
+    .highlight-card {
+        --tone: var(--quality);
+        background: linear-gradient(
+            155deg,
+            color-mix(in oklch, var(--tone) 7%, var(--card)) 0%,
+            var(--card) 62%
+        );
+        border: 1px solid color-mix(in oklch, var(--tone) 18%, var(--border));
+        box-shadow: inset 0 1px 0 0 color-mix(in oklch, var(--tone) 22%, transparent);
+        transition:
+            transform 150ms ease,
+            border-color 150ms ease,
+            box-shadow 150ms ease;
+    }
+
+    .highlight-card[data-tone='expense'] {
+        --tone: var(--expense);
+    }
+
+    .highlight-card:hover {
+        transform: translateY(-2px);
+        border-color: color-mix(in oklch, var(--tone) 42%, var(--border));
+        box-shadow:
+            inset 0 1px 0 0 color-mix(in oklch, var(--tone) 34%, transparent),
+            0 10px 24px -14px rgb(0 0 0 / 0.22);
+    }
+
+    .highlight-pill {
+        color: var(--tone);
+        background: color-mix(in oklch, var(--tone) 11%, transparent);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

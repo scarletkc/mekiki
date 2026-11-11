@@ -61,6 +61,37 @@ export const zhTW: Dictionary = {
     intro:
       '每個模型給三個評級。智慧分來自公開榜單；成本依官方價格計算，性價比看智慧和實際用起來的花費。',
   },
+  highlights: {
+    title: '今日看點',
+    frontier: {
+      kicker: '智慧王座',
+      runCost: '單輪評測帳單 {runCost} · 實測 {price} / 百萬',
+      blended: '混合價 {price} / 百萬',
+      free: '免費呼叫',
+      unpriced: '目前智慧第一',
+    },
+    value: {
+      kicker: '越級首選',
+      cheaper: '榜首 {intel}% 的智慧 · 實測便宜 {multiple}×（{price} / 百萬）',
+      free: '榜首 {intel}% 的智慧 · 免費呼叫',
+      fallback: '智慧 {intel} · {price} / 百萬',
+    },
+    burner: {
+      kicker: '標價刺客',
+      unit: '標價倍數',
+      contrast: '標價 {list} → 實測折算 {measured} / 百萬',
+    },
+    sleeper: {
+      kicker: '滄海遺珠',
+      ranked: '{tier}檔 · OpenRouter 僅 #{rank}（{price} / 百萬）',
+      unranked: '{tier}檔 · OpenRouter 未上榜（{price} / 百萬）',
+    },
+    frugal: {
+      kicker: '省流高手',
+      unit: '實測立省',
+      contrast: '標價 {list} → 實測僅 {measured} / 百萬',
+    },
+  },
   table: {
     columns: {
       model: '模型',
