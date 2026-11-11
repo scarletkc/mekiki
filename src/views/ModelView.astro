@@ -6,11 +6,12 @@ import Columns2 from '@lucide/astro/icons/columns-2';
 import ExternalLink from '@lucide/astro/icons/external-link';
 import ShareButton from '../components/ShareButton.astro';
 import ChangeText from '../components/ChangeText.astro';
+import Giscus from '../components/Giscus.astro';
 import HistoryChart from '../components/HistoryChart.astro';
 import { TierMeter } from '../components/TierMeter';
 import { badgeVariants } from '../components/ui/badge';
 import { buttonVariants } from '../components/ui/button';
-import { fmt, localePath, useTranslations, type Locale } from '../i18n';
+import { fmt, LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import { changesFor, modelSeries } from '../lib/changelog';
 import type { ModelRecord } from '../lib/dataset';
@@ -343,6 +344,13 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           </a>
         </p>
       </section>
+
+      <Giscus
+        term={model.id}
+        lang={LOCALE_INFO[locale].tag}
+        heading={t.detail.discussion}
+        note={t.detail.discussionNote}
+      />
     </div>
 
     <aside class="min-w-0 text-sm">

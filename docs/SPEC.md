@@ -57,7 +57,8 @@ Non-goals:
 
 | Layer | Choice | Notes |
 | --- | --- | --- |
-| Framework | Astro, static output | Pages ship no JavaScript except the table and compare islands and the share button |
+| Framework | Astro, static output | Pages ship no JavaScript except the table and compare islands, the share button and the giscus loader |
+| Comments | giscus, on GitHub Discussions | Loaded in the browser from giscus.app; the build never contacts it |
 | UI | React, shadcn/ui, Tailwind CSS | shadcn/ui is React, so the islands are React |
 | Table | TanStack Table | Sorting, filtering, search |
 | Share images | satori and resvg | Rendered to PNG at build time, offline |
@@ -579,6 +580,14 @@ tier boundaries inside it are drawn as hairlines. The last point is the score th
 shows, so the chart always agrees with the number above it. A model with fewer than two
 days of data gets a note saying when its history starts instead of a chart. A
 collapsible table under the charts lists the same numbers.
+
+Under the history is a discussion thread: a GitHub Discussions thread embedded with
+giscus, in a category only maintainers and giscus can open threads in. The thread is
+found by the model ID, so all three languages share one thread and URL changes never
+orphan it. It follows the site's language and its light or dark theme, loads lazily, and
+has no reactions, so it never reads as a vote; nothing in it feeds a score. The
+repository and category are set in `src/lib/giscus.config.ts`, and with any of them
+empty the section is not rendered.
 
 ### Compare page
 

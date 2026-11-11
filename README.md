@@ -38,7 +38,9 @@ official prices, and refresh every day.
 - **Charts**: the same models as a quadrant of intelligence against price, as ranked bars,
   or as a trend over the recorded history.
 - **Model pages**: how the intelligence score is built, leaderboard by leaderboard; price,
-  context window, release date and modalities; links to the source data.
+  context window, release date and modalities; links to the source data; and a discussion
+  thread. The thread is a GitHub Discussions thread in a third-party iframe from
+  [giscus](https://giscus.app); posting needs a GitHub account.
 - **Compare**: up to four models side by side, with the best figure in each row in bold.
 - **Share**: a link that opens in the reader's own language, with a preview image for
   every model.

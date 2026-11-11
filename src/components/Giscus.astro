@@ -1,0 +1,89 @@
+---
+// The discussion thread under a model page, a GitHub Discussions thread
+// embedded with giscus. Renders nothing while src/lib/giscus.config.ts is
+// incomplete. Nothing is fetched at build time: giscus loads in the browser.
+import { GISCUS_ORIGIN, GISCUS_THEMES, giscusAttributes } from '../lib/giscus';
+import { giscusConfig } from '../lib/giscus.config';
+
+interface Props {
+  /** What the thread is found by: the model ID. */
+  term: string;
+  /** giscus language: the page's BCP 47 tag. */
+  lang: string;
+  heading: string;
+  note: string;
+}
+
+const { term, lang, heading, note } = Astro.props;
+const attributes = giscusAttributes(giscusConfig, { term, lang });
+const origin = GISCUS_ORIGIN;
+const themes = GISCUS_THEMES;
+
+// What the inline script does (comments inside it would read as text to Biome):
+//
+// 1. giscus reads its settings from its own <script> tag, so the script makes
+//    that tag, with the site theme it finds on <html>. The iframe giscus adds
+//    goes into .giscus.
+// 2. It follows the site theme: the toggle, or the system while the visitor has
+//    not chosen. The iframe takes messages once giscus has loaded in it, which
+//    giscus signals by sending one. A later load (giscus reloads the iframe on
+//    sign-out) brings back the first theme, so the next message gets the current
+//    one again. The first load event can come after the first message, so it
+//    must not stop the theme updates.
+---
+
+{
+  attributes && (
+    <section aria-labelledby="discussion" class="mt-10">
+      <h2 id="discussion" class="mb-1 text-lg font-semibold tracking-tight">
+        {heading}
+      </h2>
+      <p class="text-muted-foreground max-w-[68ch] text-sm">{note}</p>
+      <div class="giscus mt-4" />
+      <script is:inline define:vars={{ attributes, origin, themes }}>
+        var root = document.documentElement;
+        var container = document.querySelector('.giscus');
+        function theme() {
+          return root.classList.contains('dark') ? themes.dark : themes.light;
+        }
+        var script = document.createElement('script');
+        Object.keys(attributes).forEach(function (name) {
+          script.setAttribute(name, attributes[name]);
+        });
+        script.setAttribute('data-theme', theme());
+        script.src = origin + '/client.js';
+        script.crossOrigin = 'anonymous';
+        script.async = true;
+        container.after(script);
+
+        var ready = false;
+        var stale = false;
+        var watched = null;
+        function sendTheme() {
+          var frame = container.querySelector('iframe');
+          if (!ready || !frame || !frame.contentWindow) return;
+          frame.contentWindow.postMessage({ giscus: { setConfig: { theme: theme() } } }, origin);
+        }
+        window.addEventListener('message', function (event) {
+          if (event.origin !== origin) return;
+          var frame = container.querySelector('iframe');
+          if (!frame || event.source !== frame.contentWindow) return;
+          if (watched !== frame) {
+            watched = frame;
+            frame.addEventListener('load', function () {
+              stale = true;
+            });
+          }
+          if (ready && !stale) return;
+          ready = true;
+          stale = false;
+          sendTheme();
+        });
+        new MutationObserver(sendTheme).observe(root, {
+          attributes: true,
+          attributeFilter: ['class'],
+        });
+      </script>
+    </section>
+  )
+}

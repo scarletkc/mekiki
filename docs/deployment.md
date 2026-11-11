@@ -27,6 +27,17 @@ Done once by the repository owner:
    ```
 
    The response should include `Access-Control-Allow-Origin: *`.
+5. Discussion threads on model pages: turn on Discussions, create a category in the
+   Announcement format (so only maintainers and giscus can open threads), and install the
+   [giscus app](https://github.com/apps/giscus) on the repository. Put the repository and
+   category names and IDs in `src/lib/giscus.config.ts`; the IDs come from giscus.app or
+   from the GraphQL API:
+
+   ```bash
+   gh api graphql -f query='{ repository(owner:"scarletkc", name:"mekiki") { id discussionCategories(first:20) { nodes { id name } } } }'
+   ```
+
+   With any field empty, model pages show no discussion section.
 
 ## Protected `main`
 

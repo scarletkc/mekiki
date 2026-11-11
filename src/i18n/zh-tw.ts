@@ -152,6 +152,8 @@ export const zhTW: Dictionary = {
     changes: '變化',
     noChanges: '{date} 以來沒有變化。',
     allChanges: '全部變化',
+    discussion: '討論',
+    discussionNote: '留言存放在 GitHub Discussions，發表留言需要 GitHub 帳號。',
   },
   metric: {
     aa_intelligence: 'AA 智慧指數',
