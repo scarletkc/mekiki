@@ -56,6 +56,9 @@ export const zhCN: Dictionary = {
       price: '输入 / 输出价',
     },
     priceNote: '价格单位：美元 / 百万 token',
+    measuredPrice: '实测 {price}',
+    measuredPriceNote:
+      '性价比按 Artificial Analysis 实测花费折算的 {price} / 百万 token 计算，不按标价',
     search: '搜索模型名称',
     filters: '筛选',
     vendor: '厂商',

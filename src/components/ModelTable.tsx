@@ -82,7 +82,15 @@ export interface ModelRow {
     output: number | null;
     free: boolean;
   };
-  value: { score: number | null; tier: ValueTier | null };
+  value: {
+    score: number | null;
+    tier: ValueTier | null;
+    /**
+     * Price per 1M tokens that value is computed from, when it comes from the
+     * measured run cost rather than the list price; null otherwise.
+     */
+    measuredPrice: number | null;
+  };
   openWeights: boolean | null;
 }
 
@@ -273,7 +281,10 @@ function SortArrow({ direction }: { direction: 'asc' | 'desc' | false }) {
 }
 
 /** Props for the three rating meters of a model; shared by the table and the cards. */
-function meterProps(model: ModelRow, { tier, empty }: Pick<ModelTableStrings, 'tier' | 'empty'>) {
+function meterProps(
+  model: ModelRow,
+  { table, tier, empty }: Pick<ModelTableStrings, 'table' | 'tier' | 'empty'>,
+) {
   const { intelligence, cost, value } = model;
   return {
     intelligence: {
@@ -293,6 +304,14 @@ function meterProps(model: ModelRow, { tier, empty }: Pick<ModelTableStrings, 't
       tier: value.tier,
       label: value.tier ? tier.value[value.tier] : empty.unrated,
       figure: value.score === null ? null : formatScore(value.score),
+      // The price behind the score, since the list price in the cost column
+      // can be far from what a model costs to run.
+      ...(value.score !== null && value.measuredPrice !== null
+        ? {
+            note: fmt(table.measuredPrice, { price: formatPrice(value.measuredPrice) }),
+            noteTitle: fmt(table.measuredPriceNote, { price: formatPrice(value.measuredPrice) }),
+          }
+        : {}),
     },
   };
 }
@@ -566,7 +585,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.intelligence.tier === wanted,
         cell: ({ row }) => (
-          <TierMeter {...meterProps(row.original, { tier, empty }).intelligence} />
+          <TierMeter {...meterProps(row.original, { table: t, tier, empty }).intelligence} />
         ),
       }),
       helper.accessor((row) => row.cost.blended ?? undefined, {
@@ -574,14 +593,18 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         header: t.columns.cost,
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.cost.tier === wanted,
-        cell: ({ row }) => <TierMeter {...meterProps(row.original, { tier, empty }).cost} />,
+        cell: ({ row }) => (
+          <TierMeter {...meterProps(row.original, { table: t, tier, empty }).cost} />
+        ),
       }),
       helper.accessor((row) => row.value.score ?? undefined, {
         id: 'value',
         header: t.columns.value,
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.value.tier === wanted,
-        cell: ({ row }) => <TierMeter {...meterProps(row.original, { tier, empty }).value} />,
+        cell: ({ row }) => (
+          <TierMeter {...meterProps(row.original, { table: t, tier, empty }).value} />
+        ),
       }),
       helper.accessor((row) => row.cost.input ?? undefined, {
         id: 'price',
@@ -775,7 +798,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         >
           {rows.map((row) => {
             const model = row.original;
-            const meters = meterProps(model, { tier, empty });
+            const meters = meterProps(model, { table: t, tier, empty });
             return (
               <li key={row.id} className="hover:bg-muted/50 relative px-4 py-3.5 transition-colors">
                 <div className="flex items-start gap-3">

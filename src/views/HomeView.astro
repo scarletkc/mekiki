@@ -32,7 +32,12 @@ const rows: ModelRow[] = dataset.models.map((model) => ({
     output: model.rating.cost.output,
     free: model.rating.cost.free,
   },
-  value: { score: model.rating.value.score, tier: model.rating.value.tier },
+  value: {
+    score: model.rating.value.score,
+    tier: model.rating.value.tier,
+    measuredPrice:
+      model.rating.value.cost_basis === 'run_cost' ? model.rating.value.effective_price : null,
+  },
   openWeights: model.facts.open_weights,
 }));
 

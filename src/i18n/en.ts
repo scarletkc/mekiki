@@ -58,6 +58,9 @@ export const en = {
       price: 'Input / output price',
     },
     priceNote: 'Prices in USD per 1M tokens',
+    measuredPrice: 'Measured {price}',
+    measuredPriceNote:
+      'Value is computed at {price} per 1M tokens, from what Artificial Analysis measured this model costing to run, not from its list price',
     search: 'Search models by name',
     filters: 'Filters',
     vendor: 'Vendor',
