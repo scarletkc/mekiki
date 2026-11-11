@@ -1,9 +1,47 @@
 {
   "source": "modelsdev",
-  "fetched_at": "2026-11-10T16:31:32.613Z",
-  "total": 8977,
+  "fetched_at": "2026-11-11T10:02:21.026Z",
+  "total": 9000,
   "frontier": {},
   "models": {
+    "anthropic/claude-fable-5-1": {
+      "name": "Claude Fable 5.1",
+      "input": 10,
+      "output": 50,
+      "cache_read": 0.25,
+      "context": 1000000,
+      "release_date": "2026-09-01",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "anthropic/claude-fable-5-2": {
+      "name": "Claude Fable 5.2",
+      "input": 8,
+      "output": 40,
+      "cache_read": 0.2,
+      "context": 1000000,
+      "release_date": "2026-11-09",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
     "anthropic/claude-haiku-5-5": {
       "name": "Claude Haiku 5.5",
       "input": 0.1,
@@ -97,6 +135,48 @@
         ]
       }
     },
+    "google/gemini-3.1-flash-lite-preview": {
+      "name": "Gemini 3.1 Flash Lite Preview",
+      "input": 0.25,
+      "output": 1.5,
+      "cache_read": 0.025,
+      "context": 1048576,
+      "release_date": "2026-03-03",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "google/gemini-3.5-flash-lite": {
+      "name": "Gemini 3.5 Flash Lite",
+      "input": 0.3,
+      "output": 2.5,
+      "cache_read": 0.03,
+      "context": 1048576,
+      "release_date": "2026-07-21",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
     "google/gemini-3.8-flash": {
       "name": "Gemini 3.8 Flash",
       "input": 0.75,
@@ -132,6 +212,238 @@
           "image",
           "video",
           "audio",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "google/gemini-4-carbon": {
+      "name": "Gemini 4 Carbon",
+      "input": 2,
+      "output": 10,
+      "cache_read": 0.1,
+      "context": 1048576,
+      "release_date": "2026-11-10",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "meta/muse-spark-1.3": {
+      "name": "Muse Spark 1.3",
+      "input": 1.25,
+      "output": 4.25,
+      "cache_read": 0.15,
+      "context": 1048576,
+      "release_date": "2026-09-02",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "pdf",
+          "audio"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "minimax/MiniMax-M3": {
+      "name": "MiniMax-M3",
+      "input": 0.3,
+      "output": 1.2,
+      "cache_read": 0.06,
+      "context": 1000000,
+      "release_date": "2026-06-01",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "minimax/MiniMax-M3.1-Flash": {
+      "name": "MiniMax-M3.1-Flash",
+      "input": 0.15,
+      "output": 0.6,
+      "cache_read": 0.015,
+      "context": 1000000,
+      "release_date": "2026-10-19",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "mistral/mistral-large-4": {
+      "name": "Mistral Large 4",
+      "input": 0.7,
+      "output": 2.1,
+      "cache_read": 0.07,
+      "context": 1048576,
+      "release_date": "2026-10-06",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "moonshotai/kimi-k3": {
+      "name": "Kimi K3",
+      "input": 3,
+      "output": 15,
+      "cache_read": 0.3,
+      "context": 1048576,
+      "release_date": "2026-07-16",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "moonshotai/kimi-k3.1-pro": {
+      "name": "Kimi K3.1 Pro",
+      "input": 2,
+      "output": 10,
+      "cache_read": 0.2,
+      "context": 1048576,
+      "release_date": "2026-10-23",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-5.6-luna": {
+      "name": "GPT-5.6 Luna",
+      "input": 0.2,
+      "output": 1.2,
+      "cache_read": 0.02,
+      "context": 1050000,
+      "release_date": "2026-07-09",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-5.6-terra": {
+      "name": "GPT-5.6 Terra",
+      "input": 2,
+      "output": 12,
+      "cache_read": 0.2,
+      "context": 1050000,
+      "release_date": "2026-07-09",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-6-astra": {
+      "name": "GPT-6 Astra",
+      "input": 10,
+      "output": 50,
+      "cache_read": 1,
+      "context": 1050000,
+      "release_date": "2026-09-04",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-6-luna": {
+      "name": "GPT-6 Luna",
+      "input": 0.1,
+      "output": 0.5,
+      "cache_read": 0.01,
+      "context": 1050000,
+      "release_date": "2026-09-22",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-6-sol": {
+      "name": "GPT-6 Sol",
+      "input": 2,
+      "output": 10,
+      "cache_read": 0.2,
+      "context": 1050000,
+      "release_date": "2026-09-22",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
           "pdf"
         ],
         "output": [
@@ -177,6 +489,25 @@
         ]
       }
     },
+    "xai/grok-4.6": {
+      "name": "Grok 4.6",
+      "input": 2,
+      "output": 6,
+      "cache_read": 0.5,
+      "context": 500000,
+      "release_date": "2026-08-12",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
     "xai/grok-4.7": {
       "name": "Grok 4.7",
       "input": 2,
@@ -189,6 +520,83 @@
         "input": [
           "text",
           "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "xiaomi/mimo-v2.6-flash": {
+      "name": "MiMo-V2.6-Flash",
+      "input": 0.14,
+      "output": 0.28,
+      "cache_read": 0.0028,
+      "context": 1048576,
+      "release_date": "2026-09-22",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "audio",
+          "video"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "xiaomi/mimo-v2.6-pro": {
+      "name": "MiMo-V2.6-Pro",
+      "input": 0.435,
+      "output": 0.87,
+      "cache_read": 0.0036,
+      "context": 1048576,
+      "release_date": "2026-09-22",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "audio",
+          "video"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "zai/glm-5.3": {
+      "name": "GLM-5.3",
+      "input": 1.4,
+      "output": 4.4,
+      "cache_read": 0.26,
+      "context": 1000000,
+      "release_date": "2026-08-14",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "zai/glm-5.3-flash": {
+      "name": "GLM-5.3-Flash",
+      "input": 0.15,
+      "output": 0.5,
+      "cache_read": 0.03,
+      "context": 1000000,
+      "release_date": "2026-08-26",
+      "open_weights": true,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
           "pdf"
         ],
         "output": [
