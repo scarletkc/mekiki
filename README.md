@@ -115,6 +115,7 @@ mekiki does not accept pull requests from outside contributors.
 - [The model list](docs/model-list.md): who gets listed, how names are matched, and corrections
 - [Development guide](docs/development.md): running locally, commands, tuning the ratings, and adding a language
 - [Deployment](docs/deployment.md): the daily workflow and one-time setup
+- [Advertising](docs/advertising.md): ad slots, monthly prices and the rules every ad follows
 
 ## Data sources
 
