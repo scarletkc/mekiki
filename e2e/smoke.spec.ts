@@ -1,7 +1,9 @@
+import { readFile } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
 import { SITE_URL } from '../src/lib/dataset';
 import { giscusAttributes } from '../src/lib/giscus';
 import { giscusConfig } from '../src/lib/giscus.config';
+import { SITE_HOST } from '../src/lib/share';
 
 const GISCUS = 'https://giscus.app';
 
@@ -214,6 +216,29 @@ test('the home page switches between the table and the charts', async ({ page })
   await views.nth(0).click();
   await expect(page.locator('table tbody tr').first()).toBeVisible();
   expect(new URL(page.url()).searchParams.get('view')).toBeNull();
+  expect(problems).toEqual([]);
+});
+
+test('a chart carries the site watermark and exports as an image of itself', async ({ page }) => {
+  const problems = trackProblems(page);
+  for (const view of ['quadrant', 'bar']) {
+    await page.goto(`/?view=${view}`);
+    const figure = page.locator('figure').first();
+    await expect(figure.locator('[data-chart-watermark]')).toHaveText(SITE_HOST);
+
+    const box = await figure.boundingBox();
+    const pending = page.waitForEvent('download');
+    await figure.locator('[data-export-ignore] button').click();
+    const file = await pending;
+    expect(file.suggestedFilename()).toMatch(
+      new RegExp(`^mekiki-${view}-.*\\d{4}-\\d{2}-\\d{2}\\.png$`),
+    );
+
+    const image = await readFile(await file.path());
+    expect(image.subarray(1, 4).toString()).toBe('PNG');
+    expect(Math.abs(image.readUInt32BE(16) - (box?.width ?? 0) * 2)).toBeLessThanOrEqual(2);
+    expect(Math.abs(image.readUInt32BE(20) - (box?.height ?? 0) * 2)).toBeLessThanOrEqual(2);
+  }
   expect(problems).toEqual([]);
 });
 

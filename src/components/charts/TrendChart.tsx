@@ -14,7 +14,15 @@ import {
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
-import { ChartTooltip, formatMetric, metricLabel, useWidth, type ChartStrings } from './shared';
+import {
+  ChartFooter,
+  ChartTooltip,
+  ExportButton,
+  formatMetric,
+  metricLabel,
+  useWidth,
+  type ChartStrings,
+} from './shared';
 
 export interface TrendData {
   start: string;
@@ -179,8 +187,9 @@ export function TrendChart({
 
   return (
     <figure className="bg-card rounded-xl border px-3 pt-3 pb-3 sm:px-4">
-      <figcaption className="mb-2 text-sm font-medium">
-        {fmt(chart.trendCaption, { metric: label })}
+      <figcaption className="mb-2 flex items-start justify-between gap-3">
+        <span className="text-sm font-medium">{fmt(chart.trendCaption, { metric: label })}</span>
+        <ExportButton name={['trend', metric]} strings={chart} />
       </figcaption>
       <div
         ref={ref}
@@ -288,6 +297,7 @@ export function TrendChart({
 
             {cursorDate && (
               <line
+                data-export-ignore
                 x1={layout.x(cursorDate)}
                 x2={layout.x(cursorDate)}
                 y1={PAD.top}
@@ -381,9 +391,9 @@ export function TrendChart({
           );
         })}
       </ul>
-      <p className="text-muted-foreground mt-3 border-t border-dashed pt-2.5 text-xs">
-        {chart.trendNote}
-      </p>
+      <ChartFooter>
+        <p>{chart.trendNote}</p>
+      </ChartFooter>
     </figure>
   );
 }
