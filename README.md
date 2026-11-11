@@ -34,14 +34,15 @@ official prices, and refresh every day.
 ## Features
 
 - **Model table**: sort by any column, filter by vendor, tier or open weights, and search
-  by name. The URL keeps the view, so you can share it.
+  by name. The URL keeps the view, so you can share it. A badge shows each model's usage
+  rank on OpenRouter over the last 7 days, for reference only.
 - **Charts**: the same models as a quadrant of intelligence against price, as ranked bars,
   or as a trend over the recorded history. Every chart carries the site's address and
   exports as a PNG.
 - **Model pages**: how the intelligence score is built, leaderboard by leaderboard; price,
-  context window, release date and modalities; links to the source data; and a discussion
-  thread. The thread is a GitHub Discussions thread in a third-party iframe from
-  [giscus](https://giscus.app); posting needs a GitHub account.
+  context window, release date and modalities; usage on OpenRouter; links to the source
+  data; and a discussion thread. The thread is a GitHub Discussions thread in a
+  third-party iframe from [giscus](https://giscus.app); posting needs a GitHub account.
 - **Compare**: up to four models side by side, with the best figure in each row in bold.
 - **Share**: a link that opens in the reader's own language, with a preview image for
   every model.
@@ -123,6 +124,7 @@ mekiki does not accept pull requests from outside contributors.
 | [Arena](https://arena.ai/leaderboard) | Text and WebDev ratings and Agent Arena scores, from the [`lmarena-ai/leaderboard-dataset`](https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset) dataset (CC BY 4.0) |
 | [LiveBench](https://livebench.ai/) | Score across the categories the AA index does not test |
 | [models.dev](https://models.dev) | Prices, context window, release date, open weights and modalities |
+| [OpenRouter](https://openrouter.ai/rankings) | Usage rank over the last 7 days, shown next to model names and never part of a rating, from its rankings dataset (CC BY 4.0) |
 
 Thanks to all of them. Every page credits them; if you republish the data, credit them
 too.

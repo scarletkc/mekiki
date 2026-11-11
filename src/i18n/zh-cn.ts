@@ -40,6 +40,21 @@ export const zhCN: Dictionary = {
     legacy: '旧模型',
     openWeights: '开源权重',
   },
+  usage: {
+    badge: 'OpenRouter #{rank}',
+    badgeTitle: 'OpenRouter 用量第 {rank} 名：{start} 至 {end} 共 {tokens} tokens',
+    title: 'OpenRouter 用量',
+    rank: '排名',
+    tokens: 'Tokens',
+    period: '统计期',
+    partial: '只有 {days}/{total} 天进入每日前 50，不参与排名。',
+    notFound: '这段时间没有在 OpenRouter 每日前 50 中找到这个模型。',
+    note: '按通过 OpenRouter 处理的 token 数排名，只排统计期内每天都在每日前 50 的模型。仅供参考，不参与任何评分。',
+    homeNote:
+      'OpenRouter #N 是按 {start} 至 {end} 通过 OpenRouter 处理的 token 数排出的名次。仅供参考，不参与任何评分。',
+    citation:
+      'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}. Licensed under CC BY 4.0.',
+  },
   home: {
     title: '模型',
     intro:
@@ -214,6 +229,7 @@ export const zhCN: Dictionary = {
     useAa: '智能指数、评测总花费',
     useArena: '文本榜、WebDev 榜和 Agent 榜的分数',
     useLivebench: 'AA 没有测的那几个分类的得分',
+    useOpenrouter: '模型名旁的用量排名，不参与任何评分',
     licenseAa: '按其条款署名',
     licenseNone: '未声明许可，注明来源',
     caveatsTitle: '注意',
@@ -246,11 +262,13 @@ export const zhCN: Dictionary = {
       'value.effective_price 是计算性价比时使用的价格（美元 / 百万 token），value.cost_index 是它的 0–100 成本指数。value.cost_basis 说明这个价格的来源：有 Artificial Analysis 实测花费（value.run_cost，美元）时为 run_cost，否则为 list_price。',
     fieldHistory:
       'history.json 每个记录日一项：日期，以及当天收录的每个模型的名称、状态、分数、档位和价格。只有发生变化的日子才会记录，所以每一项一直有效到下一项。',
+    fieldUsage:
+      'openrouter 是 sources.openrouter.edition 这段时间在 OpenRouter 上的用量：permaslug 是匹配到的版本，tokens 是总数，days 是进入每日前 50 的天数，rank 是按 token 数的名次（不是每天都在前 50 时为 null）。没有找到这个模型时整个字段为 null。它不参与任何评分。',
     versionTitle: '版本',
     versionBody: '字段只加不改。有破坏性变更时，version 加一。当前是 version {version}。',
     attributionTitle: '署名',
     attributionBody:
-      '榜单数据来自 Artificial Analysis、Arena 和 LiveBench，价格来自 models.dev。转载这些数字时请同样注明来源。',
+      '榜单数据来自 Artificial Analysis、Arena 和 LiveBench，价格来自 models.dev。转载这些数字时请同样注明来源。用量数据来自 OpenRouter，按 CC BY 4.0 许可，引用时请写 "Source: OpenRouter (openrouter.ai/rankings), as of"，后接 sources.openrouter.as_of。',
   },
   compare: {
     title: '对比模型',

@@ -84,6 +84,7 @@ export interface ModelRow {
     measuredPrice: number | null;
   };
   openWeights: boolean | null;
+  usage: { label: string; title: string } | null;
 }
 
 export type ModelTableStrings = Pick<
@@ -277,7 +278,7 @@ function ModelBadges({
   badge: ModelTableStrings['badge'];
   className?: string;
 }) {
-  if (!model.legacy && model.openWeights !== true) return null;
+  if (!model.legacy && model.openWeights !== true && model.usage === null) return null;
   return (
     <span className={cn('flex flex-wrap gap-1', className)}>
       {model.legacy && (
@@ -288,6 +289,15 @@ function ModelBadges({
       {model.openWeights === true && (
         <Badge variant="outline" className="text-muted-foreground font-normal">
           {badge.openWeights}
+        </Badge>
+      )}
+      {model.usage && (
+        <Badge
+          variant="outline"
+          className="text-muted-foreground num font-normal"
+          title={model.usage.title}
+        >
+          {model.usage.label}
         </Badge>
       )}
     </span>
@@ -482,14 +492,14 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
               <span className="flex h-[1.5em] items-center">
                 <PickBox id={model.id} name={model.name} strings={compare} />
               </span>
-              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 lg:flex-nowrap">
+              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <a
                   href={model.href}
-                  className="font-medium underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
+                  className="font-medium underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current lg:whitespace-nowrap"
                 >
                   {model.name}
                 </a>
-                <ModelBadges model={model} badge={badge} className="lg:flex-nowrap" />
+                <ModelBadges model={model} badge={badge} />
               </span>
             </span>
           );
@@ -827,7 +837,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
                       className={cn(
                         'px-3 py-2.5 align-middle',
                         index === 0 &&
-                          'bg-card sticky left-0 z-10 max-w-[13rem] min-w-[10rem] pl-4 whitespace-normal transition-colors group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))] lg:max-w-none lg:whitespace-nowrap',
+                          'bg-card sticky left-0 z-10 max-w-[13rem] min-w-[10rem] pl-4 whitespace-normal transition-colors group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))] lg:max-w-none',
                       )}
                     >
                       <table.FlexRender cell={cell} />

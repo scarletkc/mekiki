@@ -94,6 +94,23 @@ describe('mergeModelList', () => {
     expect(list[1]?.data.overrides.price).toEqual({ input: 1, output: 2 });
   });
 
+  it('keeps an OpenRouter mapping of null, which turns matching off', () => {
+    const list = mergeModelList(
+      generated,
+      overridesSchema.parse({
+        models: {
+          'a/one': { sources: { openrouter: null } },
+          'a/two': { sources: { openrouter: 'acme/two-20261001' } },
+        },
+      }),
+    );
+    expect(list.find((entry) => entry.id === 'a/one')?.data.sources.openrouter).toBeNull();
+    expect(list.find((entry) => entry.id === 'a/two')?.data.sources.openrouter).toBe(
+      'acme/two-20261001',
+    );
+    expect(list.find((entry) => entry.id === 'a/one-2')?.data.sources.openrouter).toBeUndefined();
+  });
+
   it('adds a model by hand, and keeps other corrections until their model is listed', () => {
     const overrides = overridesSchema.parse({
       models: {

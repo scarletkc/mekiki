@@ -13,7 +13,9 @@ are checked by `.github/workflows/ci.yml`.
 Done once by the repository owner:
 
 1. Create an Artificial Analysis account, generate an API key and add it as the repository
-   secret `AA_API_KEY`.
+   secret `AA_API_KEY`. For the OpenRouter usage badges, add an OpenRouter API key as
+   `OPENROUTER_API_KEY`. Its rankings dataset costs nothing, so the key can have a credit
+   limit of nearly zero. Without it that source is skipped and no badges are shown.
 2. DNS: add a `CNAME` record for `mekiki.fog.moe` pointing to `scarletkc.github.io`. With
    Cloudflare, use DNS-only mode until GitHub has issued the certificate.
 3. Repository Settings → Pages: set the source to GitHub Actions, enter the custom domain

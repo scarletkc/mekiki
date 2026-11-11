@@ -14,6 +14,7 @@ const SOURCE_FIELDS = [
   'arena_webdev',
   'arena_agent',
   'livebench',
+  'openrouter',
 ] as const;
 
 export const generatedModelSchema = z.object({
@@ -137,9 +138,9 @@ export function mergeModelList(
     const vendor =
       fix.vendor ?? (base ? (overrides.vendors[base.vendor] ?? base.vendor) : undefined);
     if (!name || !vendor) continue;
-    const sources: Record<string, string> = { ...base?.sources };
+    const sources: Record<string, string | null> = { ...base?.sources };
     for (const [field, value] of Object.entries(fix.sources ?? {})) {
-      if (value === null) delete sources[field];
+      if (value === null && field !== 'openrouter') delete sources[field];
       else if (value !== undefined) sources[field] = value;
     }
     drafts.push({

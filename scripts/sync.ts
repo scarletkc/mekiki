@@ -1,6 +1,7 @@
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import {
+  RATING_SOURCE_IDS,
   SOURCE_IDS,
   SOURCE_INFO,
   readSnapshot,
@@ -147,6 +148,7 @@ function writeSource<S extends SourceId>(
           fetched_at: new Date().toISOString(),
           total: snapshot.total,
           edition: snapshot.edition,
+          as_of: snapshot.as_of,
           frontier: snapshot.frontier,
           models: snapshot.models,
         }),
@@ -217,7 +219,7 @@ function updateModelList(
     list: previous,
     lines: [`Model list: kept as it was (${previous.length} models). ${reason}`],
   });
-  const missing = SOURCE_IDS.filter((source) => raws[source] === undefined);
+  const missing = RATING_SOURCE_IDS.filter((source) => raws[source] === undefined);
   if (missing.length > 0) {
     const names = missing.map((source) => SOURCE_INFO[source].name).join(', ');
     return keep(`Discovery needs every source; not fetched: ${names}.`);

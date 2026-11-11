@@ -106,12 +106,14 @@ export function methodContent(dataset: Dataset, locale: Locale) {
     aa: m.useAa,
     arena: m.useArena,
     livebench: m.useLivebench,
+    openrouter: m.useOpenrouter,
   };
   const unlicensed = {
     modelsdev: m.licenseNone,
     aa: m.licenseAa,
     arena: m.licenseNone,
     livebench: m.licenseNone,
+    openrouter: m.licenseNone,
   };
   const sources = SOURCE_IDS.map((id) => ({
     ...dataset.sources[id],

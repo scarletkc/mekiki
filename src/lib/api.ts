@@ -42,6 +42,7 @@ export interface ApiModel {
     effective_price: number | null;
     cost_index: number | null;
   };
+  openrouter: { permaslug: string; tokens: number; days: number; rank: number | null } | null;
   url: string;
 }
 
@@ -55,7 +56,17 @@ export interface ApiIndexEntry {
 export interface ApiFull {
   version: number;
   generated_at: string;
-  sources: Record<SourceId, { name: string; url: string; fetched_at: string | null }>;
+  sources: Record<
+    SourceId,
+    {
+      name: string;
+      url: string;
+      license: string | null;
+      fetched_at: string | null;
+      edition: string | null;
+      as_of: string | null;
+    }
+  >;
   models: ApiModel[];
 }
 
@@ -110,6 +121,7 @@ export function toApiModel(model: ModelRecord): ApiModel {
       effective_price: tidy(value.effective_price),
       cost_index: value.cost_index,
     },
+    openrouter: model.openrouter,
     url: model.url,
   };
 }
@@ -121,8 +133,8 @@ export function toApiIndex(dataset: Dataset): ApiIndexEntry[] {
 export function toApiFull(dataset: Dataset): ApiFull {
   const sources = {} as ApiFull['sources'];
   for (const id of SOURCE_IDS) {
-    const { name, url, fetched_at } = dataset.sources[id];
-    sources[id] = { name, url, fetched_at };
+    const { name, url, license, fetched_at, edition, as_of } = dataset.sources[id];
+    sources[id] = { name, url, license, fetched_at, edition, as_of };
   }
   return {
     version: API_VERSION,
@@ -149,7 +161,14 @@ export function apiDoc(dataset: Dataset, t: Dictionary) {
     },
     { path: '/api/history.json', href: '/api/history.json', content: a.endpointHistory },
   ];
-  const fields = [a.fieldScores, a.fieldTier, a.fieldPrice, a.fieldValue, a.fieldHistory];
+  const fields = [
+    a.fieldScores,
+    a.fieldTier,
+    a.fieldPrice,
+    a.fieldValue,
+    a.fieldUsage,
+    a.fieldHistory,
+  ];
   return { sample, samplePath, endpoints, fields };
 }
 

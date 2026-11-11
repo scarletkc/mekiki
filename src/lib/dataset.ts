@@ -7,7 +7,13 @@ import {
   type ScoringConfig,
 } from './scoring.config';
 import { listPrice, rateModel, type Price, type Rating } from './scoring';
-import { SOURCE_IDS, SOURCE_INFO, type Snapshots, type SourceId } from './snapshots';
+import {
+  SOURCE_IDS,
+  SOURCE_INFO,
+  type RatingSourceId,
+  type Snapshots,
+  type SourceId,
+} from './snapshots';
 
 export const SITE_URL = 'https://mekiki.fog.moe';
 export const REPO_URL = 'https://github.com/scarletkc/mekiki';
@@ -18,6 +24,14 @@ export interface SourceStatus {
   license: string | null;
   fetched_at: string | null;
   edition: string | null;
+  as_of: string | null;
+}
+
+export interface OpenrouterUsage {
+  permaslug: string;
+  tokens: number;
+  days: number;
+  rank: number | null;
 }
 
 export interface ModelRecord {
@@ -35,7 +49,8 @@ export interface ModelRecord {
     index_cost_usd: number | null;
   };
   source_ids: { modelsdev: string } & Record<MappingField, string | null>;
-  matched: Record<SourceId, boolean>;
+  matched: Record<RatingSourceId, boolean>;
+  openrouter: OpenrouterUsage | null;
   url: string;
 }
 
@@ -208,6 +223,7 @@ export function buildDataset(
         ),
         livebench: found(snapshots.livebench, sources.livebench),
       },
+      openrouter: snapshots.openrouter?.models[entry.id] ?? null,
       url: `${SITE_URL}/m/${entry.id}`,
     };
   });
@@ -220,6 +236,7 @@ export function buildDataset(
       ...SOURCE_INFO[id],
       fetched_at: snapshots[id]?.fetched_at ?? null,
       edition: snapshots[id]?.edition ?? null,
+      as_of: snapshots[id]?.as_of ?? null,
     };
   }
 

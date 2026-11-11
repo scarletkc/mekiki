@@ -126,6 +126,7 @@ const attribution = [
   SOURCE_INFO.arena,
   SOURCE_INFO.livebench,
   SOURCE_INFO.modelsdev,
+  ...(dataset.sources.openrouter.fetched_at ? [SOURCE_INFO.openrouter] : []),
 ];
 ---
 

@@ -20,6 +20,8 @@ export function formatCount(value: number): string {
 }
 
 export function formatTokens(value: number): string {
+  if (value >= 1e12) return `${trimZeros((value / 1e12).toFixed(2))}T`;
+  if (value >= 1e9) return `${trimZeros((value / 1e9).toFixed(2))}B`;
   if (value >= 1_000_000) return `${trimZeros((value / 1_000_000).toFixed(2))}M`;
   if (value >= 1_000) return `${Math.round(value / 1_000)}K`;
   return String(value);

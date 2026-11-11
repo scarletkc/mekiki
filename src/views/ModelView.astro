@@ -22,6 +22,8 @@ import { scoringConfig } from '../lib/scoring.config';
 import { modelImagePath, modelShareText } from '../lib/share';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
+import { SOURCE_INFO } from '../lib/snapshots';
+import { usageBadge, usageDetail, usagePeriod } from '../lib/usage';
 
 interface Props {
   locale: Locale;
@@ -37,6 +39,10 @@ const { metrics, scoreNote, links, priceNotes, costNote, valueNote, facts } = mo
   dataset,
   t,
 );
+
+const period = usagePeriod(dataset);
+const usage = period ? usageDetail(model, period, t) : null;
+const usageTag = usageBadge(model, period, t);
 
 const badgeClass = badgeVariants({
   variant: 'outline',
@@ -86,6 +92,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         <h1 class="text-2xl font-semibold tracking-tight break-words sm:text-3xl">{model.name}</h1>
         {model.status === 'legacy' && <span class={badgeClass}>{t.badge.legacy}</span>}
         {model.facts.open_weights === true && <span class={badgeClass}>{t.badge.openWeights}</span>}
+        {usageTag && <span class={`${badgeClass} num`} title={usageTag.title}>{usageTag.label}</span>}
       </div>
       <p class="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         {model.vendor}
@@ -315,6 +322,32 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       <div class="text-muted-foreground mt-3 space-y-1.5 text-xs leading-relaxed">
         {priceNotes.map((note) => <p>{note}</p>)}
       </div>
+
+      {
+        usage && (
+          <section aria-labelledby="usage">
+            <h2 id="usage" class="mt-8 mb-3 text-lg font-semibold tracking-tight">{t.usage.title}</h2>
+            {usage.notFound ? (
+              <p class="text-muted-foreground">{usage.notFound}</p>
+            ) : (
+              <dl class="bg-card grid grid-cols-[auto_1fr] rounded-xl border px-4 py-1 [&>dd]:border-b [&>dd]:py-2 [&>dd]:text-end [&>dt]:border-b [&>dt]:py-2 [&>dt]:pr-4 [&>dt]:text-muted-foreground [&>:nth-last-child(-n+2)]:border-b-0">
+                {usage.rows.map((row) => (
+                  <>
+                    <dt>{row.label}</dt>
+                    <dd class="num">{row.value ?? <span class="text-muted-foreground">{t.empty.noData}</span>}</dd>
+                  </>
+                ))}
+              </dl>
+            )}
+            <div class="text-muted-foreground mt-3 space-y-1.5 text-xs leading-relaxed">
+              {usage.notes.map((note) => <p>{note}</p>)}
+              <p>
+                <a class="underline underline-offset-4 hover:text-foreground" href={SOURCE_INFO.openrouter.url}>{usage.citation}</a>
+              </p>
+            </div>
+          </section>
+        )
+      }
 
       <h2 class="mt-8 mb-3 text-lg font-semibold tracking-tight">{t.detail.links}</h2>
       <ul class="space-y-2">

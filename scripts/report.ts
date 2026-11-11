@@ -6,7 +6,7 @@ import {
   VALUE_TIERS,
   scoringConfig,
 } from '../src/lib/scoring.config';
-import { SOURCE_IDS, loadSnapshots } from '../src/lib/snapshots';
+import { RATING_SOURCE_IDS, SOURCE_IDS, loadSnapshots } from '../src/lib/snapshots';
 import { readModelEntries } from './lib/content';
 
 type Align = 'left' | 'right';
@@ -157,11 +157,11 @@ console.log(
   ),
 );
 
-const unmapped = models.filter((m) => SOURCE_IDS.some((id) => !m.matched[id]));
+const unmapped = models.filter((m) => RATING_SOURCE_IDS.some((id) => !m.matched[id]));
 if (unmapped.length > 0) {
   console.log('\nNot on every source (rated on the rest)');
   for (const model of unmapped) {
-    const missing = SOURCE_IDS.filter((id) => !model.matched[id]);
+    const missing = RATING_SOURCE_IDS.filter((id) => !model.matched[id]);
     console.log(`  ${model.id}: ${missing.join(', ')}`);
   }
 }

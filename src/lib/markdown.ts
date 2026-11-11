@@ -9,6 +9,7 @@ import { utcDate, type HistoryEntry } from './history';
 import { methodContent } from './method';
 import { modelDetail } from './model-detail';
 import { changelogConfig } from './scoring.config';
+import { usageBadge, usageCitation, usageDetail, usagePeriod, type UsagePeriod } from './usage';
 
 export const LLMS_PATH = '/llms.txt';
 
@@ -69,10 +70,11 @@ function ratingText(model: ModelRecord, t: Dictionary) {
   };
 }
 
-function badges(model: ModelRecord, t: Dictionary): string[] {
+function badges(model: ModelRecord, t: Dictionary, period: UsagePeriod | null): string[] {
   return [
     model.status === 'legacy' ? t.badge.legacy : null,
     model.facts.open_weights === true ? t.badge.openWeights : null,
+    usageBadge(model, period, t)?.label ?? null,
   ].filter((badge) => badge !== null);
 }
 
@@ -101,12 +103,14 @@ function changeMarkdown(
 export function homeMarkdown(dataset: Dataset, locale: Locale): string {
   const t = useTranslations(locale);
   const columns = t.table.columns;
+  const period = usagePeriod(dataset);
+  const ranked = period !== null && dataset.models.some((model) => model.openrouter?.rank != null);
   const rows = dataset.models.map((model) => {
     const { cost, value } = model.rating;
     const rating = ratingText(model, t);
     const name = link(model.name, markdownUrl(locale, `/m/${model.id}`));
     return [
-      [name, ...badges(model, t).map((badge) => `(${badge})`)].join(' '),
+      [name, ...badges(model, t, period).map((badge) => `(${badge})`)].join(' '),
       model.vendor,
       rating.intelligence,
       rating.cost,
@@ -139,6 +143,8 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
       rows,
     ),
     `${t.table.priceNote}${t.footer.fullStop}${syncedLine(dataset, t)}${t.footer.fullStop.trimEnd()}`,
+    ranked &&
+      `${fmt(t.usage.homeNote, { start: period.start, end: period.end })} ${usageCitation(period, t)}`,
     siteLinks(locale, t),
   ]);
 }
@@ -155,6 +161,8 @@ export function modelMarkdown(
   const detail = modelDetail(model, dataset, t);
   const rating = ratingText(model, t);
   const none = t.empty.noData;
+  const period = usagePeriod(dataset);
+  const usage = period ? usageDetail(model, period, t) : null;
 
   const today = utcDate(new Date(dataset.generated_at));
   const series = modelSeries(history.entries, model.id, {
@@ -170,7 +178,7 @@ export function modelMarkdown(
 
   return compose([
     `# ${model.name}`,
-    [model.vendor, `\`${model.id}\``, ...badges(model, t)].join(' · '),
+    [model.vendor, `\`${model.id}\``, ...badges(model, t, period)].join(' · '),
     [
       `- ${t.rating.intelligence}: ${rating.intelligence}`,
       `- ${t.rating.cost}: ${rating.cost} (${detail.costNote})`,
@@ -192,6 +200,11 @@ export function modelMarkdown(
     `## ${d.facts}`,
     detail.facts.map((fact) => `- ${fact.label}: ${fact.value ?? fact.empty}`).join('\n'),
     detail.priceNotes.join('\n\n'),
+    usage && `## ${t.usage.title}`,
+    usage &&
+      (usage.notFound ??
+        usage.rows.map((row) => `- ${row.label}: ${row.value ?? none}`).join('\n')),
+    usage && [...usage.notes, usage.citation].join('\n\n'),
     `## ${d.history}`,
     series.length < 2
       ? fmt(d.historyStart, { date: historyStart })

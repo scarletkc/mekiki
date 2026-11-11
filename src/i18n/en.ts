@@ -38,6 +38,21 @@ export const en = {
     legacy: 'Legacy',
     openWeights: 'Open weights',
   },
+  usage: {
+    badge: 'OpenRouter #{rank}',
+    badgeTitle: '#{rank} by tokens on OpenRouter: {tokens} tokens from {start} to {end}',
+    title: 'Usage on OpenRouter',
+    rank: 'Rank',
+    tokens: 'Tokens',
+    period: 'Period',
+    partial: 'In the daily top 50 on {days} of {total} days, so not ranked.',
+    notFound: "Not found in OpenRouter's daily top 50 for this period.",
+    note: 'Ranked by tokens processed through OpenRouter, among the models in its daily top 50 on every day of the period. Shown for reference; not part of any rating.',
+    homeNote:
+      'OpenRouter #N ranks models by the tokens processed through OpenRouter from {start} to {end}. Shown for reference; not part of any rating.',
+    citation:
+      'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}. Licensed under CC BY 4.0.',
+  },
   home: {
     title: 'Models',
     intro:
@@ -216,6 +231,7 @@ export const en = {
     useAa: 'Intelligence Index, cost to run the index',
     useArena: 'Text and WebDev ratings, Agent Arena scores',
     useLivebench: 'Score across the categories AA does not test',
+    useOpenrouter: 'Usage rank shown next to model names; not used in any rating',
     licenseAa: 'Attribution per its terms',
     licenseNone: 'None stated; credited to the source',
     caveatsTitle: 'Caveats',
@@ -252,12 +268,14 @@ export const en = {
       'value.effective_price is the price the value score is computed from, in USD per 1M tokens, and value.cost_index is its 0–100 index. value.cost_basis says where that price comes from: run_cost when Artificial Analysis measured what the model costs to run (value.run_cost, in USD), list_price otherwise.',
     fieldHistory:
       'history.json has one entry per recorded day: its date and, for every model listed that day, the name, status, scores, tiers and prices. A day is only recorded when something changed, so each entry holds until the next one.',
+    fieldUsage:
+      'openrouter is the usage on OpenRouter over the period in sources.openrouter.edition: permaslug is the build matched, tokens the total, days how many days it was in the daily top 50, and rank its place by tokens (null unless it was there every day). It is null when the model was not found, and it is not part of any rating.',
     versionTitle: 'Versioning',
     versionBody:
       'Fields are only ever added. A breaking change bumps version. The current version is {version}.',
     attributionTitle: 'Attribution',
     attributionBody:
-      'Leaderboard data comes from Artificial Analysis, Arena and LiveBench; prices come from models.dev. Credit them too if you republish these numbers.',
+      'Leaderboard data comes from Artificial Analysis, Arena and LiveBench; prices come from models.dev. Credit them too if you republish these numbers. Usage figures come from OpenRouter under CC BY 4.0; cite them as "Source: OpenRouter (openrouter.ai/rankings), as of" followed by sources.openrouter.as_of.',
   },
   compare: {
     title: 'Compare models',

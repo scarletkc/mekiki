@@ -1,11 +1,13 @@
 ---
 import type { TrendData } from '../components/charts/TrendChart';
 import { ModelTable, type ModelRow } from '../components/ModelTable';
-import { LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
+import { fmt, LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import { trendSeries } from '../lib/charts';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
+import { SOURCE_INFO } from '../lib/snapshots';
+import { usageBadge, usageCitation, usagePeriod } from '../lib/usage';
 
 interface Props {
   locale: Locale;
@@ -14,6 +16,7 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 const dataset = await getDataset();
+const period = usagePeriod(dataset);
 
 const rows: ModelRow[] = dataset.models.map((model) => ({
   id: model.id,
@@ -39,6 +42,7 @@ const rows: ModelRow[] = dataset.models.map((model) => ({
       model.rating.value.cost_basis === 'run_cost' ? model.rating.value.effective_price : null,
   },
   openWeights: model.facts.open_weights,
+  usage: usageBadge(model, period, t),
 }));
 
 const { entries } = getHistory();
@@ -91,4 +95,14 @@ const strings = {
     compareHref={localePath(locale, '/compare')}
     trend={trend}
   />
+  {
+    period && dataset.models.some((model) => model.openrouter?.rank != null) && (
+      <p class="text-muted-foreground mt-4 max-w-[68ch] text-xs leading-relaxed">
+        {fmt(t.usage.homeNote, { start: period.start, end: period.end })}{' '}
+        <a class="underline underline-offset-4 hover:text-foreground" href={SOURCE_INFO.openrouter.url}>
+          {usageCitation(period, t)}
+        </a>
+      </p>
+    )
+  }
 </Base>

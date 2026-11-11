@@ -117,6 +117,22 @@ const snapshots: Snapshots = {
     },
   },
   livebench: null,
+  openrouter: {
+    source: 'openrouter',
+    fetched_at: '2026-11-10T11:00:00.000Z',
+    total: 60,
+    edition: '2026-11-03/2026-11-09',
+    as_of: '2026-11-10T10:40:02.886Z',
+    frontier: {},
+    models: {
+      'acme/flagship': {
+        permaslug: 'acme/flagship-20261001',
+        tokens: 6_760_000_000_000,
+        days: 7,
+        rank: 7,
+      },
+    },
+  },
 };
 
 const flagship = entry(
@@ -232,6 +248,36 @@ describe('buildDataset', () => {
       livebench: false,
     });
     expect(first?.url).toBe('https://mekiki.fog.moe/m/acme/flagship');
+  });
+
+  it('attaches OpenRouter usage by model ID without touching the ratings', () => {
+    const built = buildDataset([flagship, blank], snapshots, { now: NOW, config });
+    const withUsage = built.models.find((model) => model.id === 'acme/flagship');
+    const without = built.models.find((model) => model.id !== 'acme/flagship');
+    expect(withUsage?.openrouter).toEqual({
+      permaslug: 'acme/flagship-20261001',
+      tokens: 6_760_000_000_000,
+      days: 7,
+      rank: 7,
+    });
+    expect(without?.openrouter).toBeNull();
+    expect(built.sources.openrouter).toMatchObject({
+      name: 'OpenRouter',
+      license: 'CC BY 4.0',
+      edition: '2026-11-03/2026-11-09',
+      as_of: '2026-11-10T10:40:02.886Z',
+    });
+    const unused = buildDataset(
+      [flagship, blank],
+      { ...snapshots, openrouter: null },
+      {
+        now: NOW,
+        config,
+      },
+    );
+    expect(unused.models.map((model) => model.rating)).toEqual(
+      built.models.map((model) => model.rating),
+    );
   });
 
   it('rates a model that is on one leaderboard only', () => {
@@ -425,7 +471,7 @@ describe('buildDataset', () => {
   it('builds with no snapshots at all', () => {
     const empty = buildDataset(
       [flagship, blank],
-      { modelsdev: null, aa: null, arena: null, livebench: null },
+      { modelsdev: null, aa: null, arena: null, livebench: null, openrouter: null },
       { now: NOW, config },
     );
     expect(empty.models.map((model) => model.rating.intelligence.score)).toEqual([null, null]);
@@ -472,7 +518,18 @@ describe('JSON API', () => {
     expect(full.sources.aa).toEqual({
       name: 'Artificial Analysis',
       url: 'https://artificialanalysis.ai/',
+      license: null,
       fetched_at: '2026-11-09T00:00:00.000Z',
+      edition: null,
+      as_of: null,
+    });
+    expect(full.sources.openrouter).toEqual({
+      name: 'OpenRouter',
+      url: 'https://openrouter.ai/rankings',
+      license: 'CC BY 4.0',
+      fetched_at: '2026-11-10T11:00:00.000Z',
+      edition: '2026-11-03/2026-11-09',
+      as_of: '2026-11-10T10:40:02.886Z',
     });
     expect(full.models[0]).toEqual({
       id: 'acme/flagship',
@@ -511,6 +568,12 @@ describe('JSON API', () => {
         run_cost: 123.4,
         effective_price: 3.85,
         cost_index: 80.1,
+      },
+      openrouter: {
+        permaslug: 'acme/flagship-20261001',
+        tokens: 6_760_000_000_000,
+        days: 7,
+        rank: 7,
       },
       url: 'https://mekiki.fog.moe/m/acme/flagship',
     });
