@@ -25,17 +25,23 @@ const at = (fraction: number) => `calc((100% - ${FIGURE_ROOM}px) * ${fraction})`
 function tierStarts(metric: ChartMetric, strings: ChartStrings) {
   if (metric === 'cost') {
     const bounds = scoringConfig.cost.tiers;
-    return COST_TIERS.slice(0, -1).map((key, index) => ({
-      value: bounds[key as keyof typeof bounds],
-      label: strings.tier.cost[COST_TIERS[index + 1]!],
-    }));
+    return [
+      { value: 0, label: strings.tier.cost.very_low },
+      ...COST_TIERS.slice(0, -1).map((key, index) => ({
+        value: bounds[key as keyof typeof bounds],
+        label: strings.tier.cost[COST_TIERS[index + 1]!],
+      })),
+    ];
   }
   const kind = metric === 'int' ? 'intelligence' : 'value';
   const tiers = scoringConfig[kind].tiers;
-  return (['low', 'mid', 'high', 'top'] as const).map((key) => ({
-    value: tiers[key],
-    label: strings.tier[kind][key],
-  }));
+  return [
+    { value: 0, label: strings.tier[kind].very_low },
+    ...(['low', 'mid', 'high', 'top'] as const).map((key) => ({
+      value: tiers[key],
+      label: strings.tier[kind][key],
+    })),
+  ];
 }
 
 export function BarChart({
@@ -66,11 +72,15 @@ export function BarChart({
 
   const tierNames = useMemo(() => {
     if (trackWidth === null) return [];
+    const span = trackWidth - FIGURE_ROOM;
     let free = 0;
-    return tiers.filter((tier) => {
-      const left = (trackWidth - FIGURE_ROOM) * (tier.value / hi);
-      if (left < free) return false;
-      free = left + 4 + textWidth(tier.label, 11) + 6;
+    return tiers.filter((tier, index) => {
+      const left = span * (tier.value / hi);
+      const next = tiers[index + 1];
+      const end = next ? span * (next.value / hi) : trackWidth;
+      const width = 4 + textWidth(tier.label, 11);
+      if (left < free || left + width > end) return false;
+      free = left + width + 6;
       return true;
     });
   }, [tiers, hi, trackWidth]);
@@ -79,7 +89,7 @@ export function BarChart({
     'grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-3 @xl:grid-cols-[11rem_minmax(0,1fr)]';
   const hairlines = (
     <span aria-hidden="true" className="pointer-events-none absolute inset-0">
-      {tiers.map((tier) => (
+      {tiers.slice(1).map((tier) => (
         <span
           key={tier.value}
           className="bg-border absolute inset-y-0 w-px"
