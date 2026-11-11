@@ -6,6 +6,7 @@ import { COST_TIERS, scoringConfig } from '@/lib/scoring.config';
 import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 import {
+  ChartFigure,
   ChartFooter,
   ExportButton,
   formatMetric,
@@ -74,7 +75,7 @@ export function BarChart({
   }, [tiers, hi, trackWidth]);
 
   const grid =
-    'grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-3 sm:grid-cols-[11rem_minmax(0,1fr)]';
+    'grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-3 @xl:grid-cols-[11rem_minmax(0,1fr)]';
   const hairlines = (
     <span aria-hidden="true" className="pointer-events-none absolute inset-0">
       {tiers.map((tier) => (
@@ -88,10 +89,14 @@ export function BarChart({
   );
 
   return (
-    <figure className="bg-card rounded-xl border px-3 pt-3 pb-3 sm:px-4">
+    <ChartFigure>
       <figcaption className="mb-2 flex items-start justify-between gap-3">
         <span className="text-sm font-medium">{fmt(chart.barCaption, { metric: label })}</span>
-        <ExportButton name={['bar', metric]} strings={chart} />
+        <ExportButton
+          name={['bar', metric]}
+          strings={chart}
+          render={() => <BarChart models={models} metric={metric} strings={strings} />}
+        />
       </figcaption>
 
       <div className={grid} aria-hidden="true">
@@ -170,6 +175,6 @@ export function BarChart({
       <ChartFooter>
         <p>{chart.tierLines}</p>
       </ChartFooter>
-    </figure>
+    </ChartFigure>
   );
 }
