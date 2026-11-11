@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
 import { SITE_URL } from '../src/lib/dataset';
+import { useTranslations } from '../src/i18n';
 import { giscusAttributes } from '../src/lib/giscus';
 import { giscusConfig } from '../src/lib/giscus.config';
 import { SITE_HOST } from '../src/lib/share';
@@ -350,6 +351,33 @@ test('on a phone, every quadrant dot is named once, in the chart or under it', a
   const first = listed.first();
   await first.hover();
   await expect(figure.locator('[role="presentation"]')).toContainText((await first.textContent())!);
+  expect(problems).toEqual([]);
+});
+
+test('on a phone, a long filter value is cut short before its arrow', async ({ page }) => {
+  const problems = trackProblems(page);
+  const { tier } = useTranslations('en');
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/en/?int=very_low&val=very_low');
+  const triggers = page.locator('search [role="combobox"]');
+  await expect(triggers.nth(1)).toContainText(tier.intelligence.very_low);
+
+  const values = await triggers.evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const value = button.querySelector('[data-slot="select-value"]')!;
+      const arrow = button.querySelector(':scope > svg')!.getBoundingClientRect();
+      return {
+        text: button.textContent,
+        overlap: value.getBoundingClientRect().right - arrow.left,
+        cut: value.scrollWidth > value.clientWidth,
+      };
+    }),
+  );
+  for (const value of values) expect(value.overlap, value.text!).toBeLessThanOrEqual(0);
+  expect(values[1]!.cut).toBe(true);
+  expect(values.filter((value) => value.text!.endsWith('All')).every((value) => !value.cut)).toBe(
+    true,
+  );
   expect(problems).toEqual([]);
 });
 
