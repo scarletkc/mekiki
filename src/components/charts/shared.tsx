@@ -1,4 +1,4 @@
-import { ImageDown } from 'lucide-react';
+import { Check, ImageDown, X } from 'lucide-react';
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import type { Dictionary } from '@/i18n';
@@ -182,13 +182,20 @@ export function ExportButton({
       <Button
         type="button"
         variant="outline"
-        size="sm"
-        className="h-8 sm:h-7"
+        size="icon-sm"
+        className="text-foreground size-8 sm:size-7"
+        aria-label={strings.export}
+        title={result || strings.export}
         disabled={state === 'busy'}
         onClick={run}
       >
-        <ImageDown aria-hidden="true" />
-        {result || strings.export}
+        {state === 'done' ? (
+          <Check aria-hidden="true" />
+        ) : state === 'failed' ? (
+          <X aria-hidden="true" className="text-destructive" />
+        ) : (
+          <ImageDown aria-hidden="true" />
+        )}
       </Button>
       <span className="sr-only" aria-live="polite">
         {result}
