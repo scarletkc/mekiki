@@ -123,3 +123,11 @@ export const changelogConfig = {
 };
 
 export type ChangelogConfig = typeof changelogConfig;
+
+export const highlightConfig = {
+  burnerRatio: 1.5,
+  frugalRatio: 0.75,
+  sleeperRank: 15,
+};
+
+export type HighlightConfig = typeof highlightConfig;

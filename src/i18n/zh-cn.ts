@@ -61,6 +61,35 @@ export const zhCN: Dictionary = {
     intro:
       '每个模型给三个评级。智能分来自公开榜单；成本按官方价格计算，性价比看智能和实际用起来的花费。',
   },
+  highlights: {
+    title: '看点',
+    frontier: {
+      kicker: '智能最高',
+      runCost: '实测 {price} / 百万 · 评测总花费 {runCost}',
+      blended: '混合价 {price} / 百万',
+    },
+    value: {
+      kicker: '性价比最高',
+      cheaper: '榜首 {intel}% 的智能 · 便宜 {multiple} 倍',
+      free: '榜首 {intel}% 的智能 · 免费',
+      fallback: '智能 {intel} · {price} / 百万',
+    },
+    burner: {
+      kicker: '最耗 token',
+      unit: '较混合价',
+      contrast: '混合价 {list} → 实测 {measured} / 百万',
+    },
+    sleeper: {
+      kicker: '少有人用',
+      ranked: 'OpenRouter #{rank} · {price} / 百万',
+      unranked: 'OpenRouter 未上榜 · {price} / 百万',
+    },
+    frugal: {
+      kicker: '最省 token',
+      unit: '较混合价',
+      contrast: '混合价 {list} → 实测 {measured} / 百万',
+    },
+  },
   table: {
     columns: {
       model: '模型',

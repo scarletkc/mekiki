@@ -5,6 +5,7 @@ import { changesFor, modelSeries, type Change, type Changelog } from './changelo
 import { latestSync, SITE_URL, type Dataset, type ModelRecord } from './dataset';
 import { feedPath } from './feed';
 import { formatDateTime, formatPercent, formatPrice, formatScore } from './format';
+import { buildHighlights } from './highlights';
 import { utcDate, type HistoryEntry } from './history';
 import { methodContent } from './method';
 import { modelDetail } from './model-detail';
@@ -101,6 +102,7 @@ function changeMarkdown(
 export function homeMarkdown(dataset: Dataset, locale: Locale): string {
   const t = useTranslations(locale);
   const columns = t.table.columns;
+  const highlights = buildHighlights(dataset, t);
   const period = usagePeriod(dataset);
   const ranked = period !== null && dataset.models.some((model) => model.openrouter?.rank != null);
   const rows = dataset.models.map((model) => {
@@ -129,6 +131,14 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
   return compose([
     '# mekiki',
     `> ${t.meta.description}`,
+    highlights.length > 0 && `## ${t.highlights.title}`,
+    highlights.length > 0 &&
+      highlights
+        .map(
+          (card) =>
+            `- **${card.kicker}**: ${link(card.model.name, markdownUrl(locale, `/m/${card.model.id}`))} (${card.model.vendor}) — ${card.stat.label} ${card.stat.value} · ${card.contrast}`,
+        )
+        .join('\n'),
     `## ${t.home.title}`,
     link(t.usage.about, markdownUrl(locale, '/method')),
     table(

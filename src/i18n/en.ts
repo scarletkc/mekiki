@@ -59,6 +59,35 @@ export const en = {
     intro:
       'Every model gets three ratings. Intelligence comes from public leaderboards; cost follows from the price list, and value from intelligence and what the model costs to actually run.',
   },
+  highlights: {
+    title: 'Highlights',
+    frontier: {
+      kicker: 'Most intelligent',
+      runCost: 'Measured {price}/1M · {runCost} per index run',
+      blended: 'Blended {price}/1M',
+    },
+    value: {
+      kicker: 'Best value',
+      cheaper: '{intel}% of top intelligence · {multiple}× cheaper',
+      free: '{intel}% of top intelligence · Free',
+      fallback: 'Intelligence {intel} · {price}/1M',
+    },
+    burner: {
+      kicker: 'Most token-hungry',
+      unit: 'vs blended',
+      contrast: 'Blended {list} → measured {measured}/1M',
+    },
+    sleeper: {
+      kicker: 'Overlooked',
+      ranked: 'OpenRouter #{rank} · {price}/1M',
+      unranked: 'Not ranked on OpenRouter · {price}/1M',
+    },
+    frugal: {
+      kicker: 'Most token-efficient',
+      unit: 'vs blended',
+      contrast: 'Blended {list} → measured {measured}/1M',
+    },
+  },
   table: {
     columns: {
       model: 'Model',

@@ -1,0 +1,40 @@
+---
+import { localePath, type Locale } from '../i18n';
+import type { HighlightCard } from '../lib/highlights';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  cards: HighlightCard[];
+}
+
+const { locale, title, cards } = Astro.props;
+---
+
+{
+  cards.length > 0 && (
+    <section aria-label={title} data-highlights class="mb-5 min-w-0">
+      <ul class="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+        {cards.map((card) => (
+          <li class="w-[84%] shrink-0 snap-start sm:w-auto">
+            <a
+              href={localePath(locale, `/m/${card.model.id}`)}
+              data-kind={card.kind}
+              class="bg-card flex h-full flex-col rounded-xl border px-4 py-3.5 transition-colors hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))]"
+            >
+              <div class="text-muted-foreground flex justify-between gap-3 text-xs">
+                <span>{card.kicker}</span>
+                <span class="shrink-0">{card.stat.label}</span>
+              </div>
+              <div class="mt-1.5 flex items-baseline justify-between gap-3">
+                <span class="font-medium">{card.model.name}</span>
+                <span class="num font-medium">{card.stat.value}</span>
+              </div>
+              <p class="text-muted-foreground mt-1.5 text-xs tabular-nums">{card.contrast}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
