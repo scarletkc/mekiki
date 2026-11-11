@@ -152,6 +152,8 @@ export const zhCN: Dictionary = {
     changes: '变化',
     noChanges: '{date} 以来没有变化。',
     allChanges: '全部变化',
+    discussion: '讨论',
+    discussionNote: '评论存放在 GitHub Discussions，发表评论需要 GitHub 账号。',
   },
   metric: {
     aa_intelligence: 'AA 智能指数',

@@ -84,6 +84,8 @@ dictionary in `src/i18n/`.
 2. Add a dictionary next to `src/i18n/en.ts`. `pnpm check` fails until every string is
    there.
 3. Register it in `src/i18n/index.ts`.
+4. Check that [giscus](https://giscus.app) has the language under the same tag as
+   `LOCALE_INFO`: the discussion on model pages is shown in it.
 
 To change the default language, change `DEFAULT_LOCALE` in `src/i18n/locales.ts`. How
 unprefixed URLs pick a language is in [design §7](SPEC.md#7-site).
@@ -102,10 +104,11 @@ src/
   lib/compare.ts                         compare page selection (?m=<id>,<id>)
   lib/history.ts, lib/changelog.ts       rating history and the changes derived from it
   lib/feed.ts                            RSS feeds
+  lib/giscus.config.ts, lib/giscus.ts    discussion threads on model pages (giscus)
   i18n/                                  dictionaries and locale helpers
   views/                                 page bodies, shared by all languages
   pages/                                 routes, JSON endpoints, share images, sitemap.xml
-  components/                            table and compare islands, share button, tier meter, shadcn/ui
+  components/                            table and compare islands, share button, tier meter, giscus, shadcn/ui
 data/models.json                         the model list, written by pnpm sync
 data/model-overrides.yaml                hand-written corrections to the list
 data/snapshots/                          one JSON file per data source

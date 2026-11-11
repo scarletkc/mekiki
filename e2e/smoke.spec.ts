@@ -1,18 +1,35 @@
 import { expect, type Page, test } from '@playwright/test';
+import { giscusAttributes } from '../src/lib/giscus';
+import { giscusConfig } from '../src/lib/giscus.config';
 
 // Structural checks only. Page copy, routes and redirects change often, so
 // these tests start from `/` and follow links instead of hardcoding paths or
 // text. The JSON API paths are a public contract (README, "JSON API").
 
+// Model pages embed giscus from this origin (src/components/Giscus.astro).
+// Every test blocks it, so none depends on giscus.app and each checks that
+// the pages still work while it can't be reached.
+const GISCUS = 'https://giscus.app';
+
+test.beforeEach(async ({ context }) => {
+  await context.route(`${GISCUS}/**`, (route) => route.abort());
+});
+
 /**
  * Records script errors, console errors and failed same-origin requests.
  * Empty the returned array to start a new check on the same page.
+ * The browser's own report of the blocked giscus requests is expected and
+ * left out; any other console error from giscus still counts.
  */
 function trackProblems(page: Page): string[] {
   const problems: string[] = [];
   page.on('pageerror', (error) => problems.push(`page error: ${error.message}`));
   page.on('console', (message) => {
-    if (message.type() === 'error') problems.push(`console error: ${message.text()}`);
+    if (message.type() !== 'error') return;
+    const blockedGiscus =
+      message.location().url.startsWith(`${GISCUS}/`) &&
+      message.text().startsWith('Failed to load resource');
+    if (!blockedGiscus) problems.push(`console error: ${message.text()}`);
   });
   page.on('response', (response) => {
     const sameOrigin = new URL(response.url()).origin === new URL(page.url()).origin;
@@ -158,6 +175,70 @@ test('the home page switches between the table and the charts', async ({ page })
   await views.nth(0).click();
   await expect(page.locator('table tbody tr').first()).toBeVisible();
   expect(new URL(page.url()).searchParams.get('view')).toBeNull();
+  expect(problems).toEqual([]);
+});
+
+test('a model page has one discussion thread in every language, in the site theme', async ({
+  page,
+}) => {
+  test.skip(giscusAttributes(giscusConfig, { term: '-', lang: '-' }) === null, 'giscus is off');
+  const problems = trackProblems(page);
+  // A stand-in for giscus. Its script adds the iframe from the attributes on
+  // its tag; the iframe says it is ready the way giscus does, then records
+  // the themes it is sent.
+  await page.route(`${GISCUS}/client.js`, (route) =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      body: `(function () {
+        var frame = document.createElement('iframe');
+        frame.src = '${GISCUS}/widget';
+        document.querySelector('.giscus').appendChild(frame);
+      })();`,
+    }),
+  );
+  await page.route(`${GISCUS}/widget`, (route) =>
+    route.fulfill({
+      contentType: 'text/html',
+      body: `<script>
+        window.themes = [];
+        addEventListener('message', function (event) {
+          var config = event.data && event.data.giscus && event.data.giscus.setConfig;
+          if (config) themes.push(config.theme);
+        });
+        parent.postMessage({ giscus: { resizeHeight: 100 } }, '*');
+      </script>`,
+    }),
+  );
+
+  await page.goto('/');
+  await page.locator('table tbody a[href*="/m/"]').first().click();
+  await expect(page).toHaveURL(/\/m\//);
+  const script = page.locator(`script[src="${GISCUS}/client.js"]`);
+  const term = await script.getAttribute('data-term');
+  expect(term).toBeTruthy();
+
+  // The iframe gets the current theme once it is ready, and every change after.
+  const initial = await script.getAttribute('data-theme');
+  await expect.poll(() => page.frames().length).toBe(2);
+  const themes = () => page.frames()[1]!.evaluate(() => (window as { themes?: string[] }).themes);
+  await expect.poll(themes).toEqual([initial]);
+  await page.locator('[data-theme-toggle]').click();
+  await expect.poll(async () => new Set(await themes()).size).toBe(2);
+
+  // Every language opens the same thread, each in its own language.
+  const languages = new Set(
+    await page
+      .locator('[data-locale-link]')
+      .evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href)),
+  );
+  expect(languages.size).toBeGreaterThan(1);
+  const langs = new Set<string>();
+  for (const href of languages) {
+    await page.goto(href);
+    await expect(script).toHaveAttribute('data-term', term!);
+    langs.add((await script.getAttribute('data-lang'))!);
+  }
+  expect(langs.size).toBe(languages.size);
   expect(problems).toEqual([]);
 });
 

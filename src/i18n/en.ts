@@ -157,6 +157,8 @@ export const en = {
     changes: 'Changes',
     noChanges: 'No changes since {date}.',
     allChanges: 'All changes',
+    discussion: 'Discussion',
+    discussionNote: 'Comments are GitHub Discussions; you need a GitHub account to post.',
   },
   metric: {
     aa_intelligence: 'AA Intelligence Index',
