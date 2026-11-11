@@ -209,6 +209,9 @@ export function discoverModels(
   const alias = new Map(Object.entries(aliases).map(([maker, id]) => [compact(maker), id]));
   const providerOf = (maker: string) => alias.get(compact(maker)) ?? compact(maker);
 
+  // Every AA slug by key, with or without an index, to say why a name has no match.
+  const aaAll = groupBy(input.aa, (entry) => modelKey(aaBase(entry.slug).base));
+
   // Artificial Analysis: the base slug, or else the highest level listed.
   const aa = new Map<string, AaEntry>();
   for (const [key, entries] of groupBy(
@@ -299,7 +302,20 @@ export function discoverModels(
     const priced = (modelsdev.get(key) ?? []).some(
       (offer) => makers.includes(compact(offer.provider)) && offer.priced,
     );
-    if (priced) rejects.push({ key, reason: 'no AA Intelligence Index under this name' });
+    if (!priced) continue;
+    const listed = aaAll.get(key);
+    if (listed) {
+      const slugs = listed.map((entry) => entry.slug).join(', ');
+      rejects.push({ key, reason: `on AA (${slugs}) without an Intelligence Index` });
+      continue;
+    }
+    // AA slugs that share the first two parts of the key, to spot a different spelling.
+    const stem = key.split('-').slice(0, 2).join('-');
+    const near = [...aaAll.keys()].filter((other) => other.startsWith(stem)).slice(0, 4);
+    rejects.push({
+      key,
+      reason: `not on AA's list under this name${near.length > 0 ? ` (close: ${near.join(', ')})` : ''}`,
+    });
   }
 
   models.sort((a, b) => a.id.localeCompare(b.id));

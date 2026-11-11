@@ -41,16 +41,19 @@ Model list: updated (31 models).
     moonshotai/kimi-k3.1-pro (Moonshot AI, released 2026-10-23, 3 Arena boards, LiveBench)
   Left out:
     gpt-oss-120b: no official price (maker openai; on models.dev at cerebras, …)
-    qwen3-8-max: no AA Intelligence Index under this name
+    gpt-5-6-sol: on AA (gpt-5-6-sol) without an Intelligence Index
+    qwen3-8-max: not on AA's list under this name (close: qwen3-8-27b)
   Left to a human (only special setups listed):
     arena_webdev: GPT-5.6 Sol (xHigh, Codex Harness)
 ```
 
-- **Left out, no official price**: the maker sells no API for it, or its provider ID on
-  models.dev differs from the maker's name. For the second, add an alias.
-- **Left out, no AA Intelligence Index under this name**: on an Arena board with an
-  official price, but Artificial Analysis either has no index for it or names it
-  differently. For the second, map it by hand.
+- **No official price**: the maker sells no API for it, or its provider ID on models.dev
+  differs from the maker's name. For the second, add an alias.
+- **On AA without an Intelligence Index**: Artificial Analysis lists the model but has
+  not scored it on the current index. Nothing to fix.
+- **Not on AA's list under this name**: on an Arena board with an official price, but
+  the AA list has no slug with that name. If one of the close slugs is the same model,
+  add the model by hand under `models` with its mappings.
 
 Without `AA_API_KEY`, or when any source fails, the previous list is kept. So is it when
 discovery finds fewer than half as many models as last time.

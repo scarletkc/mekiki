@@ -200,6 +200,38 @@ describe('discoverModels', () => {
       { key: 'unpriced', reason: 'no official price (maker acme; on models.dev at resale, acme)' },
     ]);
   });
+
+  it('says why a priced model on Arena has no AA match', () => {
+    const priced = (id: string) => ({
+      provider: 'acme',
+      providerName: 'Acme',
+      id,
+      name: id,
+      priced: true,
+      release: null,
+    });
+    const { rejects } = discoverModels({
+      aa: [
+        { slug: 'scored-1', name: 'Scored 1', creator: 'Acme', index: null },
+        { slug: 'other-2-flash', name: 'Other 2 Flash', creator: 'Acme', index: 40 },
+      ],
+      arena: {
+        arena_text: [
+          { name: 'Scored 1', org: 'acme', score: 1 },
+          { name: 'Other 2 Max', org: 'acme', score: 1 },
+          { name: 'Unpriced 3', org: 'acme', score: 1 },
+        ],
+        arena_webdev: [],
+        arena_agent: [],
+      },
+      livebench: [],
+      modelsdev: [priced('scored-1'), priced('other-2-max'), priced('other-2-flash')],
+    });
+    expect(rejects).toEqual([
+      { key: 'other-2-max', reason: "not on AA's list under this name (close: other-2-flash)" },
+      { key: 'scored-1', reason: 'on AA (scored-1) without an Intelligence Index' },
+    ]);
+  });
 });
 
 describe('reading the payloads', () => {
