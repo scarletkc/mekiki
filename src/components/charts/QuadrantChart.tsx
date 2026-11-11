@@ -195,7 +195,7 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
     <ChartFigure>
       <figcaption className="mb-2 flex items-start justify-between gap-3">
         <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <ChartCaption text={chart.quadrantCaption} link={strings.method} section="tiers" />
+          <ChartCaption text={chart.quadrantCaption} />
           <span className="text-muted-foreground text-xs">{strings.rating.intelligence} ↑</span>
         </span>
         <ExportButton

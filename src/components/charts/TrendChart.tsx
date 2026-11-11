@@ -192,11 +192,7 @@ export function TrendChart({
   return (
     <ChartFigure>
       <figcaption className="mb-2 flex items-start justify-between gap-3">
-        <ChartCaption
-          text={fmt(chart.trendCaption, { metric: label })}
-          link={strings.method}
-          section="changes"
-        />
+        <ChartCaption text={fmt(chart.trendCaption, { metric: label })} />
         <ExportButton
           name={['trend', metric]}
           strings={chart}

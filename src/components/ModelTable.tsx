@@ -101,7 +101,6 @@ interface ModelTableProps {
   strings: ModelTableStrings;
   lang: string;
   compareHref: string;
-  methodHref: string;
   trend: TrendData;
   usageAvailable: boolean;
 }
@@ -450,7 +449,6 @@ export function ModelTable({
   strings,
   lang,
   compareHref,
-  methodHref,
   trend,
   usageAvailable,
 }: ModelTableProps) {
@@ -611,9 +609,8 @@ export function ModelTable({
       tier,
       empty,
       rating: strings.rating,
-      method: { href: methodHref, label: u.about },
     }),
-    [chart, tier, empty, strings.rating, methodHref, u.about],
+    [chart, tier, empty, strings.rating],
   );
   const filtersActive =
     filters.q.trim() !== '' ||

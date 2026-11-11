@@ -7,7 +7,6 @@ import ExternalLink from '@lucide/astro/icons/external-link';
 import ShareButton from '../components/ShareButton.astro';
 import ChangeText from '../components/ChangeText.astro';
 import Giscus from '../components/Giscus.astro';
-import MethodLink from '../components/MethodLink.astro';
 import HistoryChart from '../components/HistoryChart.astro';
 import { TierMeter } from '../components/TierMeter';
 import { badgeVariants } from '../components/ui/badge';
@@ -146,10 +145,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
   <div class="grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
     <div class="min-w-0">
       <section aria-labelledby="breakdown">
-        <h2 id="breakdown" class="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight">
-          {t.detail.breakdown}
-          <MethodLink locale={locale} section="intelligence" />
-        </h2>
+        <h2 id="breakdown" class="mb-3 text-lg font-semibold tracking-tight">{t.detail.breakdown}</h2>
         <div class="table-wrap my-0">
           <table class="data-table">
             <caption>{t.detail.breakdown}</caption>
@@ -193,10 +189,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       </section>
 
       <section aria-labelledby="history" class="mt-10">
-        <h2 id="history" class="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight">
-          {t.detail.history}
-          <MethodLink locale={locale} section="changes" />
-        </h2>
+        <h2 id="history" class="mb-3 text-lg font-semibold tracking-tight">{t.detail.history}</h2>
         {
           series.length < 2 ? (
             <p class="text-muted-foreground max-w-[68ch] text-sm">{fmt(t.detail.historyStart, { date: historyStart })}</p>
@@ -287,9 +280,8 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       {
         groups.map((group, index) => (
           <section aria-labelledby={group.key} class={index > 0 ? 'mt-8' : undefined}>
-            <h2 id={group.key} class="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <h2 id={group.key} class="mb-3 text-lg font-semibold tracking-tight">
               {group.title}
-              {group.method && <MethodLink locale={locale} section={group.method} />}
             </h2>
             <dl class="bg-card grid grid-cols-[auto_1fr] rounded-xl border px-4 py-1 [&>dd]:border-b [&>dd]:py-2 [&>dd]:text-end [&>dt]:border-b [&>dt]:py-2 [&>dt]:pr-4 [&>dt]:text-muted-foreground [&>:nth-last-child(-n+2)]:border-b-0">
               {group.facts.map((fact) => (
@@ -323,9 +315,8 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       {
         usage && (
           <section aria-labelledby="usage">
-            <h2 id="usage" class="mt-8 mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <h2 id="usage" class="mt-8 mb-3 text-lg font-semibold tracking-tight">
               {t.usage.title}
-              <MethodLink locale={locale} section="usage" />
             </h2>
             {usage.notFound ? (
               <p class="text-muted-foreground">{usage.notFound}</p>

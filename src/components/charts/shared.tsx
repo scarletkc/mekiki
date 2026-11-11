@@ -1,4 +1,4 @@
-import { Check, ImageDown, Info, X } from 'lucide-react';
+import { Check, ImageDown, X } from 'lucide-react';
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
@@ -18,38 +18,10 @@ import { SITE_HOST } from '@/lib/share';
 import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 
-export interface MethodLink {
-  href: string;
-  label: string;
-}
+export type ChartStrings = Pick<Dictionary, 'chart' | 'tier' | 'empty' | 'rating'>;
 
-export type ChartStrings = Pick<Dictionary, 'chart' | 'tier' | 'empty' | 'rating'> & {
-  method: MethodLink;
-};
-
-export function ChartCaption({
-  text,
-  link,
-  section,
-}: {
-  text: string;
-  link: MethodLink;
-  section: string;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="text-sm font-medium">{text}</span>
-      <a
-        href={`${link.href}#${section}`}
-        data-export-ignore
-        className="text-muted-foreground hover:text-foreground inline-flex shrink-0 transition-colors"
-        aria-label={link.label}
-        title={link.label}
-      >
-        <Info className="size-3.5" aria-hidden="true" />
-      </a>
-    </span>
-  );
+export function ChartCaption({ text }: { text: string }) {
+  return <span className="text-sm font-medium">{text}</span>;
 }
 
 export function useWidth<T extends HTMLElement>() {
