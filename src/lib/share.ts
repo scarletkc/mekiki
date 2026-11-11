@@ -11,6 +11,8 @@ export function modelImagePath(id: string): string {
 
 export const SITE_IMAGE_PATH = '/og.png';
 
+export const SITE_HOST = 'mekiki.fog.moe';
+
 export const COMPARE_MAX = 4;
 
 export function modelShareText(

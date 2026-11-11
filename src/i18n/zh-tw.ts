@@ -100,6 +100,9 @@ export const zhTW: Dictionary = {
       '每天記錄的數值；在下一次有變化的紀錄之前維持不變。指向一條線，或在下方選一個模型來查看。',
     trendEmpty: '記錄滿兩天後顯示折線圖。',
     follow: '查看 {name}',
+    export: '匯出圖片',
+    exported: '圖片已儲存',
+    exportFailed: '圖片匯出失敗',
   },
   detail: {
     back: '全部模型',

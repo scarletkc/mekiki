@@ -6,6 +6,8 @@ import { COST_TIERS, scoringConfig } from '@/lib/scoring.config';
 import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 import {
+  ChartFooter,
+  ExportButton,
   formatMetric,
   metricLabel,
   metricOf,
@@ -87,8 +89,9 @@ export function BarChart({
 
   return (
     <figure className="bg-card rounded-xl border px-3 pt-3 pb-3 sm:px-4">
-      <figcaption className="mb-2 text-sm font-medium">
-        {fmt(chart.barCaption, { metric: label })}
+      <figcaption className="mb-2 flex items-start justify-between gap-3">
+        <span className="text-sm font-medium">{fmt(chart.barCaption, { metric: label })}</span>
+        <ExportButton name={['bar', metric]} strings={chart} />
       </figcaption>
 
       <div className={grid} aria-hidden="true">
@@ -164,9 +167,9 @@ export function BarChart({
           ))}
         </span>
       </div>
-      <p className="text-muted-foreground mt-3 border-t border-dashed pt-2.5 text-xs">
-        {chart.tierLines}
-      </p>
+      <ChartFooter>
+        <p>{chart.tierLines}</p>
+      </ChartFooter>
     </figure>
   );
 }

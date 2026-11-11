@@ -99,6 +99,9 @@ export const en = {
       'As recorded each day; a figure holds until the next recorded change. Point at a line or pick a model below to follow it.',
     trendEmpty: 'The trend appears once a second day has been recorded.',
     follow: 'Follow {name}',
+    export: 'Export image',
+    exported: 'Image saved',
+    exportFailed: "Couldn't export the image",
   },
   detail: {
     back: 'All models',

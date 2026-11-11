@@ -270,6 +270,8 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
               <div class="grid gap-3 sm:grid-cols-2">
                 <HistoryChart
                   title={t.rating.intelligence}
+                  name={`${model.id} intelligence`}
+                  strings={t.chart}
                   points={series.map((point) => ({ date: point.date, score: point.intelligence }))}
                   end={today}
                   thresholds={thresholds('intelligence')}
@@ -277,6 +279,8 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
                 />
                 <HistoryChart
                   title={t.rating.value}
+                  name={`${model.id} value`}
+                  strings={t.chart}
                   points={series.map((point) => ({ date: point.date, score: point.value }))}
                   end={today}
                   thresholds={thresholds('value')}
