@@ -20,7 +20,8 @@ export const GISCUS_THEMES = { light: 'light', dark: 'transparent_dark' } as con
  *
  * The thread is found by the model ID alone (`specific` mapping, strict
  * matching), so every locale shares one thread and URL changes never orphan
- * it. Reactions are off, so the thread does not read as a vote on the model.
+ * it. Reactions on the thread let visitors vote on the model; they never feed
+ * a score.
  */
 export function giscusAttributes(
   config: GiscusConfig,
@@ -35,7 +36,7 @@ export function giscusAttributes(
     'data-mapping': 'specific',
     'data-term': term,
     'data-strict': '1',
-    'data-reactions-enabled': '0',
+    'data-reactions-enabled': '1',
     'data-emit-metadata': '0',
     'data-input-position': 'bottom',
     'data-lang': lang,
