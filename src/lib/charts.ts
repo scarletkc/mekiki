@@ -15,6 +15,28 @@ export function logTicks(lo: number, hi: number): number[] {
   return ticks;
 }
 
+export function thinLogTicks(
+  ticks: number[],
+  extent: (tick: number, index: number) => [number, number],
+  gap = 6,
+): number[] {
+  const rank = (tick: number) => {
+    const mantissa = Number((tick / 10 ** Math.floor(Math.log10(tick) + 1e-9)).toPrecision(3));
+    return mantissa === 1 ? 0 : mantissa === 5 ? 1 : 2;
+  };
+  const kept: { index: number; left: number; right: number }[] = [];
+  const order = ticks
+    .map((tick, index) => ({ tick, index }))
+    .sort((a, b) => rank(a.tick) - rank(b.tick) || a.index - b.index);
+  for (const { tick, index } of order) {
+    const [left, right] = extent(tick, index);
+    if (kept.every((other) => left >= other.right + gap || right + gap <= other.left)) {
+      kept.push({ index, left, right });
+    }
+  }
+  return kept.sort((a, b) => a.index - b.index).map((item) => ticks[item.index]);
+}
+
 export function logDomain(values: number[]): [number, number] {
   const positive = values.filter((value) => Number.isFinite(value) && value > 0);
   if (positive.length === 0) return [0.1, 10];
@@ -148,6 +170,13 @@ export function placeLabels(
     }
   }
   return placed;
+}
+
+export function clearOf(candidates: Box[], obstacles: Box[]): Box {
+  return (
+    candidates.find((candidate) => obstacles.every((other) => !overlaps(candidate, other))) ??
+    candidates[0]
+  );
 }
 
 function box(left: number, top: number, width: number, height: number): Box {

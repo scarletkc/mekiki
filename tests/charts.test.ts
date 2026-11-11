@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clearOf,
   linearTicks,
   logDomain,
   logTicks,
@@ -7,6 +8,7 @@ import {
   pointAt,
   scoreDomain,
   stepPath,
+  thinLogTicks,
   trendSeries,
   zeroBasedAxis,
   type TrendPoint,
@@ -22,6 +24,25 @@ describe('logTicks', () => {
   it('returns nothing for a range that is not positive', () => {
     expect(logTicks(0, 5)).toEqual([]);
     expect(logTicks(5, 1)).toEqual([]);
+  });
+});
+
+describe('thinLogTicks', () => {
+  const ticks = [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
+  const at = (spacing: number) => (_tick: number, index: number) =>
+    [index * spacing - 12, index * spacing + 12] as [number, number];
+
+  it('keeps every tick when the labels have room', () => {
+    expect(thinLogTicks(ticks, at(40))).toEqual(ticks);
+  });
+
+  it('keeps the powers of ten when neighbouring labels collide', () => {
+    expect(thinLogTicks(ticks, at(20))).toEqual([0.1, 1, 10]);
+  });
+
+  it('prefers a 5 to a 2 when only one of them fits', () => {
+    const spans: Record<number, [number, number]> = { 1: [0, 24], 2: [40, 64], 5: [60, 84] };
+    expect(thinLogTicks([1, 2, 5], (tick) => spans[tick])).toEqual([1, 5]);
   });
 });
 
@@ -108,6 +129,20 @@ describe('placeLabels', () => {
     const placed = placeLabels([mark(24)], 317, 346, [corner(24)]).get('a');
     expect(placed?.anchor).toBe('end');
     expect(placed?.box.bottom).toBeLessThanOrEqual(24);
+  });
+});
+
+describe('clearOf', () => {
+  const row = (top: number) => ({ left: 0, top, right: 50, bottom: top + 14 });
+
+  it('takes the first candidate that touches no obstacle', () => {
+    const dot = { left: 10, top: 5, right: 20, bottom: 15 };
+    expect(clearOf([row(0), row(14), row(28)], [dot])).toEqual(row(28));
+  });
+
+  it('falls back to the first candidate when none is clear', () => {
+    const wall = { left: 0, top: 0, right: 50, bottom: 100 };
+    expect(clearOf([row(0), row(14)], [wall])).toEqual(row(0));
   });
 });
 

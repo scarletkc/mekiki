@@ -1,6 +1,15 @@
 import { useMemo, useRef, useState } from 'react';
 import { fmt } from '@/i18n/fmt';
-import { linearTicks, logDomain, logTicks, placeLabels, scoreDomain, type Box } from '@/lib/charts';
+import {
+  clearOf,
+  linearTicks,
+  logDomain,
+  logTicks,
+  placeLabels,
+  scoreDomain,
+  thinLogTicks,
+  type Box,
+} from '@/lib/charts';
 import { formatPrice } from '@/lib/format';
 import { scoringConfig } from '@/lib/scoring.config';
 import { cn } from '@/lib/utils';
@@ -65,11 +74,23 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
       return { ...point, hit: Math.max(DOT + 1, Math.min(HIT, nearest / 2)) };
     });
 
+    const marks = points.map((point) => ({
+      left: point.x - LABEL_RING,
+      top: point.y - LABEL_RING,
+      right: point.x + LABEL_RING,
+      bottom: point.y + LABEL_RING,
+    }));
     const corner = (text: string, side: 'left' | 'right', edge: 'top' | 'bottom') => {
       const w = textWidth(text, LABEL_SIZE);
       const left = side === 'left' ? PAD.left + 6 : PAD.left + plotWidth - 6 - w;
-      const top = edge === 'top' ? PAD.top + 4 : PAD.top + plotHeight - 4 - LABEL_HEIGHT;
-      return { text, side, box: { left, top, right: left + w, bottom: top + LABEL_HEIGHT } };
+      const rows = [0, 1, 2, 3].map((row) => {
+        const top =
+          edge === 'top'
+            ? PAD.top + 4 + row * LABEL_HEIGHT
+            : PAD.top + plotHeight - 4 - (row + 1) * LABEL_HEIGHT;
+        return { left, top, right: left + w, bottom: top + LABEL_HEIGHT };
+      });
+      return { text, side, box: clearOf(rows, marks) };
     };
     const corners = [
       corner(chart.areas.smartCheap, 'left', 'top'),
@@ -92,15 +113,38 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
       })),
       width,
       height - PAD.bottom,
-      corners.map((item) => item.box satisfies Box),
+      [
+        { left: 0, top: 0, right: PAD.left, bottom: height },
+        ...corners.map((item) => item.box satisfies Box),
+      ],
     );
+
+    const xTicks = logTicks(xLo, xHi);
+    const anchorOf = (index: number): 'start' | 'middle' | 'end' =>
+      index === 0 ? 'start' : index === xTicks.length - 1 ? 'end' : 'middle';
+    const shown = new Set(
+      thinLogTicks(xTicks, (tick, index) => {
+        const w = textWidth(formatPrice(tick), 11);
+        const at = x(tick);
+        const anchor = anchorOf(index);
+        return anchor === 'start'
+          ? [at, at + w]
+          : anchor === 'end'
+            ? [at - w, at]
+            : [at - w / 2, at + w / 2];
+      }),
+    );
+    const xLabels = xTicks
+      .map((tick, index) => ({ tick, anchor: anchorOf(index) }))
+      .filter((item) => shown.has(item.tick));
 
     return {
       plotWidth,
       plotHeight,
       x,
       y,
-      xTicks: logTicks(xLo, xHi),
+      xTicks,
+      xLabels,
       yTicks: linearTicks(yLo, yHi, 10),
       points,
       corners,
@@ -187,14 +231,12 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
                   {tick}
                 </text>
               ))}
-              {layout.xTicks.map((tick, index) => (
+              {layout.xLabels.map(({ tick, anchor }) => (
                 <text
                   key={tick}
                   x={layout.x(tick)}
                   y={height - 6}
-                  textAnchor={
-                    index === 0 ? 'start' : index === layout.xTicks.length - 1 ? 'end' : 'middle'
-                  }
+                  textAnchor={anchor}
                   className="num"
                 >
                   {formatPrice(tick)}
