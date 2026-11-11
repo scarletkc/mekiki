@@ -57,6 +57,16 @@ pnpm exec playwright install --only-shell chromium
 - Look at a real response from a source before writing its adapter and Zod schema.
 - Missing data is shown as missing ("Not rated", "No data", "No price"), never as a blank
   or a 0.
+- Pages stay clean. Visible text has to help a reader use the page: figures, units, empty
+  states, what is missing, source credits. How something is computed, usage hints and
+  caveats belong on the Method page, said once there rather than repeated on every page.
+  Where a section needs that explanation, link to its Method section (a small icon by the
+  heading works) instead of adding a sentence.
+- Secondary information must not cost the main table its layout. Use the lightest form
+  that does the job; if an addition makes rows wrap or the table scroll at the page's full
+  width, look for a lighter form, or put it behind a toggle.
+- Check visual changes in the preview, at full width and on a phone, in English and in
+  Chinese.
 - In the JSON API, missing values are `null` and no field is omitted. Fields are only
   added; a breaking change bumps `API_VERSION` in `src/lib/api.ts`.
 - API responses must carry `Access-Control-Allow-Origin: *`.
