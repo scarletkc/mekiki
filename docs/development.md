@@ -51,8 +51,10 @@ without writing. What happens when a source fails is in
 
 `pnpm sync` also records today's ratings in `data/history.jsonl`, the file the changelog,
 the RSS feeds and the trend charts are built from ([design §4.5](SPEC.md#45-history)).
-The daily workflow commits it. A local run writes it too; commit that only if you mean
-to, or discard it with `git checkout data/history.jsonl`.
+Recording stays off until the site is published (`changelogConfig.recordHistory` in
+`src/lib/scoring.config.ts`); until then neither `pnpm sync` nor `pnpm history` writes
+the file. Once it is on, the daily workflow commits it. A local run writes it too; commit
+that only if you mean to, or discard it with `git checkout data/history.jsonl`.
 
 ## Change weights and thresholds
 

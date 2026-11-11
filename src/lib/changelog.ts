@@ -124,7 +124,7 @@ function sortChanges(changes: Change[]): Change[] {
  */
 export function buildChangelog(
   entries: HistoryEntry[],
-  config: ChangelogConfig = changelogConfig,
+  config: Pick<ChangelogConfig, 'scoreDelta'> = changelogConfig,
 ): Changelog {
   const sorted = [...entries].sort((a, b) => (a.date < b.date ? -1 : 1));
   // Last reported score per model and rating; a score is reported again

@@ -78,7 +78,8 @@ data/snapshots/*.json ────┘
 ```
 
 - After the snapshots, `pnpm sync` records the day's ratings in `data/history.jsonl`
-  (§4.5). The changelog, the RSS feeds and the trend charts are built from that file.
+  (§4.5), once recording is on. The changelog, the RSS feeds and the trend charts are
+  built from that file.
 - The model schema (`src/lib/model-schema.ts`) and snapshot schemas
   (`src/lib/snapshots.ts`) use Astro's own Zod (`astro/zod`), so the content collection
   and the Node scripts share one schema and one Zod version.
@@ -199,13 +200,19 @@ nothing).
 - `pnpm sync` exits 0 even then, so a broken source never blocks a deploy.
 - A missing snapshot file still builds; the site shows "no data" for that source.
 - Without `AA_API_KEY`, Artificial Analysis is skipped.
-- After the sources, today's ratings are recorded in the history (§4.5). A failure there
-  doesn't fail the sync either.
+- After the sources, today's ratings are recorded in the history (§4.5), once recording
+  is on. A failure there doesn't fail the sync either.
 
 ### 4.5 History
 
 `data/history.jsonl` keeps the ratings the site showed, one JSON line per UTC day, oldest
-first:
+first. **Recording is off until the site is published** (`changelogConfig.recordHistory`
+in the config): the scoring is still being tuned, and a changelog of that tuning would
+mean nothing. The file is empty until then, so the changelog, the feeds and the trend
+charts are empty too. Turn recording on at launch; the first recorded day is the
+baseline (§7).
+
+
 
 ```json
 {"date":"2026-11-10","models":{"<provider>/<model>":{"name":"...","status":"active","intelligence":{"score":93.2,"tier":"top"},"cost":{"tier":"high","blended":2.94,"input":4,"output":20,"cache_read":0.2},"value":{"score":59.6,"tier":"mid"}}}}

@@ -207,6 +207,13 @@ export const scoringConfig: ScoringConfig = {
  */
 export const changelogConfig = {
   scoreDelta: 3,
+  /**
+   * Whether `pnpm sync` and `pnpm history` record the day's ratings in
+   * data/history.jsonl. Off until the site is published: the scoring is still
+   * being tuned, and a changelog of that tuning would mean nothing. Turn it on
+   * at launch; the first recorded day becomes the baseline.
+   */
+  recordHistory: false,
 };
 
 export type ChangelogConfig = typeof changelogConfig;

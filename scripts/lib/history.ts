@@ -16,22 +16,32 @@ import {
   utcDate,
   type AddOutcome,
 } from '../../src/lib/history';
+import { changelogConfig } from '../../src/lib/scoring.config';
 import { loadSnapshots } from '../../src/lib/snapshots';
 import { readModelEntries } from './content';
 
 export interface RecordResult {
   date: string;
-  outcome: AddOutcome | 'invalid';
+  outcome: AddOutcome | 'invalid' | 'off';
   /** Human-readable summary for the console and the job summary. */
   message: string;
 }
 
 export function recordHistory(
-  options: { now?: Date; dryRun?: boolean; root?: string } = {},
+  options: { now?: Date; dryRun?: boolean; root?: string; enabled?: boolean } = {},
 ): RecordResult {
   const now = options.now ?? new Date();
   const root = options.root ?? process.cwd();
   const date = utcDate(now);
+
+  if (!(options.enabled ?? changelogConfig.recordHistory)) {
+    return {
+      date,
+      outcome: 'off',
+      message:
+        'off until the site is published (changelogConfig.recordHistory); nothing was recorded.',
+    };
+  }
 
   const { entries, invalid } = readHistory(root);
   if (invalid > 0) {

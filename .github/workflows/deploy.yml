@@ -41,7 +41,8 @@ jobs:
 
       # A source that is down keeps its old snapshot and the step still
       # succeeds; details are written to the job summary. The sync also
-      # records today's ratings in data/history.jsonl.
+      # records today's ratings in data/history.jsonl once recording is on
+      # (changelogConfig.recordHistory; off until the site is published).
       - name: Sync snapshots and history
         if: github.event_name != 'push'
         run: pnpm sync
