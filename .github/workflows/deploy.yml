@@ -108,6 +108,7 @@ jobs:
   smoke:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -135,8 +136,9 @@ jobs:
       - name: Unpack the built site
         run: mkdir -p dist && tar -xf "${RUNNER_TEMP}/site/artifact.tar" -C dist
 
+      # No --with-deps: see the same step in ci.yml.
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps --only-shell chromium
+        run: pnpm exec playwright install --only-shell chromium
 
       - name: Smoke test
         run: pnpm smoke
