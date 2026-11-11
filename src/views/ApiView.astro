@@ -1,7 +1,7 @@
 ---
 import { fmt, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
-import { API_VERSION, toApiModel } from '../lib/api';
+import { API_VERSION, apiDoc, toApiModel } from '../lib/api';
 import { SITE_URL } from '../lib/dataset';
 import { getDataset } from '../lib/site-data';
 
@@ -12,22 +12,7 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 const a = t.api;
-const dataset = await getDataset();
-
-const sample =
-  dataset.models.find((model) => model.rating.value.score !== null) ?? dataset.models[0];
-const samplePath = sample ? `/api/models/${sample.id}.json` : '/api/models/<provider>/<model>.json';
-
-const endpoints = [
-  { path: '/api.json', href: '/api.json', content: a.endpointFull },
-  { path: '/api/models.json', href: '/api/models.json', content: a.endpointList },
-  {
-    path: '/api/models/<provider>/<model>.json',
-    href: sample ? samplePath : null,
-    content: a.endpointOne,
-  },
-  { path: '/api/history.json', href: '/api/history.json', content: a.endpointHistory },
-];
+const { sample, samplePath, endpoints, fields } = apiDoc(await getDataset(), t);
 ---
 
 <Base locale={locale} path="/api" title={a.title}>
@@ -79,11 +64,7 @@ const endpoints = [
 
     <h2 id="fields">{a.fieldsTitle}</h2>
     <ul>
-      <li>{a.fieldScores}</li>
-      <li>{a.fieldTier}</li>
-      <li>{a.fieldPrice}</li>
-      <li>{a.fieldValue}</li>
-      <li>{a.fieldHistory}</li>
+      {fields.map((field) => <li>{field}</li>)}
     </ul>
 
     <h2 id="versioning">{a.versionTitle}</h2>

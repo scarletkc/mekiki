@@ -56,6 +56,12 @@ pnpm exec playwright install --only-shell chromium
 - In the JSON API, missing values are `null` and no field is omitted. Fields are only
   added; a breaking change bumps `API_VERSION` in `src/lib/api.ts`.
 - API responses must carry `Access-Control-Allow-Origin: *`.
+- Every page except Compare has a Markdown version for AI agents, at the page's address
+  with `.md` in place of the trailing slash (`/en/method.md`, `/en/index.md`), and
+  `/llms.txt` links them. What the Method, API and model pages work out lives in
+  `src/lib/` (`method.ts`, `api.ts`, `model-detail.ts`), and the view and the Markdown
+  renderer in `src/lib/markdown.ts` both read it. A new page gets a renderer, a `.md.ts`
+  route and an entry in `markdownPath`.
 - Code carries no comments. `pnpm lint:comments` fails on any comment in `.ts`, `.tsx`,
   `.js`, `.mjs`, `.cjs`, `.astro` and `.css` files, except tool directives (`@ts-check`,
   `@ts-nocheck`, `@ts-expect-error`, `@ts-ignore`, `/// <reference>`, `biome-ignore` and
@@ -119,6 +125,8 @@ src/
   lib/scoring.ts                         rating algorithm (pure functions)
   lib/dataset.ts                         merges models and snapshots for pages, API and report
   lib/api.ts                             JSON API shapes
+  lib/method.ts, lib/model-detail.ts     what the Method and model pages show
+  lib/markdown.ts, lib/llms.ts           the Markdown version of the pages, and llms.txt
   lib/logo.ts                            the mark; header, favicon and share images use it
   lib/og.tsx                             share images, rendered to PNG at build time
   lib/compare.ts                         compare page selection (?m=<id>,<id>)
@@ -128,7 +136,7 @@ src/
   lib/giscus.config.ts, lib/giscus.ts    discussion threads on model pages (giscus)
   i18n/                                  dictionaries and locale helpers
   views/                                 page bodies, shared by all languages
-  pages/                                 routes, JSON endpoints, share images, sitemap.xml
+  pages/                                 routes, JSON endpoints, Markdown pages, llms.txt, share images, sitemap.xml
   components/                            table and compare islands, share button, tier meter, giscus, shadcn/ui
 data/models.json                         the model list, written by pnpm sync
 data/model-overrides.yaml                hand-written corrections to the list

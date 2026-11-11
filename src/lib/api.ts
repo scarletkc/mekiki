@@ -1,4 +1,4 @@
-import { useTranslations, tierLabels } from '../i18n';
+import { useTranslations, tierLabels, type Dictionary } from '../i18n';
 import type { ValueCostBasis } from './scoring';
 import {
   METRIC_KEYS,
@@ -130,6 +130,27 @@ export function toApiFull(dataset: Dataset): ApiFull {
     sources,
     models: dataset.models.map(toApiModel),
   };
+}
+
+export function apiDoc(dataset: Dataset, t: Dictionary) {
+  const a = t.api;
+  const sample =
+    dataset.models.find((model) => model.rating.value.score !== null) ?? dataset.models[0];
+  const samplePath = sample
+    ? `/api/models/${sample.id}.json`
+    : '/api/models/<provider>/<model>.json';
+  const endpoints = [
+    { path: '/api.json', href: '/api.json', content: a.endpointFull },
+    { path: '/api/models.json', href: '/api/models.json', content: a.endpointList },
+    {
+      path: '/api/models/<provider>/<model>.json',
+      href: sample ? samplePath : null,
+      content: a.endpointOne,
+    },
+    { path: '/api/history.json', href: '/api/history.json', content: a.endpointHistory },
+  ];
+  const fields = [a.fieldScores, a.fieldTier, a.fieldPrice, a.fieldValue, a.fieldHistory];
+  return { sample, samplePath, endpoints, fields };
 }
 
 export interface ApiHistory {

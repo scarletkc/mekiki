@@ -10,6 +10,7 @@ import { listPrice, rateModel, type Price, type Rating } from './scoring';
 import { SOURCE_IDS, SOURCE_INFO, type Snapshots, type SourceId } from './snapshots';
 
 export const SITE_URL = 'https://mekiki.fog.moe';
+export const REPO_URL = 'https://github.com/scarletkc/mekiki';
 
 export interface SourceStatus {
   name: string;
