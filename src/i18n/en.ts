@@ -54,11 +54,12 @@ export const en = {
       vendor: 'Vendor',
       intelligence: 'Intelligence',
       cost: 'Cost',
+      measured: 'Measured price',
       value: 'Value',
       price: 'Input / output price',
     },
     priceNote: 'Prices in USD per 1M tokens',
-    measuredPrice: 'Measured {price}',
+    notMeasured: 'Not measured',
     measuredPriceNote:
       'Value is computed at {price} per 1M tokens, from what Artificial Analysis measured this model costing to run, not from its list price',
     search: 'Search models by name',

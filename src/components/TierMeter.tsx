@@ -29,10 +29,6 @@ interface TierMeterProps {
    * 320px phone).
    */
   stacked?: boolean;
-  /** A second, smaller line under the mark, such as the price behind a score. */
-  note?: string;
-  /** Longer explanation of the note, shown on hover. */
-  noteTitle?: string;
   className?: string;
 }
 
@@ -41,16 +37,7 @@ interface TierMeterProps {
  * Quality ratings are drawn in indigo, cost in vermilion. The pips are
  * decorative: the label carries the same information as text.
  */
-export function TierMeter({
-  kind,
-  tier,
-  label,
-  figure,
-  stacked,
-  note,
-  noteTitle,
-  className,
-}: TierMeterProps) {
+export function TierMeter({ kind, tier, label, figure, stacked, className }: TierMeterProps) {
   if (tier === null) {
     return <span className={cn('text-muted-foreground', className)}>{label}</span>;
   }
@@ -74,37 +61,18 @@ export function TierMeter({
       <span className="min-w-[2em] font-medium whitespace-nowrap">{label}</span>
     </span>
   );
-  const noteLine = note != null && (
-    <span
-      // Not `.num`, which never wraps: in a narrow card the note may need two lines.
-      className={cn('text-muted-foreground text-xs tabular-nums', !stacked && 'whitespace-nowrap')}
-      title={noteTitle}
-    >
-      {note}
-    </span>
-  );
   if (stacked) {
     return (
       <span className={cn('inline-flex flex-col gap-0.5', className)}>
         {mark}
         {figure != null && <span className="num text-muted-foreground text-xs">{figure}</span>}
-        {noteLine}
       </span>
     );
   }
-  const line = (
-    <span
-      className={cn('inline-flex items-center gap-2 whitespace-nowrap', !noteLine && className)}
-    >
+  return (
+    <span className={cn('inline-flex items-center gap-2 whitespace-nowrap', className)}>
       {mark}
       {figure != null && <span className="num text-muted-foreground">{figure}</span>}
-    </span>
-  );
-  if (!noteLine) return line;
-  return (
-    <span className={cn('inline-flex flex-col gap-0.5', className)}>
-      {line}
-      {noteLine}
     </span>
   );
 }

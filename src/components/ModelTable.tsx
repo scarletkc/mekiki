@@ -122,7 +122,15 @@ const features = tableFeatures({
 
 const helper = createColumnHelper<typeof features, ModelRow>();
 
-const COLUMN_IDS = ['model', 'vendor', 'intelligence', 'cost', 'value', 'price'] as const;
+const COLUMN_IDS = [
+  'model',
+  'vendor',
+  'intelligence',
+  'cost',
+  'measured',
+  'value',
+  'price',
+] as const;
 
 const DEFAULT_SORT: SortingState = [{ id: 'intelligence', desc: true }];
 const ALL = 'all';
@@ -281,10 +289,7 @@ function SortArrow({ direction }: { direction: 'asc' | 'desc' | false }) {
 }
 
 /** Props for the three rating meters of a model; shared by the table and the cards. */
-function meterProps(
-  model: ModelRow,
-  { table, tier, empty }: Pick<ModelTableStrings, 'table' | 'tier' | 'empty'>,
-) {
+function meterProps(model: ModelRow, { tier, empty }: Pick<ModelTableStrings, 'tier' | 'empty'>) {
   const { intelligence, cost, value } = model;
   return {
     intelligence: {
@@ -304,14 +309,6 @@ function meterProps(
       tier: value.tier,
       label: value.tier ? tier.value[value.tier] : empty.unrated,
       figure: value.score === null ? null : formatScore(value.score),
-      // The price behind the score, since the list price in the cost column
-      // can be far from what a model costs to run.
-      ...(value.score !== null && value.measuredPrice !== null
-        ? {
-            note: fmt(table.measuredPrice, { price: formatPrice(value.measuredPrice) }),
-            noteTitle: fmt(table.measuredPriceNote, { price: formatPrice(value.measuredPrice) }),
-          }
-        : {}),
     },
   };
 }
@@ -353,6 +350,26 @@ function Price({ model, empty }: { model: ModelRow; empty: ModelTableStrings['em
       {formatPrice(input)}
       <span className="text-muted-foreground"> / </span>
       {formatPrice(output)}
+    </span>
+  );
+}
+
+/**
+ * The price value is computed from, when it comes from the measured run cost.
+ * Shown next to the list price because the two can be far apart: a model that
+ * is cheap per token can still use many more tokens.
+ */
+function MeasuredPrice({
+  price,
+  strings,
+}: {
+  price: number | null;
+  strings: ModelTableStrings['table'];
+}) {
+  if (price === null) return <span className="text-muted-foreground">{strings.notMeasured}</span>;
+  return (
+    <span className="num" title={fmt(strings.measuredPriceNote, { price: formatPrice(price) })}>
+      {formatPrice(price)}
     </span>
   );
 }
@@ -585,7 +602,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.intelligence.tier === wanted,
         cell: ({ row }) => (
-          <TierMeter {...meterProps(row.original, { table: t, tier, empty }).intelligence} />
+          <TierMeter {...meterProps(row.original, { tier, empty }).intelligence} />
         ),
       }),
       helper.accessor((row) => row.cost.blended ?? undefined, {
@@ -593,18 +610,20 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         header: t.columns.cost,
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.cost.tier === wanted,
-        cell: ({ row }) => (
-          <TierMeter {...meterProps(row.original, { table: t, tier, empty }).cost} />
-        ),
+        cell: ({ row }) => <TierMeter {...meterProps(row.original, { tier, empty }).cost} />,
+      }),
+      helper.accessor((row) => row.value.measuredPrice ?? undefined, {
+        id: 'measured',
+        header: t.columns.measured,
+        ...figure,
+        cell: ({ row }) => <MeasuredPrice price={row.original.value.measuredPrice} strings={t} />,
       }),
       helper.accessor((row) => row.value.score ?? undefined, {
         id: 'value',
         header: t.columns.value,
         ...figure,
         filterFn: (row, _id, wanted: string) => row.original.value.tier === wanted,
-        cell: ({ row }) => (
-          <TierMeter {...meterProps(row.original, { table: t, tier, empty }).value} />
-        ),
+        cell: ({ row }) => <TierMeter {...meterProps(row.original, { tier, empty }).value} />,
       }),
       helper.accessor((row) => row.cost.input ?? undefined, {
         id: 'price',
@@ -798,7 +817,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         >
           {rows.map((row) => {
             const model = row.original;
-            const meters = meterProps(model, { table: t, tier, empty });
+            const meters = meterProps(model, { tier, empty });
             return (
               <li key={row.id} className="hover:bg-muted/50 relative px-4 py-3.5 transition-colors">
                 <div className="flex items-start gap-3">
@@ -835,12 +854,20 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
                     </div>
                   ))}
                 </dl>
-                <p className="text-muted-foreground mt-3 flex items-baseline justify-between gap-3 border-t border-dashed pt-2.5 text-xs">
-                  <span>{t.columns.price}</span>
-                  <span className="text-foreground">
-                    <Price model={model} empty={empty} />
-                  </span>
-                </p>
+                <dl className="text-muted-foreground mt-3 space-y-1 border-t border-dashed pt-2.5 text-xs">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt>{t.columns.price}</dt>
+                    <dd className="text-foreground">
+                      <Price model={model} empty={empty} />
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <dt>{t.columns.measured}</dt>
+                    <dd className="text-foreground">
+                      <MeasuredPrice price={model.value.measuredPrice} strings={t} />
+                    </dd>
+                  </div>
+                </dl>
               </li>
             );
           })}

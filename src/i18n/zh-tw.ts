@@ -52,11 +52,12 @@ export const zhTW: Dictionary = {
       vendor: '廠商',
       intelligence: '智慧',
       cost: '成本',
+      measured: '實測價',
       value: '性價比',
       price: '輸入 / 輸出價',
     },
     priceNote: '價格單位：美元 / 百萬 token',
-    measuredPrice: '實測 {price}',
+    notMeasured: '未實測',
     measuredPriceNote:
       '性價比依 Artificial Analysis 實測花費折算的 {price} / 百萬 token 計算，不依標價',
     search: '搜尋模型名稱',
