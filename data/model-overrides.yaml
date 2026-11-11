@@ -3,6 +3,7 @@
 #
 # exclude:   model IDs never to list, even when discovery finds them
 # aliases:   maker name -> models.dev provider ID, where the two differ
+# vendors:   generated vendor name -> the name shown, for every model of that vendor
 # models:    per-model corrections, keyed by model ID (`<provider>/<model>`):
 #              name, vendor     replace the generated value
 #              status           active or legacy; wins over the automatic rule
@@ -13,6 +14,9 @@
 exclude: []
 
 aliases: {}
+
+vendors:
+  xAI: SpaceXSI
 
 models:
   # Superseded by Kimi K3.1 Pro, which the version rule cannot tell from the

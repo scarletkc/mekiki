@@ -66,13 +66,19 @@ export const overridesSchema = z
     exclude: z.array(z.string().min(1)).default([]),
     /** Maker name → models.dev provider ID, where the two differ. */
     aliases: z.record(z.string(), z.string()).default({}),
+    vendors: z.record(z.string(), z.string().min(1)).default({}),
     /** Per-model corrections, keyed by model ID. An ID discovery did not find is added. */
     models: z.record(z.string(), modelOverrideSchema).default({}),
   })
   .strict();
 export type ModelOverrides = z.infer<typeof overridesSchema>;
 
-export const EMPTY_OVERRIDES: ModelOverrides = { exclude: [], aliases: {}, models: {} };
+export const EMPTY_OVERRIDES: ModelOverrides = {
+  exclude: [],
+  aliases: {},
+  vendors: {},
+  models: {},
+};
 
 /** Validate one model; throws with `where` in the message. */
 export function parseModelEntry(id: string, raw: unknown, where = id): ModelEntry {
@@ -154,7 +160,8 @@ export function mergeModelList(
     const base = byId.get(id);
     const fix = overrides.models[id] ?? {};
     const name = fix.name ?? base?.name;
-    const vendor = fix.vendor ?? base?.vendor;
+    const vendor =
+      fix.vendor ?? (base ? (overrides.vendors[base.vendor] ?? base.vendor) : undefined);
     // A correction for a model that is not listed waits until it is, unless
     // it carries a name and a vendor, which add the model by hand.
     if (!name || !vendor) continue;
