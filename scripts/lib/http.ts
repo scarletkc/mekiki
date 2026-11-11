@@ -1,5 +1,3 @@
-/** Small fetch wrapper for the sync adapters: timeout, retries, JSON or bytes. */
-
 const USER_AGENT = 'mekiki-sync';
 const TIMEOUT_MS = 30_000;
 const RETRIES = 3;
@@ -10,14 +8,12 @@ export class HttpError extends Error {
     readonly status: number,
     url: string,
   ) {
-    // Never include request headers here: they may carry an API key.
     super(`HTTP ${status} from ${new URL(url).origin}${new URL(url).pathname}`);
   }
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** GET with retries on network errors, 429 and 5xx. Throws HttpError on other statuses. */
 async function get<T>(
   url: string,
   accept: string,

@@ -1,8 +1,3 @@
-/**
- * Records today's ratings in data/history.jsonl. Shared by `pnpm sync`,
- * which records after refreshing the snapshots, and `pnpm history`, which
- * records from the files as they are, without going online.
- */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { buildDataset } from '../../src/lib/dataset';
@@ -23,7 +18,6 @@ import { readModelEntries } from './content';
 export interface RecordResult {
   date: string;
   outcome: AddOutcome | 'invalid' | 'off';
-  /** Human-readable summary for the console and the job summary. */
   message: string;
 }
 
@@ -44,7 +38,6 @@ export function recordHistory(
 
   const { entries, invalid } = readHistory(root);
   if (invalid > 0) {
-    // Rewriting the file would silently drop the broken lines.
     return {
       date,
       outcome: 'invalid',

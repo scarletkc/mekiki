@@ -1,9 +1,7 @@
 import type { CostTier, IntelligenceTier, ValueTier } from '@/lib/scoring.config';
 
-/** The value of a select filter that lets every model through. */
 export const ALL = 'all';
 
-/** Filter state. Keys double as the (locale-independent) URL query parameters. */
 export interface Filters {
   q: string;
   vendor: string;
@@ -24,7 +22,6 @@ export const NO_FILTERS: Filters = {
   legacy: false,
 };
 
-/** The fields of a model that the filters read. */
 export interface Filterable {
   id: string;
   name: string;
@@ -36,10 +33,6 @@ export interface Filterable {
   openWeights: boolean | null;
 }
 
-/**
- * Whether a model passes the search and every select filter. The legacy toggle
- * is not one of them: it decides which models are in the list, not which match.
- */
 export function matchesFilters(model: Filterable, filters: Filters): boolean {
   const query = filters.q.trim().toLowerCase();
   if (
@@ -59,18 +52,11 @@ export function matchesFilters(model: Filterable, filters: Filters): boolean {
 }
 
 export interface FilteredModels<T> {
-  /** The models that pass the filters, in their original order. */
   rows: T[];
-  /** Models in the list before any filter: active ones, plus legacy ones when shown. */
   total: number;
-  /** Legacy models that pass the filters, whether or not they are shown. */
   legacy: number;
 }
 
-/**
- * Applies the filters, and counts what the page shows around the list: "rows of
- * total", and how many models the legacy toggle would add.
- */
 export function filterModels<T extends Filterable>(
   models: readonly T[],
   filters: Filters,

@@ -2,8 +2,7 @@
 
 The models on the site are not picked by hand. `pnpm sync` builds the list from the
 sources every day and writes it to `data/models.json`. Hand-written corrections go in
-`data/model-overrides.yaml`. The rules behind it are in the
-[design, §4.1](SPEC.md#41-model-list).
+`data/model-overrides.yaml`.
 
 ## Who gets listed
 
@@ -109,7 +108,7 @@ the effect.
 - **Intelligence needs no upkeep.** Every score is normalised to the current leader on
   each sync, so nothing needs revisiting when a new model takes the lead.
 - **A model missing from a leaderboard is rated on the rest**, and the model page says
-  how many it is on ([design §5.1](SPEC.md#51-intelligence)).
+  how many it is on.
 - **The list moves everyone's value a little.** Value measures token use against the
-  median of the listed models ([design §5.3](SPEC.md#53-value)), so a model joining or
+  median of the listed models, so a model joining or
   leaving the list nudges the others.

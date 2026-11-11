@@ -1,8 +1,3 @@
-/**
- * English, the default locale. This file defines the dictionary shape: the
- * other locales are type-checked against it, so a missing key fails
- * `pnpm check`. `{name}` placeholders are filled by `fmt()` from ./fmt.
- */
 export const en = {
   meta: {
     tagline: 'AI model ratings',

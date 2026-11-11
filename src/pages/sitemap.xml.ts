@@ -3,11 +3,6 @@ import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, localePath } from '../i18n';
 import { latestSync, SITE_URL } from '../lib/dataset';
 import { getDataset } from '../lib/site-data';
 
-/**
- * `/sitemap.xml`: every page in every locale, with its language versions
- * as hreflang alternates. Only the locale-prefixed pages are listed; the
- * unprefixed ones only redirect and are not indexed.
- */
 export const GET: APIRoute = async () => {
   const dataset = await getDataset();
   const paths = [

@@ -1,10 +1,3 @@
-/**
- * Merges the model list with the source snapshots into the one dataset
- * that pages, the JSON API and `pnpm report` all read, so every consumer
- * shows the same numbers (docs/SPEC.md §2).
- *
- * Pure: takes its inputs as arguments and must not import `astro:*`.
- */
 import type { ModelEntry } from './model-schema';
 import {
   METRIC_KEYS,
@@ -22,52 +15,35 @@ export interface SourceStatus {
   name: string;
   url: string;
   license: string | null;
-  /** Null when the snapshot file is missing or invalid. */
   fetched_at: string | null;
-  /** Release of the leaderboard the data is from; null when the source has none. */
   edition: string | null;
 }
 
 export interface ModelRecord {
-  /** Canonical ID, `<provider>/<model>`. */
   id: string;
   name: string;
   vendor: string;
   status: 'active' | 'legacy';
   rating: Rating;
-  /** Where the price comes from; null when there is no price. */
   price_source: 'override' | 'modelsdev' | null;
   facts: {
-    /** Context window in tokens. */
     context: number | null;
     release_date: string | null;
     open_weights: boolean | null;
     modalities: { input: string[]; output: string[] } | null;
-    /** USD spent running the full AA Intelligence Index. */
     index_cost_usd: number | null;
   };
-  /** The model's ID in each source, as mapped in the model list. */
   source_ids: { modelsdev: string } & Record<MappingField, string | null>;
-  /** Whether the model was found in each source's snapshot. */
   matched: Record<SourceId, boolean>;
-  /** Language-neutral page URL; it redirects to the default locale. */
   url: string;
 }
 
 export interface Dataset {
   generated_at: string;
   sources: Record<SourceId, SourceStatus>;
-  /** Best raw score of each benchmark metric, null when unknown. */
   frontier: Record<MetricKey, number | null>;
-  /** How a run cost becomes a price per 1M tokens. */
   run_cost: {
-    /**
-     * Typical token use of an AA index run, in millions of tokens: the
-     * median of run cost ÷ blended price over the listed models. A run cost
-     * is divided by it. Null when no model has both figures.
-     */
     typical_token_use: number | null;
-    /** How many models that figure is the median of. */
     models: number;
   };
   models: ModelRecord[];
@@ -81,7 +57,6 @@ export interface BuildOptions {
 const asNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
-/** Whether any of the mapped IDs is an entry of the snapshot. */
 function found(
   snapshot: { models: Record<string, unknown> } | null,
   ...ids: (string | undefined)[]
@@ -96,7 +71,6 @@ function median(values: number[]): number | null {
   return sorted.length % 2 === 1 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
 }
 
-/** A metric's raw score for one model: snapshot → mapped ID → metric. */
 function metricValue(
   snapshots: Snapshots,
   entry: ModelEntry,
@@ -122,7 +96,6 @@ export function frontierOf(
   return frontier;
 }
 
-/** Sort for display: best intelligence first, unrated models last, then by name. */
 export function compareByIntelligence(a: ModelRecord, b: ModelRecord): number {
   const left = a.rating.intelligence.score;
   const right = b.rating.intelligence.score;
@@ -143,7 +116,6 @@ export function buildDataset(
   const config = options.config ?? scoringConfig;
   const frontier = frontierOf(snapshots, config);
 
-  // First pass: each model's source data and price.
   const prepared = entries.map((entry) => {
     const { data } = entry;
     const { sources } = data;
@@ -177,12 +149,6 @@ export function buildDataset(
     };
   });
 
-  // Typical token use: the median, over the listed models, of run cost ÷
-  // blended price. Dividing a run cost by it puts the cost back on the
-  // per-token price scale, where a model of typical token use lands on its
-  // own blended price. That keeps measured models comparable with those
-  // that have no run cost and are rated on the blended price. Legacy models
-  // count too, so a status change does not move the figure.
   const tokenUses = prepared.flatMap(({ runCost, price }) => {
     const blended = listPrice(price, config);
     return runCost !== null && runCost > 0 && blended !== null && blended > 0
@@ -201,7 +167,6 @@ export function buildDataset(
       metrics[key] = metricValue(snapshots, entry, key, config);
     }
 
-    // What the model cost to run, as a price per 1M tokens.
     const measuredPrice =
       runCost !== null && typicalTokenUse !== null && runCost > 0 && typicalTokenUse > 0
         ? runCost / typicalTokenUse
@@ -269,7 +234,6 @@ export function buildDataset(
   };
 }
 
-/** Latest `fetched_at` across all sources, or null when nothing was ever synced. */
 export function latestSync(dataset: Dataset): string | null {
   const times = SOURCE_IDS.map((id) => dataset.sources[id].fetched_at).filter(
     (value): value is string => value !== null,

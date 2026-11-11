@@ -1,4 +1,3 @@
-/** 繁體中文（台灣用語）. Shape is checked against the English dictionary. */
 import type { Dictionary } from './en';
 
 export const zhTW: Dictionary = {

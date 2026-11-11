@@ -2,25 +2,12 @@ import { expect, type Page, test } from '@playwright/test';
 import { giscusAttributes } from '../src/lib/giscus';
 import { giscusConfig } from '../src/lib/giscus.config';
 
-// Structural checks only. Page copy, routes and redirects change often, so
-// these tests start from `/` and follow links instead of hardcoding paths or
-// text. The JSON API paths are a public contract (README, "JSON API").
-
-// Model pages embed giscus from this origin (src/components/Giscus.astro).
-// Every test blocks it, so none depends on giscus.app and each checks that
-// the pages still work while it can't be reached.
 const GISCUS = 'https://giscus.app';
 
 test.beforeEach(async ({ context }) => {
   await context.route(`${GISCUS}/**`, (route) => route.abort());
 });
 
-/**
- * Records script errors, console errors and failed same-origin requests.
- * Empty the returned array to start a new check on the same page.
- * The browser's own report of the blocked giscus requests is expected and
- * left out; any other console error from giscus still counts.
- */
 function trackProblems(page: Page): string[] {
   const problems: string[] = [];
   page.on('pageerror', (error) => problems.push(`page error: ${error.message}`));
@@ -152,7 +139,6 @@ test('the home page switches between the table and the charts', async ({ page })
   const problems = trackProblems(page);
   await page.goto('/');
   await expect(page.locator('table tbody tr').first()).toBeVisible();
-  // The switch lists the table, quadrant, trend and bar views, in that order.
   const views = page.locator('fieldset button[aria-pressed]');
   await expect(views).toHaveCount(4);
 
@@ -168,7 +154,6 @@ test('the home page switches between the table and the charts', async ({ page })
   await views.nth(3).click();
   await expect(page.locator('figure ol li a[href]').first()).toBeVisible();
 
-  // The view is part of the URL, so a reload keeps it.
   await page.reload();
   await expect(page.locator('figure ol li a[href]').first()).toBeVisible();
 
@@ -183,9 +168,6 @@ test('a model page has one discussion thread in every language, in the site them
 }) => {
   test.skip(giscusAttributes(giscusConfig, { term: '-', lang: '-' }) === null, 'giscus is off');
   const problems = trackProblems(page);
-  // A stand-in for giscus. Its script adds the iframe from the attributes on
-  // its tag; the iframe says it is ready the way giscus does, then records
-  // the themes it is sent.
   await page.route(`${GISCUS}/client.js`, (route) =>
     route.fulfill({
       contentType: 'text/javascript',
@@ -217,7 +199,6 @@ test('a model page has one discussion thread in every language, in the site them
   const term = await script.getAttribute('data-term');
   expect(term).toBeTruthy();
 
-  // The iframe gets the current theme once it is ready, and every change after.
   const initial = await script.getAttribute('data-theme');
   await expect.poll(() => page.frames().length).toBe(2);
   const themes = () => page.frames()[1]!.evaluate(() => (window as { themes?: string[] }).themes);
@@ -225,7 +206,6 @@ test('a model page has one discussion thread in every language, in the site them
   await page.locator('[data-theme-toggle]').click();
   await expect.poll(async () => new Set(await themes()).size).toBe(2);
 
-  // Every language opens the same thread, each in its own language.
   const languages = new Set(
     await page
       .locator('[data-locale-link]')

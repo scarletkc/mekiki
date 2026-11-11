@@ -26,9 +26,6 @@ const m = t.method;
 const dataset = await getDataset();
 const { intelligence, cost, value } = scoringConfig;
 
-// Everything below is derived from scoring.config.ts so the page cannot
-// drift from the numbers the site actually uses.
-// Each metric's share of the score when a model is on every leaderboard.
 const shares = computeBenchmark({}, {}).breakdown;
 const metrics = METRIC_KEYS.map((key) => {
   const { source, floor } = intelligence.metrics[key];
@@ -42,7 +39,6 @@ const metrics = METRIC_KEYS.map((key) => {
         : fmt(m.floorBelowFrontier, { gap: floor.gap }),
   };
 });
-// LiveBench's own category names, as the site lists them.
 const list = new Intl.ListFormat(LOCALE_INFO[locale].tag, { type: 'conjunction' });
 const livebenchNote = fmt(m.livebenchBody, {
   kept: list.format(Object.keys(livebenchCategories.kept)),
@@ -77,8 +73,6 @@ const tierRows = [
   },
 ];
 
-// How a run cost becomes the price value is computed from. The weight only
-// shows up in the formula when it is not all-or-nothing.
 const typicalTokenUse = dataset.run_cost.typical_token_use;
 const measured = 'run_cost ÷ typical_token_use';
 const effectivePriceFormula =
@@ -94,7 +88,6 @@ const sourceUse = {
   arena: m.useArena,
   livebench: m.useLivebench,
 };
-// What to say where a source names no licence for its data.
 const unlicensed = {
   modelsdev: m.licenseNone,
   aa: m.licenseAa,

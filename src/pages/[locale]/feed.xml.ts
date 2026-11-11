@@ -6,7 +6,6 @@ import { getDataset, getHistory } from '../../lib/site-data';
 
 export const getStaticPaths = localeStaticPaths;
 
-/** `/<locale>/feed.xml`: the changelog as RSS, in one language. */
 export const GET: APIRoute = async ({ props }) => {
   const { models } = await getDataset();
   const linkable = new Set(models.map((model) => model.id));

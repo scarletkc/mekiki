@@ -2,8 +2,6 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { useTranslations } from '@/i18n';
 
-// The site, package.json, the README and the GitHub repository describe the
-// project in the same sentence. The GitHub one is set by hand.
 describe('project description', () => {
   const sentence = useTranslations('en').meta.description;
 

@@ -1,8 +1,3 @@
-/**
- * The compare page: what it needs to know about a model, and how the
- * selection is read from and written to the address (`?m=<id>,<id>`).
- * Pure, so the page, the table island and the tests share it.
- */
 import type { ModelRecord } from './dataset';
 import {
   METRIC_KEYS,
@@ -18,7 +13,6 @@ export interface CompareModel {
   name: string;
   vendor: string;
   legacy: boolean;
-  /** Link to the detail page, already localised. */
   href: string;
   intelligence: { score: number | null; tier: IntelligenceTier | null };
   cost: {
@@ -63,13 +57,8 @@ export function toCompareModel(model: ModelRecord, href: string): CompareModel {
   };
 }
 
-/** The query parameter that holds the selection. */
 export const COMPARE_PARAM = 'm';
 
-/**
- * Shown when the address names no models: the three most intelligent
- * current models, so the page is never empty.
- */
 export function defaultCompareIds(models: readonly ModelRecord[]): string[] {
   return models
     .filter((model) => model.status === 'active' && model.rating.intelligence.score !== null)
@@ -78,10 +67,6 @@ export function defaultCompareIds(models: readonly ModelRecord[]): string[] {
     .map((model) => model.id);
 }
 
-/**
- * The selection named by a `?m=` value: known IDs only, no duplicates, at
- * most COMPARE_MAX. Returns null when there is no such parameter at all.
- */
 export function parseCompareIds(value: string | null, known: readonly string[]): string[] | null {
   if (value === null) return null;
   const ids: string[] = [];
@@ -93,10 +78,6 @@ export function parseCompareIds(value: string | null, known: readonly string[]):
   return ids;
 }
 
-/**
- * Query string for a selection. IDs only contain characters that are safe
- * in a query (`a-z 0-9 . - /`), so they are written as-is and stay readable.
- */
 export function compareQuery(ids: readonly string[]): string {
   return `?${COMPARE_PARAM}=${ids.map((id) => encodeURIComponent(id).replace(/%2F/gi, '/')).join(',')}`;
 }

@@ -21,16 +21,9 @@ import {
   type ScoringConfig,
 } from '@/lib/scoring.config';
 
-/** Fictional leaderboard tops used by the fixtures in docs/SPEC.md §5.5. */
 const frontier = { aa_intelligence: 70, aa_coding: 62, arena_text: 1500 };
 
-/**
- * The metric set the fixtures in docs/SPEC.md §5.5 were computed with: two
- * index-style metrics and one Elo-style metric. The fixtures pin the
- * algorithm, so they use this reference set and not whatever the live
- * config in scoring.config.ts currently lists.
- */
-const specConfig: ScoringConfig = {
+const referenceConfig: ScoringConfig = {
   ...scoringConfig,
   intelligence: {
     ...scoringConfig.intelligence,
@@ -87,7 +80,6 @@ interface Fixture {
   };
 }
 
-// The table from docs/SPEC.md §5.5, verbatim. Tolerance ±0.1.
 const fixtures: Fixture[] = [
   {
     name: 'A flagship',
@@ -199,10 +191,10 @@ function near(actual: number | null, expected: number) {
   expect(Math.abs((actual as number) - expected)).toBeLessThanOrEqual(TOLERANCE + 1e-9);
 }
 
-describe('SPEC §5.5 fixtures', () => {
+describe('reference fixtures', () => {
   for (const { name, input, expected } of fixtures) {
     it(name, () => {
-      const rating = rateModel(input, specConfig);
+      const rating = rateModel(input, referenceConfig);
 
       if (expected.intelligence === null) expect(rating.intelligence.score).toBeNull();
       else near(rating.intelligence.score, expected.intelligence);
@@ -246,7 +238,7 @@ describe('normalizeMetric', () => {
 
 describe('computeBenchmark', () => {
   it('re-normalises weights over the metrics that have a score', () => {
-    const { score } = computeBenchmark({ arena_text: 1350 }, frontier, specConfig);
+    const { score } = computeBenchmark({ arena_text: 1350 }, frontier, referenceConfig);
     expect(score).toBe(50);
   });
 
@@ -254,12 +246,12 @@ describe('computeBenchmark', () => {
     const withCoding = computeBenchmark(
       { aa_intelligence: 56, aa_coding: 40, arena_text: 1430 },
       { aa_intelligence: 70, aa_coding: null, arena_text: 1500 },
-      specConfig,
+      referenceConfig,
     );
     const withoutCoding = computeBenchmark(
       { aa_intelligence: 56, arena_text: 1430 },
       frontier,
-      specConfig,
+      referenceConfig,
     );
     expect(withCoding.score).toBeCloseTo(withoutCoding.score as number, 9);
     expect(withCoding.breakdown.aa_coding).toEqual({
@@ -288,7 +280,7 @@ describe('computeBenchmark', () => {
   it('always reports every configured metric in the breakdown', () => {
     const { breakdown } = computeBenchmark({}, {});
     expect(Object.keys(breakdown).sort()).toEqual([...METRIC_KEYS].sort());
-    expect(Object.keys(computeBenchmark({}, {}, specConfig).breakdown).sort()).toEqual([
+    expect(Object.keys(computeBenchmark({}, {}, referenceConfig).breakdown).sort()).toEqual([
       'aa_coding',
       'aa_intelligence',
       'arena_text',
@@ -300,31 +292,34 @@ describe('computeBenchmark', () => {
 
 describe('cost', () => {
   it('blends cache reads, input and output 7:2:1', () => {
-    expect(blendedPrice({ input: 5, output: 25, cache_read: 0.5 }, specConfig)).toBeCloseTo(
+    expect(blendedPrice({ input: 5, output: 25, cache_read: 0.5 }, referenceConfig)).toBeCloseTo(
       3.85,
       9,
     );
-    expect(blendedPrice({ input: 0, output: 0 }, specConfig)).toBe(0);
+    expect(blendedPrice({ input: 0, output: 0 }, referenceConfig)).toBe(0);
   });
 
   it('equals a 9:1 input:output blend with 7 in 9 input tokens cached', () => {
     const hit = 7 / 9;
     const effectiveInput = hit * 0.2 + (1 - hit) * 2;
-    expect(blendedPrice({ input: 2, output: 10, cache_read: 0.2 }, specConfig)).toBeCloseTo(
+    expect(blendedPrice({ input: 2, output: 10, cache_read: 0.2 }, referenceConfig)).toBeCloseTo(
       (9 * effectiveInput + 10) / 10,
       9,
     );
-    expect(cacheHitPercent(specConfig.cost)).toBe(78);
+    expect(cacheHitPercent(referenceConfig.cost)).toBe(78);
   });
 
   it('treats a cache price of 0 as a real price', () => {
-    expect(blendedPrice({ input: 5, output: 25, cache_read: 0 }, specConfig)).toBeCloseTo(3.5, 9);
+    expect(blendedPrice({ input: 5, output: 25, cache_read: 0 }, referenceConfig)).toBeCloseTo(
+      3.5,
+      9,
+    );
   });
 
   it('charges the input price for cached tokens when the cache price is unknown', () => {
     expect(cacheReadPrice(5, null)).toBe(5);
     expect(cacheReadPrice(5, undefined)).toBe(5);
-    expect(blendedPrice({ input: 2, output: 8 }, specConfig)).toBeCloseTo(2.6, 9);
+    expect(blendedPrice({ input: 2, output: 8 }, referenceConfig)).toBeCloseTo(2.6, 9);
   });
 
   it('never lets a cache price above the input price raise the cost', () => {
@@ -332,44 +327,44 @@ describe('cost', () => {
   });
 
   it('maps the blended price to a log-scaled index', () => {
-    expect(costIndex(0, specConfig)).toBe(0);
-    expect(costIndex(0.04, specConfig)).toBe(0);
-    expect(costIndex(12, specConfig)).toBeCloseTo(100, 9);
-    expect(costIndex(120, specConfig)).toBe(100);
-    expect(costIndex(Math.sqrt(0.04 * 12), specConfig)).toBeCloseTo(50, 9);
+    expect(costIndex(0, referenceConfig)).toBe(0);
+    expect(costIndex(0.04, referenceConfig)).toBe(0);
+    expect(costIndex(12, referenceConfig)).toBeCloseTo(100, 9);
+    expect(costIndex(120, referenceConfig)).toBe(100);
+    expect(costIndex(Math.sqrt(0.04 * 12), referenceConfig)).toBeCloseTo(50, 9);
   });
 
   it('assigns tiers by absolute blended price', () => {
-    expect(costTier(0, specConfig)).toBe('very_low');
-    expect(costTier(0.09, specConfig)).toBe('very_low');
-    expect(costTier(0.1, specConfig)).toBe('low');
-    expect(costTier(0.39, specConfig)).toBe('low');
-    expect(costTier(0.4, specConfig)).toBe('mid');
-    expect(costTier(1.99, specConfig)).toBe('mid');
-    expect(costTier(2, specConfig)).toBe('high');
-    expect(costTier(5.99, specConfig)).toBe('high');
-    expect(costTier(6, specConfig)).toBe('very_high');
+    expect(costTier(0, referenceConfig)).toBe('very_low');
+    expect(costTier(0.09, referenceConfig)).toBe('very_low');
+    expect(costTier(0.1, referenceConfig)).toBe('low');
+    expect(costTier(0.39, referenceConfig)).toBe('low');
+    expect(costTier(0.4, referenceConfig)).toBe('mid');
+    expect(costTier(1.99, referenceConfig)).toBe('mid');
+    expect(costTier(2, referenceConfig)).toBe('high');
+    expect(costTier(5.99, referenceConfig)).toBe('high');
+    expect(costTier(6, referenceConfig)).toBe('very_high');
   });
 });
 
 describe('tiers', () => {
   it('intelligence thresholds are inclusive', () => {
-    expect(intelligenceTier(90, specConfig)).toBe('top');
-    expect(intelligenceTier(89.9, specConfig)).toBe('high');
-    expect(intelligenceTier(75, specConfig)).toBe('high');
-    expect(intelligenceTier(55, specConfig)).toBe('mid');
-    expect(intelligenceTier(54.9, specConfig)).toBe('low');
-    expect(intelligenceTier(40, specConfig)).toBe('low');
-    expect(intelligenceTier(39.9, specConfig)).toBe('very_low');
+    expect(intelligenceTier(90, referenceConfig)).toBe('top');
+    expect(intelligenceTier(89.9, referenceConfig)).toBe('high');
+    expect(intelligenceTier(75, referenceConfig)).toBe('high');
+    expect(intelligenceTier(55, referenceConfig)).toBe('mid');
+    expect(intelligenceTier(54.9, referenceConfig)).toBe('low');
+    expect(intelligenceTier(40, referenceConfig)).toBe('low');
+    expect(intelligenceTier(39.9, referenceConfig)).toBe('very_low');
   });
 
   it('value thresholds are inclusive', () => {
-    expect(valueTier(70, specConfig)).toBe('top');
-    expect(valueTier(60, specConfig)).toBe('high');
-    expect(valueTier(50, specConfig)).toBe('mid');
-    expect(valueTier(49.9, specConfig)).toBe('low');
-    expect(valueTier(40, specConfig)).toBe('low');
-    expect(valueTier(39.9, specConfig)).toBe('very_low');
+    expect(valueTier(70, referenceConfig)).toBe('top');
+    expect(valueTier(60, referenceConfig)).toBe('high');
+    expect(valueTier(50, referenceConfig)).toBe('mid');
+    expect(valueTier(49.9, referenceConfig)).toBe('low');
+    expect(valueTier(40, referenceConfig)).toBe('low');
+    expect(valueTier(39.9, referenceConfig)).toBe('very_low');
   });
 
   it('keeps the live thresholds in order', () => {
@@ -398,7 +393,7 @@ describe('computeValue', () => {
 
 describe('metric weights', () => {
   it("reports each metric's share of the whole", () => {
-    const { breakdown } = computeBenchmark({}, frontier, specConfig);
+    const { breakdown } = computeBenchmark({}, frontier, referenceConfig);
     expect(breakdown.aa_intelligence?.weight).toBe(0.5);
     expect(breakdown.aa_coding?.weight).toBe(0.2);
     expect(breakdown.arena_text?.weight).toBe(0.3);
@@ -417,23 +412,29 @@ describe('metric weights', () => {
 
 describe('effectivePrice', () => {
   it('takes a measured price over the blended list price', () => {
-    expect(effectivePrice(4, 1, specConfig)).toEqual({ price: 1, basis: 'run_cost' });
-    expect(effectivePrice(0.2, 3, specConfig)).toEqual({ price: 3, basis: 'run_cost' });
+    expect(effectivePrice(4, 1, referenceConfig)).toEqual({ price: 1, basis: 'run_cost' });
+    expect(effectivePrice(0.2, 3, referenceConfig)).toEqual({ price: 3, basis: 'run_cost' });
   });
 
   it('keeps the blended price when nothing usable was measured', () => {
     for (const measured of [null, undefined, 0, -1, Number.NaN]) {
-      expect(effectivePrice(4, measured, specConfig)).toEqual({ price: 4, basis: 'list_price' });
+      expect(effectivePrice(4, measured, referenceConfig)).toEqual({
+        price: 4,
+        basis: 'list_price',
+      });
     }
   });
 
   it('blends the two geometrically by runCostWeight', () => {
     const half: ScoringConfig = {
-      ...specConfig,
-      value: { ...specConfig.value, runCostWeight: 0.5 },
+      ...referenceConfig,
+      value: { ...referenceConfig.value, runCostWeight: 0.5 },
     };
     expect(effectivePrice(4, 1, half).price).toBeCloseTo(2, 9);
-    const off: ScoringConfig = { ...specConfig, value: { ...specConfig.value, runCostWeight: 0 } };
+    const off: ScoringConfig = {
+      ...referenceConfig,
+      value: { ...referenceConfig.value, runCostWeight: 0 },
+    };
     expect(effectivePrice(4, 1, off)).toEqual({ price: 4, basis: 'list_price' });
   });
 
@@ -443,15 +444,14 @@ describe('effectivePrice', () => {
       frontier,
       price: { input: 2, output: 8 },
     };
-    const listed = rateModel(input, specConfig);
-    const measured = rateModel({ ...input, measuredPrice: 0.26 }, specConfig);
+    const listed = rateModel(input, referenceConfig);
+    const measured = rateModel({ ...input, measuredPrice: 0.26 }, referenceConfig);
     expect(measured.cost).toEqual(listed.cost);
     expect(listed.value).toMatchObject({
       cost_basis: 'list_price',
       effective_price: 2.6,
       cost_index: 73.2,
     });
-    // A tenth of the price is 100 ÷ log10(300) = 40.4 index points lower.
     expect(measured.value).toMatchObject({
       cost_basis: 'run_cost',
       effective_price: 0.26,
@@ -487,7 +487,7 @@ describe('rateModel edge cases', () => {
   it('rates cost without intelligence, but not value', () => {
     const rating = rateModel(
       { metrics: {}, frontier, price: { input: 2, output: 10, cache_read: 0.1 } },
-      specConfig,
+      referenceConfig,
     );
     expect(rating.cost.tier).toBe('mid');
     expect(rating.cost.cache_read).toBe(0.1);
@@ -514,7 +514,6 @@ describe('rateModel edge cases', () => {
   });
 
   it('derives the tier from the rounded score', () => {
-    // 62.97 / 70 = 89.96, shown as 90.0, so the tier must be `top`.
     const rating = rateModel({
       metrics: { aa_intelligence: 62.97 },
       frontier: { aa_intelligence: 70 },

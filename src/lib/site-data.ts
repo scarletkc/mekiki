@@ -1,8 +1,3 @@
-/**
- * Astro-side entry point to the dataset. Pages and API endpoints all call
- * `getDataset()`, which is computed once per build so every page and every
- * JSON file carries the same numbers and the same `generated_at`.
- */
 import { buildChangelog, type Changelog } from './changelog';
 import { buildDataset, type Dataset } from './dataset';
 import { readHistory, type HistoryEntry } from './history';
@@ -22,7 +17,6 @@ export function getDataset(): Promise<Dataset> {
 
 let history: { entries: HistoryEntry[]; changelog: Changelog } | undefined;
 
-/** The recorded history and the changelog derived from it, read once per build. */
 export function getHistory(): { entries: HistoryEntry[]; changelog: Changelog } {
   if (!history) {
     const { entries } = readHistory();

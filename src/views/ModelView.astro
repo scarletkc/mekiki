@@ -38,7 +38,6 @@ interface Props {
 const { locale, model } = Astro.props;
 const t = useTranslations(locale);
 const dataset = await getDataset();
-// What a run cost is divided by to become a price per 1M tokens.
 const typicalTokenUse = dataset.run_cost.typical_token_use;
 
 const { intelligence, cost, value } = model.rating;
@@ -52,15 +51,12 @@ const metrics = METRIC_KEYS.map((key) => {
     frontier: null,
   };
   const mapped = model.source_ids[config.mapping];
-  // Say why a figure is missing: not on that leaderboard (no mapping), not in the snapshot, or no score.
   const missing =
     mapped === null ? t.detail.notMapped : item.raw === null ? t.detail.notFound : t.empty.noData;
   return { key, label: t.metric[key], ...item, mapped, missing, url: 'url' in config ? config.url : null };
 });
-// How many leaderboards the score rests on; the rest are left out, not counted as 0.
 const covered = metrics.filter((metric) => metric.normalized !== null).length;
 
-// Where the raw numbers can be checked: one link per leaderboard the model is mapped to.
 const links = [
   model.source_ids.aa
     ? {
@@ -76,13 +72,11 @@ const links = [
   { href: `/api/models/${model.id}.json`, label: t.detail.linkJson, json: true },
 ].filter((link) => link !== null);
 
-// Same badge as the model table's.
 const badgeClass = badgeVariants({
   variant: 'outline',
   className: 'text-muted-foreground font-normal',
 });
 
-// Footnotes under the price list, one paragraph each.
 const priceNotes = [
   fmt(t.detail.priceNote, {
     cache: scoringConfig.cost.cacheReadWeight,
@@ -98,7 +92,6 @@ const priceNotes = [
 
 const { description, imageAlt } = modelShareText(model, t);
 const compareHref = `${localePath(locale, '/compare')}${compareQuery([model.id])}`;
-// History: recorded days, ending on what this page shows today.
 const { entries, changelog } = getHistory();
 const today = utcDate(new Date(dataset.generated_at));
 const series = modelSeries(entries, model.id, {

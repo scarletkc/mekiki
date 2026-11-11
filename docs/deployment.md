@@ -6,8 +6,7 @@ snapshots and record the day's ratings first; every run then lints, type-checks,
 and builds, daily and manual runs commit any data change that passed, and the site is
 deployed. A separate `smoke` job runs the browser smoke test against the built site; it
 never blocks the deploy, and a failure only marks that job red. Pull requests into `main`
-are checked by `.github/workflows/ci.yml`. Why the workflows are shaped this way is in
-[design §8](SPEC.md#8-sync-and-deployment).
+are checked by `.github/workflows/ci.yml`.
 
 ## One-time setup
 

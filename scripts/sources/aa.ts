@@ -1,32 +1,3 @@
-/**
- * Artificial Analysis: Intelligence Index and the cost of running the full
- * Intelligence Index. Free API, key in the `x-api-key` header (env
- * `AA_API_KEY`). Attribution is required on every tier.
- *
- * Endpoint: GET /api/v2/language/models/free?page=N (the one the free tier
- * may call; /language/models is Pro only). 100 requests per 24 hours.
- *
- * Response shape, per https://artificialanalysis.ai/data-api/docs/reference
- * as read on 2026-11-11:
- *   { tier, intelligence_index_version,
- *     pagination: { page, page_size, total_pages, has_more },
- *     data: [{ id, name, slug, release_date, model_creator: { id, name },
- *       evaluations: { artificial_analysis_intelligence_index,
- *         artificial_analysis_coding_index, … },
- *       artificial_analysis_intelligence_index_cost: { total_cost, … },
- *       pricing: { … }, … }] }
- *
- * Checked against the live API on 2026-11-11 through a CI run: 734 models
- * parsed without a validation failure. The free tier returns null for the
- * Coding Index on every model, so that index is not read; coding ability
- * comes from Arena's WebDev board instead (see ./arena.ts).
- *
- * `total_cost` feeds the value rating (src/lib/dataset.ts). The methodology
- * page lists one fixed set of tasks and repeats for the index, so run costs
- * are compared across models as they are. `cost_per_task.total_cost` is not
- * read: on 2026-11-11 total ÷ per-task ranged from 631 to 1782 across the
- * models that have both.
- */
 import { z } from 'astro/zod';
 import type { AaModel } from '../../src/lib/snapshots';
 import { suggest } from '../lib/candidates';

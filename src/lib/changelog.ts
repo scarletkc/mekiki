@@ -1,14 +1,3 @@
-/**
- * Changes between consecutive history entries (src/lib/history.ts), for the
- * changelog page, the RSS feeds and the model pages (docs/SPEC.md §7).
- *
- * Only changes that matter are reported: tier changes, price changes, a new
- * leader, models added, removed or moved to legacy, and scores that drifted
- * far enough (changelogConfig.scoreDelta). Leaderboards move a little every
- * day, so reporting every score change would bury the rest.
- *
- * Pure: no I/O, no dates, no Astro imports.
- */
 import type { HistoryEntry, HistoryModel } from './history';
 import { changelogConfig, type ChangelogConfig } from './scoring.config';
 
@@ -37,17 +26,14 @@ export type Change =
       model: ModelRef;
       from: string | null;
       to: string | null;
-      /** Score before and after; for cost, the blended price. */
       fromFigure: number | null;
       toFigure: number | null;
     }
   | {
       kind: 'price';
       model: ModelRef;
-      /** Null when the model had no price on that side. */
       from: PriceFields | null;
       to: PriceFields | null;
-      /** The cost tier, when it changed with the price. */
       tier: { from: string | null; to: string | null } | null;
     }
   | { kind: 'score'; rating: ScoredRating; model: ModelRef; from: number; to: number };
@@ -58,11 +44,8 @@ export interface ChangelogDay {
 }
 
 export interface Changelog {
-  /** First recorded day, null when nothing was recorded yet. */
   start: string | null;
-  /** Last recorded day. */
   end: string | null;
-  /** Days with at least one change, newest first. */
   days: ChangelogDay[];
 }
 
@@ -81,7 +64,6 @@ const RATING_ORDER: RatingKey[] = ['intelligence', 'cost', 'value'];
 const ref = (id: string, model: HistoryModel): ModelRef => ({ id, name: model.name });
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
-/** The model with the best score of one rating; ties go to the name first in order. */
 export function leaderOf(entry: HistoryEntry, rating: ScoredRating): ModelRef | null {
   let best: { id: string; model: HistoryModel; score: number } | null = null;
   for (const [id, model] of Object.entries(entry.models)) {
@@ -118,17 +100,11 @@ function sortChanges(changes: Change[]): Change[] {
   );
 }
 
-/**
- * Every change across the history, grouped by day, newest day first. The
- * first entry is the baseline and reports nothing.
- */
 export function buildChangelog(
   entries: HistoryEntry[],
   config: Pick<ChangelogConfig, 'scoreDelta'> = changelogConfig,
 ): Changelog {
   const sorted = [...entries].sort((a, b) => (a.date < b.date ? -1 : 1));
-  // Last reported score per model and rating; a score is reported again
-  // once it has drifted `scoreDelta` points from here.
   const baseline = new Map<string, number | null>();
   const key = (id: string, rating: ScoredRating) => `${rating}\u0000${id}`;
   const resetBaseline = (id: string, model: HistoryModel) => {
@@ -204,7 +180,6 @@ export function buildChangelog(
           tier: costTierChanged ? { from: old.cost.tier, to: model.cost.tier } : null,
         });
       } else if (costTierChanged) {
-        // Same price, new tier: the thresholds or the blend weights changed.
         changes.push({
           kind: 'tier',
           rating: 'cost',
@@ -234,7 +209,6 @@ export function buildChangelog(
   };
 }
 
-/** The changes that concern one model, newest first. */
 export function changesFor(changelog: Changelog, id: string): { date: string; change: Change }[] {
   return changelog.days.flatMap(({ date, changes }) =>
     changes.filter((change) => change.model.id === id).map((change) => ({ date, change })),
@@ -247,14 +221,6 @@ export interface SeriesPoint {
   value: number | null;
 }
 
-/**
- * One model's scores over time, oldest first, for the trend chart. Each
- * point holds until the next one. Days on which the model was not listed
- * after it first appeared become null points, which break the line.
- *
- * `current` is what the site shows now; it replaces any point on or after
- * its date, so the chart always ends on the numbers printed above it.
- */
 export function modelSeries(
   entries: HistoryEntry[],
   id: string,

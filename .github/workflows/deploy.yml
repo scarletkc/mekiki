@@ -58,6 +58,9 @@ jobs:
       - name: Lint and check formatting
         run: pnpm exec biome ci .
 
+      - name: Check for comments
+        run: pnpm lint:comments
+
       - name: Type check
         run: pnpm check
 

@@ -10,7 +10,7 @@
 
 [![Astro](https://img.shields.io/badge/Astro-7-BC52EE?logo=astro&logoColor=white)](https://astro.build/)
 [![API](https://img.shields.io/badge/API-JSON%20%2B%20CORS-2EA44F)](https://mekiki.fog.moe/api)
-[![Data](https://img.shields.io/badge/data-refreshed%20daily-C2452B)](docs/SPEC.md#4-data)
+[![Data](https://img.shields.io/badge/data-refreshed%20daily-C2452B)](#data-sources)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 </div>
@@ -110,7 +110,6 @@ mekiki does not accept pull requests from outside contributors.
 - [The model list](docs/model-list.md): who gets listed, how names are matched, and corrections
 - [Development guide](docs/development.md): running locally, commands, tuning the ratings, and adding a language
 - [Deployment](docs/deployment.md): the daily workflow and one-time setup
-- [Design](docs/SPEC.md): rules, data model, rating algorithm, and the API contract
 
 ## Data sources
 

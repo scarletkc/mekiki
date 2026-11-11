@@ -1,23 +1,4 @@
 ---
-/**
- * A page that only forwards to the same page in one of the locales.
- * Unprefixed URLs (`/`, `/method`, `/m/<provider>/<model>`) are kept as
- * stable, language-neutral links; this is what they serve.
- *
- * The locale is picked in the browser, in this order:
- * 1. the language the visitor last chose in the switcher (stored by
- *    src/layouts/Base.astro under the `locale` key);
- * 2. the first browser language we have: Chinese goes to `zh-tw` for
- *    Traditional script or Taiwan, Hong Kong and Macau, else to `zh-cn`;
- * 3. the default locale.
- *
- * GitHub Pages cannot send HTTP redirects, so the page redirects by script,
- * which keeps the query string and hash. Without JavaScript, a meta refresh
- * goes to the default locale.
- *
- * Link previews read this page, not the one it forwards to (scrapers do
- * not run scripts), so it carries the same share tags as the real page.
- */
 import {
   DEFAULT_LOCALE,
   LOCALES,
@@ -30,12 +11,9 @@ import { SITE_URL } from '../lib/dataset';
 import { OG_HEIGHT, OG_WIDTH, SITE_IMAGE_PATH } from '../lib/share';
 
 interface Props {
-  /** Page path without a locale prefix, e.g. `/method`. */
   path: string;
-  /** Title of the page it forwards to, without the site name. */
   title?: string;
   description?: string;
-  /** Share image, site-relative; defaults to the site card. */
   image?: string;
   imageAlt?: string;
 }
@@ -75,7 +53,6 @@ const description = Astro.props.description ?? t.meta.description;
         return locales.indexOf(locale) !== -1 ? locale : null;
       }
 
-      // Map a BCP 47 tag such as `zh-Hant-HK` or `en-US` to one of our locales.
       function fromTag(tag) {
         var parts = String(tag || '').toLowerCase().split(/[-_]/);
         if (parts[0] !== 'zh') return known(parts[0]);

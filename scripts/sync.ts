@@ -1,22 +1,3 @@
-/**
- * `pnpm sync`: fetches every source, rebuilds the model list and refreshes
- * data/snapshots/.
- *
- *   pnpm sync                 all sources
- *   pnpm sync --only=arena    one source (repeatable, comma-separated)
- *   pnpm sync --dry-run       fetch and report, write nothing
- *
- * When every source was fetched, the model list (data/models.json) is
- * rebuilt from them (scripts/lib/discover.ts); otherwise the previous list
- * is kept. The snapshots then keep only the listed models. After that,
- * today's ratings are recorded in data/history.jsonl once recording is on
- * (see scripts/lib/history.ts).
- *
- * A source that fails, returns invalid data or returns suspiciously few
- * models keeps its old snapshot. The command still exits 0 so a broken
- * source can never block a deploy; the reason goes to the console and to
- * the GitHub Actions job summary.
- */
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import {
@@ -51,7 +32,6 @@ import { recordHistory } from './lib/history';
 import { adapters, trackedModels } from './sources';
 import { SourceDataError, type Unmatched } from './sources/types';
 
-/** A drop below this share of the previous model count is treated as an outage. */
 const MIN_SHARE_OF_PREVIOUS = 0.5;
 
 type Outcome =
@@ -87,7 +67,6 @@ function parseArgs(argv: string[]) {
   };
 }
 
-/** Stable JSON: model keys sorted so diffs only show real changes. */
 function serialize<T extends { models: Record<string, unknown> }>(snapshot: T): string {
   const models = Object.fromEntries(
     Object.entries(snapshot.models).sort(([a], [b]) => a.localeCompare(b, 'en')),
@@ -95,11 +74,6 @@ function serialize<T extends { models: Record<string, unknown> }>(snapshot: T): 
   return `${JSON.stringify({ ...snapshot, models }, null, 2)}\n`;
 }
 
-/**
- * The part of a snapshot that decides whether it changed. `total` is left
- * out on purpose: a source gaining a model nobody tracks (models.dev does
- * so almost daily) is not a change worth a commit.
- */
 function comparable(snapshot: {
   edition?: string;
   frontier: unknown;
@@ -120,7 +94,6 @@ function describeError(error: unknown): string {
   return String(error);
 }
 
-/** Fetch one source. Returns its raw payload, or null with the reason in the report. */
 async function fetchSource(source: SourceId, report: SourceReport): Promise<unknown> {
   try {
     const fetched = await adapters[source].fetch({ env: process.env });
@@ -135,7 +108,6 @@ async function fetchSource(source: SourceId, report: SourceReport): Promise<unkn
   }
 }
 
-/** Trim one fetched payload to the listed models and write its snapshot. */
 function writeSource<S extends SourceId>(
   source: S,
   raw: unknown,
@@ -162,8 +134,6 @@ function writeSource<S extends SourceId>(
       );
     }
 
-    // `fetched_at` only moves when the data does, so an uneventful day
-    // produces no diff and no commit.
     const changed = previous === null || comparable(previous) !== comparable(snapshot);
     const matched = Object.keys(snapshot.models).length;
 
@@ -202,10 +172,6 @@ function statusLine({ source, outcome }: SourceReport, dryRun: boolean): string 
   }
 }
 
-/**
- * Mappings that name an entry the source does not have. An empty mapping
- * is not reported: it means the model is not on that leaderboard.
- */
 function unmatchedLines(report: SourceReport): string[] {
   const lines: string[] = [];
   for (const { model, field, value, candidates } of report.unmatched) {
@@ -241,12 +207,6 @@ function printConsole(reports: SourceReport[], dryRun: boolean) {
   console.log('');
 }
 
-/**
- * Rebuild the generated model list from the payloads just fetched, and
- * write it when it changed. Keeps the previous list when a source is
- * missing, discovery fails, or the list shrinks below half its size.
- * Returns the list to use and the report lines.
- */
 function updateModelList(
   raws: Partial<Record<SourceId, unknown>>,
   overrides: ModelOverrides,
@@ -276,7 +236,6 @@ function updateModelList(
     if (list.length === 0 || list.length < previous.length * MIN_SHARE_OF_PREVIOUS) {
       return keep(`Discovery found only ${list.length} models.`);
     }
-    // Validate before writing: a malformed entry keeps the previous list.
     mergeModelList(list, overrides);
     const changed = serializeModelList(list) !== serializeModelList(previous);
     if (changed && !dryRun) writeFileSync(MODEL_LIST_FILE, serializeModelList(list));
@@ -324,17 +283,13 @@ function writeJobSummary(
 }
 
 async function main() {
-  // Local convenience: read AA_API_KEY from .env when present.
   try {
     process.loadEnvFile('.env');
-  } catch {
-    // No .env file; rely on the environment.
-  }
+  } catch {}
 
   const { sources, dryRun } = parseArgs(process.argv.slice(2));
   const overrides = readOverrides();
 
-  // 1. Fetch every source once (Artificial Analysis allows 100 requests a day).
   const reports: SourceReport[] = [];
   const raws: Partial<Record<SourceId, unknown>> = {};
   for (const source of sources) {
@@ -349,12 +304,10 @@ async function main() {
     if (raw !== null) raws[source] = raw;
   }
 
-  // 2. Rebuild the model list from what was fetched.
   const { list, lines: found } = updateModelList(raws, overrides, dryRun);
   const entries = mergeModelList(list, overrides);
   console.log(`Listing ${entries.length} models.`);
 
-  // 3. Trim each payload to the listed models and write the snapshots.
   for (const report of reports) {
     if (report.source in raws) {
       writeSource(report.source, raws[report.source], entries, dryRun, report);
@@ -364,8 +317,6 @@ async function main() {
   printConsole(reports, dryRun);
   console.log(`${found.join('\n')}\n`);
 
-  // Record what the site will show, from the snapshots just written. A
-  // failure here must not fail the sync either.
   let history: string;
   try {
     history = recordHistory({ dryRun }).message;
@@ -377,7 +328,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  // Only programming or content errors land here (e.g. an invalid overrides file).
   console.error(describeError(error));
   process.exitCode = 1;
 });

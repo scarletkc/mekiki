@@ -14,7 +14,6 @@ const t = useTranslations(locale);
 const a = t.api;
 const dataset = await getDataset();
 
-// Show a real response, preferring a model that has every rating.
 const sample =
   dataset.models.find((model) => model.rating.value.score !== null) ?? dataset.models[0];
 const samplePath = sample ? `/api/models/${sample.id}.json` : '/api/models/<provider>/<model>.json';

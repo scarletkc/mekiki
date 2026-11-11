@@ -1,9 +1,3 @@
-/**
- * Suggests likely names in a source for a model that has no working
- * mapping. Suggestions are only ever printed for a human to copy into the
- * overrides file; suggestions are never applied (docs/SPEC.md §4.1).
- */
-
 function tokens(text: string): string[] {
   return text
     .toLowerCase()
@@ -13,7 +7,6 @@ function tokens(text: string): string[] {
     .filter(Boolean);
 }
 
-/** 0–1 similarity: share of the wanted tokens found, lightly penalising extra tokens. */
 function similarity(wanted: string[], candidate: string[]): number {
   if (wanted.length === 0 || candidate.length === 0) return 0;
   const pool = new Set(candidate);
@@ -25,13 +18,10 @@ function similarity(wanted: string[], candidate: string[]): number {
 }
 
 export interface Candidate {
-  /** What to paste into the overrides file. */
   id: string;
-  /** Extra text to match against (display name, vendor…). */
   text?: string;
 }
 
-/** The closest entries of a source to the given model, best first. */
 export function suggest(
   model: { id: string; name: string },
   pool: Candidate[],

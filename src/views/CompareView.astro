@@ -15,7 +15,6 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 const { models } = await getDataset();
 
-// Current models first, then legacy ones, each in list order.
 const ordered = [...models].sort(
   (a, b) => Number(a.status === 'legacy') - Number(b.status === 'legacy'),
 );

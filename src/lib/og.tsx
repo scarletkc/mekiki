@@ -1,11 +1,3 @@
-/**
- * Share images (Open Graph cards), rendered to PNG at build time.
- *
- * satori lays out the card and turns its text into paths; resvg rasterises
- * the result. Both run offline, with the font read from node_modules. The
- * cards are in English for every locale: model names are Latin script, and
- * a CJK font would add megabytes to the build for three short labels.
- */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
@@ -19,7 +11,6 @@ import { OG_HEIGHT, OG_WIDTH } from './share';
 
 const HOST = 'mekiki.fog.moe';
 
-/** How many of the five pips each tier fills; mirrors src/components/TierMeter.tsx. */
 const LEVEL: Record<string, number> = {
   top: 5,
   very_high: 5,
@@ -33,8 +24,6 @@ const STEPS = [1, 2, 3, 4, 5];
 let fonts: { name: string; data: Buffer; weight: 400 | 600; style: 'normal' }[] | undefined;
 
 function loadFonts() {
-  // satori reads WOFF but not WOFF2 or variable fonts, hence the static
-  // @fontsource package next to the variable one the site uses.
   const file = (weight: number) =>
     join(
       process.cwd(),
@@ -64,7 +53,6 @@ function Logo({ size }: { size: number }) {
   );
 }
 
-/** Five pips take about the width four did, so a long label and price still fit. */
 function Pips({ level, color, scale = 1 }: { level: number; color: string; scale?: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 * scale }}>
@@ -92,11 +80,6 @@ interface Rating {
   note?: string;
 }
 
-/**
- * Type sizes for the tier label and figure. A long label ("Very high") with a
- * price must still fit one third of the card, and "Very low" with a
- * three-decimal price ("$0.077") is the longest pair, so it steps down again.
- */
 function ratingSizes({ tierLabel, figure }: Rating) {
   if (tierLabel.length <= 5) return { label: 40, figure: 34, gap: 16 };
   if (tierLabel.length + (figure?.length ?? 0) <= 13) return { label: 34, figure: 30, gap: 16 };
@@ -193,7 +176,6 @@ function Masthead() {
   );
 }
 
-/** Font size that keeps a long model name on one line. */
 function nameSize(name: string): number {
   if (name.length <= 16) return 92;
   if (name.length <= 22) return 80;
@@ -201,7 +183,6 @@ function nameSize(name: string): number {
   return 54;
 }
 
-/** The share card of one model. */
 export function modelCard(model: ModelRecord): Promise<Uint8Array<ArrayBuffer>> {
   const { intelligence, cost, value } = model.rating;
   const ratings: Rating[] = [
@@ -289,7 +270,6 @@ export function modelCard(model: ModelRecord): Promise<Uint8Array<ArrayBuffer>> 
   );
 }
 
-/** The share card of every other page. */
 export function siteCard(): Promise<Uint8Array<ArrayBuffer>> {
   const legend = [
     { label: t.rating.intelligence, level: LEVEL.top, color: BRAND.ink },
@@ -339,7 +319,6 @@ export function siteCard(): Promise<Uint8Array<ArrayBuffer>> {
   );
 }
 
-/** The mark as a PNG, for the touch icon. */
 export function logoPng(size: number, svg: string): Uint8Array<ArrayBuffer> {
   return new Uint8Array(new Resvg(svg, { fitTo: { mode: 'width', value: size } }).render().asPng());
 }

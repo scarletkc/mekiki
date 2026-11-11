@@ -13,14 +13,12 @@ const dictionaries: Record<Locale, Dictionary> = {
   en,
 };
 
-/** The UI strings of a locale. */
 export function useTranslations(locale: Locale): Dictionary {
   return dictionaries[locale];
 }
 
 type TierGroup = keyof Dictionary['tier'];
 
-/** Label of one tier in every locale, keyed by BCP 47 tag (used by the JSON API). */
 export function tierLabels<G extends TierGroup>(
   group: G,
   tier: keyof Dictionary['tier'][G],

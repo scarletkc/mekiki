@@ -1,39 +1,22 @@
 ---
-/**
- * One score over time as a static step chart, rendered at build time with
- * no script. A score holds until the next recorded change, so the line moves
- * in steps; a gap means the model was not listed or not rated. Tier
- * boundaries inside the visible range are drawn as hairlines. Hovering a
- * step shows its date and score (native SVG tooltip).
- *
- * The plot stretches to its box (fixed height, fluid width) and every label
- * is HTML on top of it, so text and strokes keep their size at any width.
- */
 import { formatScore } from '../lib/format';
 
 interface Props {
-  /** Rating name, shown as the caption. */
   title: string;
-  /** Oldest first; each point holds until the next. */
   points: { date: string; score: number | null }[];
-  /** Day the last point extends to (today). */
   end: string;
-  /** Tier boundaries, e.g. `{ label: 'Top', value: 90 }` meaning Top from 90 up. */
   thresholds: { label: string; value: number }[];
-  /** Shown instead of the plot when no point has a score ("Not rated"). */
   empty: string;
 }
 
 const { title, points, end, thresholds, empty } = Astro.props;
 
-// Plot coordinates: x 0–1000 across, y 0–100 down. Stretched to the box.
 const DAY = 86_400_000;
 const dayNumber = (date: string) => Math.round(Date.parse(`${date}T00:00:00Z`) / DAY);
 const start = points[0]?.date ?? end;
 const span = Math.max(1, dayNumber(end) - dayNumber(start));
 const x = (date: string) => ((dayNumber(date) - dayNumber(start)) / span) * 1000;
 
-// Zoom to the data in steps of 5, at least 10 points tall.
 const scores = points.map((point) => point.score).filter((score): score is number => score !== null);
 let lo = 0;
 let hi = 100;
@@ -45,10 +28,8 @@ if (scores.length > 0) {
     else lo -= 5;
   }
 }
-/** Vertical position, as a percentage of the plot height from the top. */
 const y = (score: number) => ((hi - Math.min(Math.max(score, lo), hi)) / (hi - lo)) * 100;
 
-// Steps: each point runs flat until the next point (or `end`).
 const steps = points.map((point, index) => ({
   ...point,
   x0: x(point.date),
@@ -70,8 +51,6 @@ for (const step of steps) {
 const endScore = points.at(-1)?.score ?? null;
 const firstScore = points.find((point) => point.score !== null)?.score ?? null;
 
-// Axis labels: the tier boundaries inside the range, plus the range ends
-// unless they would crowd a boundary (closer than 15% of the height).
 const visible = thresholds.filter((item) => item.value > lo && item.value < hi);
 const ticks = [
   ...visible.map((item) => item.value),
@@ -91,7 +70,6 @@ const label =
   ) : (
   <div class="mt-2 pr-11 pl-7">
     <div class="relative h-28" role="img" aria-label={label}>
-      {/* Tier names go first so the data line is drawn over them. */}
       {
         visible.map((item) => (
           <span
