@@ -19,16 +19,16 @@ vendors:
   xAI: SpaceXSI
 
 models:
-  # Not discovered: DeepSeek's API sells V4.1 Flash as `deepseek-flash`, so its
-  # official price does not match the boards' "DeepSeek-V4.1-Flash" by name, and
-  # only AA's 1017 build has an Intelligence Index. The text board has only the
-  # 0910 build.
+  # Not discovered: DeepSeek's API sells V4.1 Flash 1017 as `deepseek-flash`, so
+  # its official price does not match the boards' "DeepSeek-V4.1-Flash" by name.
+  # 1017 and 0910 are different models: the text board has only 0910, so this
+  # model is not on it.
   deepseek/deepseek-flash:
-    name: DeepSeek V4.1 Flash
+    name: DeepSeek V4.1 Flash 1017
     vendor: DeepSeek
     sources:
       aa: deepseek-v4-1-flash-1017
-      arena_text: 'DeepSeek-V4.1-Flash-20260910 (Max)'
+      arena_text: null
       arena_webdev: 'DeepSeek-V4.1-Flash-20261017 (Max)'
       arena_agent: 'DeepSeek-V4.1-Flash-20261017 (Max)'
       livebench: deepseek-v4.1-flash-1017
