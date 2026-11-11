@@ -322,10 +322,10 @@ cost_index = clamp(100 × log10(blended / p0) / log10(p1 / p0), 0, 100)
   - A `cache_read` above `input` counts as `input`. This happens when an override
     changes the input price but the cache price still comes from models.dev.
   - Cache-write surcharges are not counted.
-- **The index bounds and cost tiers moved with the blend.** On a typical price list
-  (output 5× input, cache reads 10% of input) the 7 : 2 : 1 blend is about 0.385× a
-  3 : 1 input-to-output blend, so the earlier bounds and tiers were scaled by that factor
-  and rounded. They mean what they meant before.
+- **The index bounds moved with the blend.** On a typical price list (output 5× input,
+  cache reads 10% of input) the 7 : 2 : 1 blend is about 0.385× a 3 : 1 input-to-output
+  blend, so the earlier bounds were scaled by that factor and rounded. They mean what
+  they meant before.
 - Cost tiers are set by the absolute `blended` price (§5.4). `cost_index` is used only
   to compute value.
 - A price of 0 has `cost_index` 0 and is shown as "free".
@@ -387,6 +387,9 @@ cheap but dim both score low.
   current language.
 - Thresholds are tuned against real data: `pnpm report` prints every model's scores and
   how they spread across the tiers.
+- Each threshold sits in a gap between the listed models, at least a point (10% for a
+  price) from the nearest one, so a small daily move does not flip a tier. Round numbers
+  come second.
 
 ### 5.5 Reference fixtures
 

@@ -354,22 +354,34 @@ describe('cost', () => {
 
 describe('tiers', () => {
   it('intelligence thresholds are inclusive', () => {
-    expect(intelligenceTier(90)).toBe('top');
-    expect(intelligenceTier(89.9)).toBe('high');
-    expect(intelligenceTier(75)).toBe('high');
-    expect(intelligenceTier(55)).toBe('mid');
-    expect(intelligenceTier(54.9)).toBe('low');
-    expect(intelligenceTier(40)).toBe('low');
-    expect(intelligenceTier(39.9)).toBe('very_low');
+    expect(intelligenceTier(90, specConfig)).toBe('top');
+    expect(intelligenceTier(89.9, specConfig)).toBe('high');
+    expect(intelligenceTier(75, specConfig)).toBe('high');
+    expect(intelligenceTier(55, specConfig)).toBe('mid');
+    expect(intelligenceTier(54.9, specConfig)).toBe('low');
+    expect(intelligenceTier(40, specConfig)).toBe('low');
+    expect(intelligenceTier(39.9, specConfig)).toBe('very_low');
   });
 
   it('value thresholds are inclusive', () => {
-    expect(valueTier(70)).toBe('top');
-    expect(valueTier(60)).toBe('high');
-    expect(valueTier(50)).toBe('mid');
-    expect(valueTier(49.9)).toBe('low');
-    expect(valueTier(40)).toBe('low');
-    expect(valueTier(39.9)).toBe('very_low');
+    expect(valueTier(70, specConfig)).toBe('top');
+    expect(valueTier(60, specConfig)).toBe('high');
+    expect(valueTier(50, specConfig)).toBe('mid');
+    expect(valueTier(49.9, specConfig)).toBe('low');
+    expect(valueTier(40, specConfig)).toBe('low');
+    expect(valueTier(39.9, specConfig)).toBe('very_low');
+  });
+
+  it('keeps the live thresholds in order', () => {
+    const { intelligence, cost, value } = scoringConfig;
+    for (const tiers of [intelligence.tiers, value.tiers]) {
+      expect(tiers.top).toBeGreaterThan(tiers.high);
+      expect(tiers.high).toBeGreaterThan(tiers.mid);
+      expect(tiers.mid).toBeGreaterThan(tiers.low);
+    }
+    expect(cost.tiers.very_low).toBeLessThan(cost.tiers.low);
+    expect(cost.tiers.low).toBeLessThan(cost.tiers.mid);
+    expect(cost.tiers.mid).toBeLessThan(cost.tiers.high);
   });
 });
 
@@ -473,11 +485,10 @@ describe('rateModel edge cases', () => {
   });
 
   it('rates cost without intelligence, but not value', () => {
-    const rating = rateModel({
-      metrics: {},
-      frontier,
-      price: { input: 2, output: 10, cache_read: 0.1 },
-    });
+    const rating = rateModel(
+      { metrics: {}, frontier, price: { input: 2, output: 10, cache_read: 0.1 } },
+      specConfig,
+    );
     expect(rating.cost.tier).toBe('mid');
     expect(rating.cost.cache_read).toBe(0.1);
     expect(rating.value.score).toBeNull();

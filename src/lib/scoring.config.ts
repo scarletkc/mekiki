@@ -179,7 +179,10 @@ export const METRIC_KEYS = Object.keys(metrics) as MetricKey[];
 export const scoringConfig: ScoringConfig = {
   intelligence: {
     metrics,
-    tiers: { top: 90, high: 75, mid: 55, low: 40 },
+    // Each line sits in a gap between the listed models, at least a point from
+    // the nearest, so a small daily move does not flip a tier; hence 74 and 44
+    // rather than multiples of 5 (set on 2026-11-11).
+    tiers: { top: 90, high: 74, mid: 60, low: 44 },
   },
   cost: {
     // 7 : 2 : 1 is Artificial Analysis's default blend (artificialanalysis.ai/
@@ -192,18 +195,23 @@ export const scoringConfig: ScoringConfig = {
     outputWeight: 1,
     // A typical price list (output 5× input, cache reads 10% of input) blends
     // to about 0.385× what a plain 3:1 input:output blend gives. The index
-    // bounds and tiers were scaled by that factor when the blend changed, so
-    // they mean what they meant before.
+    // bounds were scaled by that factor when the blend changed, so they mean
+    // what they meant before.
     indexFloorPrice: 0.04,
     indexCeilPrice: 12,
-    tiers: { very_low: 0.1, low: 0.4, mid: 2, high: 6 },
+    // Each step is 2 to 4 times the last, and each line is at least 10% from
+    // the nearest listed model's price (set on 2026-11-11).
+    tiers: { very_low: 0.1, low: 0.4, mid: 1, high: 2 },
   },
   value: {
     intelligenceExponent: 0.6,
     affordabilityExponent: 0.4,
     minAffordability: 5,
     runCostWeight: 1,
-    tiers: { top: 70, high: 60, mid: 50, low: 40 },
+    // Value spreads less than intelligence (it is a geometric mean with the
+    // price), so its lines are 6 points apart, each at least a point from the
+    // nearest listed model (set on 2026-11-11).
+    tiers: { top: 64, high: 58, mid: 52, low: 46 },
   },
 };
 
