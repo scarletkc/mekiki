@@ -1,11 +1,13 @@
 # Deployment
 
 mekiki is deployed to GitHub Pages by `.github/workflows/deploy.yml`, on every push to
-`main`, once a day, and on manual dispatch. Daily and manual runs sync the snapshots and
-record the day's ratings first, and commit any change; every run then lints, type-checks, tests, builds and deploys. A
-separate `smoke` job runs the browser smoke test against the built site; it never blocks
-the deploy, and a failure only marks that job red. Why the workflow is shaped this way is
-in [design §8](SPEC.md#8-sync-and-deployment).
+`main`, once a day at 00:00 UTC, and on manual dispatch. Daily and manual runs sync the
+snapshots and record the day's ratings first; every run then lints, type-checks, tests
+and builds, daily and manual runs commit any data change that passed, and the site is
+deployed. A separate `smoke` job runs the browser smoke test against the built site; it
+never blocks the deploy, and a failure only marks that job red. Pull requests into `main`
+are checked by `.github/workflows/ci.yml`. Why the workflows are shaped this way is in
+[design §8](SPEC.md#8-sync-and-deployment).
 
 ## One-time setup
 
@@ -28,6 +30,22 @@ Done once by the repository owner:
 
 ## Protected `main`
 
-The sync step pushes snapshot and history changes to `main` with the workflow's own
-token. If `main` is protected, allow GitHub Actions to push to it, or the daily sync
-cannot save its snapshots or its history.
+`main` is protected by the repository ruleset "Protect main":
+
+- changes land through pull requests; no approval is required;
+- the `check` job of `ci.yml` must pass on a branch that is up to date with `main`;
+- `main` cannot be deleted or force-pushed.
+
+Repository admins can bypass the ruleset, and so can deploy keys. The sync pushes its data
+commit with the write deploy key "sync bot (GitHub Actions)", whose private key is the
+secret `SYNC_DEPLOY_KEY`. Without it the daily sync cannot save its snapshots or its
+history. To replace the key:
+
+```bash
+ssh-keygen -t ed25519 -N "" -C "mekiki sync bot" -f sync_key
+gh repo deploy-key add sync_key.pub --allow-write --title "sync bot (GitHub Actions)"
+gh secret set SYNC_DEPLOY_KEY < sync_key
+rm sync_key sync_key.pub
+```
+
+Then delete the old key under Settings → Deploy keys.
