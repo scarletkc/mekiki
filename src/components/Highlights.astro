@@ -1,12 +1,6 @@
 ---
-import ArrowUpRight from '@lucide/astro/icons/arrow-up-right';
-import Crown from '@lucide/astro/icons/crown';
-import Flame from '@lucide/astro/icons/flame';
-import Gem from '@lucide/astro/icons/gem';
-import Sparkles from '@lucide/astro/icons/sparkles';
-import Zap from '@lucide/astro/icons/zap';
 import { localePath, type Locale } from '../i18n';
-import type { HighlightCard, HighlightKind } from '../lib/highlights';
+import type { HighlightCard } from '../lib/highlights';
 
 interface Props {
   locale: Locale;
@@ -15,73 +9,31 @@ interface Props {
 }
 
 const { locale, title, cards } = Astro.props;
-
-const ICONS: Record<HighlightKind, typeof Crown> = {
-  frontier: Crown,
-  value: Zap,
-  burner: Flame,
-  sleeper: Gem,
-  frugal: Sparkles,
-};
 ---
 
 {
   cards.length > 0 && (
     <section aria-label={title} data-highlights class="mb-5 min-w-0">
-      <ul class="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
-        {cards.map((card) => {
-          const Icon = ICONS[card.kind];
-          return (
-            <li class="w-[84%] shrink-0 snap-start sm:w-auto">
-              <a
-                href={localePath(locale, `/m/${card.model.id}`)}
-                data-tone={card.tone}
-                data-kind={card.kind}
-                class="highlight-card group flex h-full flex-col justify-between rounded-xl px-4 py-3.5"
-              >
-                <div>
-                  <div class="flex items-start justify-between gap-3">
-                    <span class="highlight-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium">
-                      <Icon class="size-3.5 shrink-0" />
-                      {card.kicker}
-                    </span>
-                    <div class="shrink-0 text-end">
-                      <div
-                        class:list={[
-                          'num text-xl leading-none font-semibold tracking-tight',
-                          card.tone === 'expense'
-                            ? 'text-expense'
-                            : card.kind === 'frontier'
-                              ? 'text-quality'
-                              : 'text-foreground',
-                        ]}
-                      >
-                        {card.stat.value}
-                      </div>
-                      <div class="text-muted-foreground mt-0.5 text-[0.6875rem] leading-tight">
-                        {card.stat.label}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="mt-2.5 flex items-baseline justify-between gap-2">
-                    <div class="min-w-0">
-                      <div class="text-[0.9375rem] leading-snug font-semibold tracking-tight group-hover:underline">
-                        {card.model.name}
-                      </div>
-                      <div class="text-muted-foreground mt-0.5 text-xs">{card.model.vendor}</div>
-                    </div>
-                    <ArrowUpRight class="text-muted-foreground group-hover:text-foreground size-4 shrink-0 opacity-50 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
-                  </div>
-                </div>
-
-                <p class="border-border/70 text-muted-foreground group-hover:text-foreground/90 mt-3 border-t pt-2.5 text-xs leading-snug tabular-nums transition-colors">
-                  {card.contrast}
-                </p>
-              </a>
-            </li>
-          );
-        })}
+      <ul class="flex snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+        {cards.map((card) => (
+          <li class="w-[84%] shrink-0 snap-start sm:w-auto">
+            <a
+              href={localePath(locale, `/m/${card.model.id}`)}
+              data-kind={card.kind}
+              class="bg-card flex h-full flex-col rounded-xl border px-4 py-3.5 transition-colors hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))]"
+            >
+              <div class="text-muted-foreground flex justify-between gap-3 text-xs">
+                <span>{card.kicker}</span>
+                <span class="shrink-0">{card.stat.label}</span>
+              </div>
+              <div class="mt-1.5 flex items-baseline justify-between gap-3">
+                <span class="font-medium">{card.model.name}</span>
+                <span class="num font-medium">{card.stat.value}</span>
+              </div>
+              <p class="text-muted-foreground mt-1.5 text-xs tabular-nums">{card.contrast}</p>
+            </a>
+          </li>
+        ))}
       </ul>
     </section>
   )

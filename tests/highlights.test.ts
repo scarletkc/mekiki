@@ -228,7 +228,6 @@ describe('buildHighlights', () => {
     expect(cards[1]!.contrast).toContain('80%');
     expect(cards[1]!.contrast).toContain('20×');
     expect(cards[2]!.stat.value).toBe('4.0×');
-    expect(cards[2]!.tone).toBe('expense');
     expect(cards[3]!.contrast).toContain('#29');
   });
 

@@ -10,11 +10,9 @@ import {
 import { usagePeriod } from './usage';
 
 export type HighlightKind = 'frontier' | 'value' | 'burner' | 'sleeper' | 'frugal';
-export type HighlightTone = 'quality' | 'expense';
 
 export interface HighlightCard {
   kind: HighlightKind;
-  tone: HighlightTone;
   kicker: string;
   model: {
     id: string;
@@ -98,7 +96,6 @@ export function buildHighlights(
 
   cards.push({
     kind: 'frontier',
-    tone: 'quality',
     kicker: h.frontier.kicker,
     model: modelRef(frontier),
     stat: { value: formatScore(frontierScore), label: t.rating.intelligence },
@@ -157,7 +154,6 @@ export function buildHighlights(
     if (contrast !== null) {
       cards.push({
         kind: 'value',
-        tone: 'quality',
         kicker: h.value.kicker,
         model: modelRef(bestValue),
         stat: { value: formatScore(bestValue.rating.value.score), label: t.rating.value },
@@ -193,7 +189,6 @@ export function buildHighlights(
     used.add(burner.model.id);
     cards.push({
       kind: 'burner',
-      tone: 'expense',
       kicker: h.burner.kicker,
       model: modelRef(burner.model),
       stat: { value: `${formatMultiple(burner.ratio)}×`, label: h.burner.unit },
@@ -238,7 +233,6 @@ export function buildHighlights(
       const rank = sleeper.openrouter?.rank;
       cards.push({
         kind: 'sleeper',
-        tone: 'quality',
         kicker: h.sleeper.kicker,
         model: modelRef(sleeper),
         stat: { value: formatScore(sleeper.rating.value.score), label: t.rating.value },
@@ -279,7 +273,6 @@ export function buildHighlights(
     const savedPct = Math.round((1 - frugal.ratio) * 100);
     cards.push({
       kind: 'frugal',
-      tone: 'quality',
       kicker: h.frugal.kicker,
       model: modelRef(frugal.model),
       stat: { value: `−${savedPct}%`, label: h.frugal.unit },
