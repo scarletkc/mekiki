@@ -59,7 +59,7 @@ Non-goals:
 | --- | --- | --- |
 | Framework | Astro, static output | Pages ship no JavaScript except the table and compare islands and the share button |
 | UI | React, shadcn/ui, Tailwind CSS | shadcn/ui is React, so the islands are React |
-| Table | TanStack Table | Sorting, filtering, search |
+| Table | TanStack Table | Sorting; filters and search run before it (`src/lib/filters.ts`) |
 | Share images | satori and resvg | Rendered to PNG at build time, offline |
 | Content | Astro content collections with Zod | One Markdown file per model |
 | Language | TypeScript, strict | TypeScript 6: `@astrojs/check` does not support 7 yet |
@@ -540,7 +540,10 @@ column shows a tier badge and the score.
 - Sorting and filters live in the URL so a view can be shared. The parameters are the
   same in every language: `q`, `vendor`, `int`, `cost`, `val`, `open`, `sort`, `dir`,
   `legacy`, `view`, `metric`.
-- Legacy models are collapsed by default.
+- Legacy models are collapsed by default. The toggle that shows them gives how many
+  pass the current filters, and is hidden when none do while they are collapsed.
+- The count above the table reads "shown / total". The total is the whole list (active
+  models, plus legacy ones when shown) and does not change with the filters.
 - Each row has a checkbox. Ticking up to four models shows a bar with a Compare button.
 
 A switch above the table shows the same models as charts instead (`view`): the filters

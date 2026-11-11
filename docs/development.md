@@ -102,6 +102,7 @@ src/
   lib/logo.ts                            the mark; header, favicon and share images use it
   lib/og.tsx                             share images, rendered to PNG at build time
   lib/compare.ts                         compare page selection (?m=<id>,<id>)
+  lib/filters.ts                         home page filters and the counts around the list
   lib/history.ts, lib/changelog.ts       rating history and the changes derived from it
   lib/feed.ts                            RSS feeds
   lib/giscus.config.ts, lib/giscus.ts    discussion threads on model pages (giscus)
