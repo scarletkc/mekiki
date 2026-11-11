@@ -113,8 +113,12 @@ test('the sitemap lists pages that load, each with a share image that loads', as
   for (const path of paths) {
     const page = await request.get(path);
     expect(page.ok(), path).toBe(true);
-    const image = (await page.text()).match(/property="og:image" content="([^"]+)"/)?.[1];
+    const html = await page.text();
+    const image = html.match(/property="og:image" content="([^"]+)"/)?.[1];
     expect(image, path).toBeTruthy();
+    const data = html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)?.[1];
+    expect(data, path).toBeTruthy();
+    expect(new URL(JSON.parse(data!)['@graph'][1].url).pathname, path).toBe(path);
     images.add(new URL(image!).pathname);
   }
   for (const path of images) {
