@@ -149,12 +149,16 @@ const metrics = {
     floor: { type: 'below_frontier', gap: 450 },
     url: 'https://arena.ai/leaderboard/webdev',
   },
-  // The weighted mean of the categories AA does not already test.
+  // The weighted mean of the categories AA does not already test. Those
+  // scores sit close together (most models between 60 and 87), so counting
+  // from 0 would put nearly every model in the 70s to 90s. Like the Arena
+  // boards it uses a range below the leader instead: a gap of 17 leaves
+  // about 70% of the board above the zero point (measured on 2026-11-11).
   livebench: {
     source: 'livebench',
     mapping: 'livebench',
     weight: livebenchKeptShare,
-    floor: { type: 'absolute', value: 0 },
+    floor: { type: 'below_frontier', gap: 17 },
     url: 'https://livebench.ai/',
   },
 } satisfies Record<string, MetricConfig>;

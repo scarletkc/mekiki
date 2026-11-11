@@ -247,10 +247,12 @@ n_s = clamp(100 × (x − floor_s) / (frontier_s − floor_s), 0, 100)
 ```
 
 - `frontier_s` is the current leader's score on that metric.
-- `floor_s` is a fixed raw score for index-style metrics (`absolute`, 0 for the AA
-  Intelligence Index and LiveBench). Elo-style metrics have no meaningful zero, so their floor is
-  `frontier_s − gap_s` (`below_frontier`). The WebDev board is spread wider than the
-  text board, so it gets a wider gap; each gap leaves about 70% of its board above zero.
+- `floor_s` is a fixed raw score (`absolute`) only for the AA Intelligence Index, which
+  starts at 0. The other metrics use `frontier_s − gap_s` (`below_frontier`), with a gap
+  that leaves about 70% of the board above zero (measured on 2026-11-11). Elo ratings
+  have no meaningful zero, and the WebDev board is spread wider than the text board, so
+  it gets a wider gap. LiveBench's kept categories put most models between 60 and 87, so
+  counting from 0 would hardly tell them apart; its gap is 17.
 
 The score is the weighted mean of the metrics the model has:
 
