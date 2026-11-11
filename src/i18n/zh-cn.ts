@@ -49,7 +49,7 @@ export const zhCN: Dictionary = {
     period: '统计期',
     partial: '只有 {days}/{total} 天进入每日前 50，不参与排名。',
     notFound: '这段时间没有在 OpenRouter 每日前 50 中找到这个模型。',
-    note: '按通过 OpenRouter 处理的 token 数排名，只排统计期内每天都在每日前 50 的模型。仅供参考，不参与任何评分。',
+    note: '排名是统计期内通过 OpenRouter 处理的 token 总数的名次。只有每天都在每日前 50 的模型才显示名次，缺了几天的模型总数会偏低。仅供参考，不参与任何评分。',
     homeNote:
       'OpenRouter #N 是按 {start} 至 {end} 通过 OpenRouter 处理的 token 数排出的名次。仅供参考，不参与任何评分。',
     citation:

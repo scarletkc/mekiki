@@ -47,7 +47,7 @@ export const en = {
     period: 'Period',
     partial: 'In the daily top 50 on {days} of {total} days, so not ranked.',
     notFound: "Not found in OpenRouter's daily top 50 for this period.",
-    note: 'Ranked by tokens processed through OpenRouter, among the models in its daily top 50 on every day of the period. Shown for reference; not part of any rating.',
+    note: "The rank is the model's place by total tokens processed through OpenRouter over the period. It is shown only for models in OpenRouter's daily top 50 on every day, since a model missing some days is undercounted. Shown for reference; not part of any rating.",
     homeNote:
       'OpenRouter #N ranks models by the tokens processed through OpenRouter from {start} to {end}. Shown for reference; not part of any rating.',
     citation:
