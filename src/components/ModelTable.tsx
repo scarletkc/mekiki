@@ -364,9 +364,9 @@ function FilterSelect({
         }}
         className="w-full min-w-0 gap-1 data-[size=default]:h-9 data-[pointer]:focus-visible:border-input data-[pointer]:focus-visible:ring-0 sm:w-fit sm:data-[size=default]:h-8"
       >
-        <span className="flex min-w-0 items-center gap-1">
+        <span className="flex min-w-0 items-center gap-1 *:data-[slot=select-value]:truncate">
           <span className="text-muted-foreground shrink-0">{label}</span>
-          <SelectValue className="truncate">{selected}</SelectValue>
+          <SelectValue>{selected}</SelectValue>
         </span>
       </SelectTrigger>
       <SelectContent position="popper" align="start">
