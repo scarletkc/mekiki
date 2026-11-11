@@ -232,11 +232,10 @@ nothing).
 ### 4.5 History
 
 `data/history.jsonl` keeps the ratings the site showed, one JSON line per UTC day, oldest
-first. **Recording is off until the site is published** (`changelogConfig.recordHistory`
-in the config): the scoring is still being tuned, and a changelog of that tuning would
-mean nothing. The file is empty until then, so the changelog, the feeds and the trend
-charts are empty too. Turn recording on at launch; the first recorded day is the
-baseline (§7).
+first. **Recording started at launch, on 2026-11-11** (`changelogConfig.recordHistory`
+in the config); the first recorded day is the baseline (§7). Nothing was recorded before
+that: the scoring was still being tuned, and a changelog of that tuning would have meant
+nothing.
 
 
 

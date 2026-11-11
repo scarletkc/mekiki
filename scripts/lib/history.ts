@@ -38,8 +38,7 @@ export function recordHistory(
     return {
       date,
       outcome: 'off',
-      message:
-        'off until the site is published (changelogConfig.recordHistory); nothing was recorded.',
+      message: 'recording is off (changelogConfig.recordHistory); nothing was recorded.',
     };
   }
 

@@ -42,8 +42,8 @@ jobs:
       # A source that is down keeps its old snapshot and the step still
       # succeeds; details are written to the job summary. When every source
       # was fetched, the sync also rebuilds the model list (data/models.json).
-      # It records today's ratings in data/history.jsonl once recording is on
-      # (changelogConfig.recordHistory; off until the site is published).
+      # It also records today's ratings in data/history.jsonl
+      # (changelogConfig.recordHistory).
       - name: Sync the model list, snapshots and history
         if: github.event_name != 'push'
         run: pnpm sync
