@@ -92,11 +92,7 @@ export function BarChart({
   return (
     <ChartFigure>
       <figcaption className="mb-2 flex items-start justify-between gap-3">
-        <ChartCaption
-          text={fmt(chart.barCaption, { metric: label })}
-          link={strings.method}
-          section="tiers"
-        />
+        <ChartCaption text={fmt(chart.barCaption, { metric: label })} />
         <ExportButton
           name={['bar', metric]}
           strings={chart}
