@@ -16,19 +16,12 @@ import Base from '../layouts/Base.astro';
 import { changesFor, modelSeries } from '../lib/changelog';
 import type { ModelRecord } from '../lib/dataset';
 import { compareQuery } from '../lib/compare';
-import {
-  formatCount,
-  formatPercent,
-  formatPrice,
-  formatScore,
-  formatTokens,
-} from '../lib/format';
-import { METRIC_KEYS, scoringConfig } from '../lib/scoring.config';
-import { cacheHitPercent } from '../lib/scoring';
+import { formatPercent, formatPrice, formatScore } from '../lib/format';
+import { modelDetail } from '../lib/model-detail';
+import { scoringConfig } from '../lib/scoring.config';
 import { modelImagePath, modelShareText } from '../lib/share';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
-import { SOURCE_INFO } from '../lib/snapshots';
 
 interface Props {
   locale: Locale;
@@ -38,57 +31,17 @@ interface Props {
 const { locale, model } = Astro.props;
 const t = useTranslations(locale);
 const dataset = await getDataset();
-const typicalTokenUse = dataset.run_cost.typical_token_use;
-
 const { intelligence, cost, value } = model.rating;
-
-const metrics = METRIC_KEYS.map((key) => {
-  const config = scoringConfig.intelligence.metrics[key];
-  const item = intelligence.breakdown[key] ?? {
-    raw: null,
-    normalized: null,
-    weight: config.weight,
-    frontier: null,
-  };
-  const mapped = model.source_ids[config.mapping];
-  const missing =
-    mapped === null ? t.detail.notMapped : item.raw === null ? t.detail.notFound : t.empty.noData;
-  return { key, label: t.metric[key], ...item, mapped, missing, url: 'url' in config ? config.url : null };
-});
-const covered = metrics.filter((metric) => metric.normalized !== null).length;
-
-const links = [
-  model.source_ids.aa
-    ? {
-        href: `https://artificialanalysis.ai/models/${encodeURIComponent(model.source_ids.aa)}`,
-        label: t.detail.linkAa,
-        json: false,
-      }
-    : null,
-  ...metrics.map((metric) =>
-    metric.url && metric.mapped ? { href: metric.url, label: metric.label, json: false } : null,
-  ),
-  { href: SOURCE_INFO.modelsdev.url, label: t.detail.linkModelsdev, json: false },
-  { href: `/api/models/${model.id}.json`, label: t.detail.linkJson, json: true },
-].filter((link) => link !== null);
+const { metrics, scoreNote, links, priceNotes, costNote, valueNote, facts } = modelDetail(
+  model,
+  dataset,
+  t,
+);
 
 const badgeClass = badgeVariants({
   variant: 'outline',
   className: 'text-muted-foreground font-normal',
 });
-
-const priceNotes = [
-  fmt(t.detail.priceNote, {
-    cache: scoringConfig.cost.cacheReadWeight,
-    input: scoringConfig.cost.inputWeight,
-    output: scoringConfig.cost.outputWeight,
-    hit: cacheHitPercent(scoringConfig.cost),
-  }),
-  model.price_source === 'override' ? t.detail.priceOverride : null,
-  value.cost_basis === 'run_cost' && typicalTokenUse !== null
-    ? fmt(t.detail.runCostNote, { typical: formatCount(typicalTokenUse) })
-    : null,
-].filter((note) => note !== null);
 
 const { description, imageAlt } = modelShareText(model, t);
 const compareHref = `${localePath(locale, '/compare')}${compareQuery([model.id])}`;
@@ -174,11 +127,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           figure={cost.free ? t.empty.free : cost.blended === null ? null : formatPrice(cost.blended)}
         />
       </dd>
-      <dd class="text-muted-foreground mt-1 text-xs">
-        {
-          cost.blended === null ? t.empty.noPrice : t.detail.blendedUnit
-        }
-      </dd>
+      <dd class="text-muted-foreground mt-1 text-xs">{costNote}</dd>
     </div>
     <div class="bg-card rounded-xl border px-4 py-3.5">
       <dt class="text-muted-foreground text-xs">{t.rating.value}</dt>
@@ -190,15 +139,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           figure={value.score === null ? null : formatScore(value.score)}
         />
       </dd>
-      <dd class="text-muted-foreground mt-1 text-xs">
-        {
-          value.effective_price === null
-            ? t.empty.noPrice
-            : value.cost_basis === 'run_cost'
-              ? fmt(t.detail.valueFromRunCost, { price: formatPrice(value.effective_price) })
-              : t.detail.valueFromListPrice
-        }
-      </dd>
+      <dd class="text-muted-foreground mt-1 text-xs">{valueNote}</dd>
     </div>
   </dl>
 
@@ -252,12 +193,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
             {intelligence.score === null ? <span class="text-muted-foreground font-normal">{t.empty.unrated}</span> : formatScore(intelligence.score)}
           </dd>
         </dl>
-        <p class="text-muted-foreground mt-2 max-w-[68ch] text-sm">
-          {intelligence.score === null ? t.detail.unratedNote : t.detail.scoreNote}
-          {intelligence.score !== null &&
-            covered < metrics.length &&
-            ` ${fmt(t.detail.coverageNote, { n: covered, total: metrics.length })}`}
-        </p>
+        <p class="text-muted-foreground mt-2 max-w-[68ch] text-sm">{scoreNote}</p>
       </section>
 
       <section aria-labelledby="history" class="mt-10">
@@ -355,46 +291,26 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       <dl
         class="bg-card grid grid-cols-[auto_1fr] rounded-xl border px-4 py-1 [&>dd]:border-b [&>dd]:py-2 [&>dd]:text-end [&>dt]:border-b [&>dt]:py-2 [&>dt]:pr-4 [&>dt]:text-muted-foreground [&>:nth-last-child(-n+2)]:border-b-0"
       >
-        <dt>{t.detail.input}</dt>
-        <dd class="num">{cost.input === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : cost.free ? t.empty.free : formatPrice(cost.input)}</dd>
-        <dt>{t.detail.output}</dt>
-        <dd class="num">{cost.output === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : cost.free ? t.empty.free : formatPrice(cost.output)}</dd>
-        <dt>{t.detail.cacheRead}</dt>
-        <dd class="num">{cost.cache_read === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : formatPrice(cost.cache_read)}</dd>
-        <dt>{t.detail.blended}</dt>
-        <dd class="num">{cost.blended === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : formatPrice(cost.blended)}</dd>
-        <dt>{t.detail.context}</dt>
-        <dd class="num">
-          {model.facts.context === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : fmt(t.detail.tokens, { n: formatTokens(model.facts.context) })}
-        </dd>
-        <dt>{t.detail.releaseDate}</dt>
-        <dd class="num">{model.facts.release_date ?? <span class="text-muted-foreground">{t.empty.noData}</span>}</dd>
-        <dt>{t.detail.weights}</dt>
-        <dd>
-          {model.facts.open_weights === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : model.facts.open_weights ? t.detail.open : t.detail.closed}
-        </dd>
-        <dt>{t.detail.modalities}</dt>
-        <dd>
-          {
-            model.facts.modalities === null ? (
-              <span class="text-muted-foreground">{t.empty.noData}</span>
-            ) : (
-              <>
-                <span class="text-muted-foreground">{t.detail.modalityIn}</span> {model.facts.modalities.input.join(', ') || t.empty.noData}
-                <br />
-                <span class="text-muted-foreground">{t.detail.modalityOut}</span> {model.facts.modalities.output.join(', ') || t.empty.noData}
-              </>
-            )
-          }
-        </dd>
-        <dt>{t.detail.indexCost}</dt>
-        <dd class="num">
-          {model.facts.index_cost_usd === null ? <span class="text-muted-foreground">{t.empty.noData}</span> : formatPrice(model.facts.index_cost_usd)}
-        </dd>
-        <dt>{t.detail.effectivePrice}</dt>
-        <dd class="num">
-          {value.effective_price === null ? <span class="text-muted-foreground">{t.empty.noPrice}</span> : formatPrice(value.effective_price)}
-        </dd>
+        {
+          facts.map((fact) => (
+            <>
+              <dt>{fact.label}</dt>
+              <dd class={fact.numeric ? 'num' : undefined}>
+                {fact.value === null ? (
+                  <span class="text-muted-foreground">{fact.empty}</span>
+                ) : fact.key === 'modalities' && model.facts.modalities ? (
+                  <>
+                    <span class="text-muted-foreground">{t.detail.modalityIn}</span> {model.facts.modalities.input.join(', ') || t.empty.noData}
+                    <br />
+                    <span class="text-muted-foreground">{t.detail.modalityOut}</span> {model.facts.modalities.output.join(', ') || t.empty.noData}
+                  </>
+                ) : (
+                  fact.value
+                )}
+              </dd>
+            </>
+          ))
+        }
       </dl>
       <div class="text-muted-foreground mt-3 space-y-1.5 text-xs leading-relaxed">
         {priceNotes.map((note) => <p>{note}</p>)}

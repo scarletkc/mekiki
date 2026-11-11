@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
+import { SITE_URL } from '../src/lib/dataset';
 import { giscusAttributes } from '../src/lib/giscus';
 import { giscusConfig } from '../src/lib/giscus.config';
 import { SITE_HOST } from '../src/lib/share';
@@ -93,6 +94,59 @@ test('the RSS feed a page advertises is RSS', async ({ page, request }) => {
   const xml = await feed.text();
   expect(xml).toContain('<rss version="2.0"');
   expect(xml).toContain('<channel>');
+});
+
+test('llms.txt links pages and data that load', async ({ request }) => {
+  const llms = await request.get('/llms.txt');
+  expect(llms.ok()).toBe(true);
+  expect(llms.headers()['content-type']).toContain('text/plain');
+  const text = await llms.text();
+  expect(text.split('\n')[0]).toBe('# mekiki');
+
+  const paths = new Set(
+    [...text.matchAll(/\]\(([^)\s]+)\)/g)]
+      .map((match) => new URL(match[1]!))
+      .filter((url) => url.origin === SITE_URL)
+      .map((url) => url.pathname),
+  );
+  expect(paths.size).toBeGreaterThan(4);
+  for (const path of paths) {
+    const response = await request.get(path);
+    expect(response.ok(), path).toBe(true);
+    if (path.endsWith('.md')) {
+      expect(response.headers()['content-type'], path).toContain('text/markdown');
+    }
+  }
+});
+
+test('every page names a Markdown version that loads', async ({ page, request }) => {
+  await page.goto('/');
+  await expect(page.locator('table tbody tr').first()).toBeVisible();
+  const model = await page.locator('table tbody a[href*="/m/"]').first().getAttribute('href');
+  expect(model).toBeTruthy();
+  const languages = await page
+    .locator('[data-locale-link]')
+    .evaluateAll((links) =>
+      links.map((link) => new URL((link as HTMLAnchorElement).href).pathname),
+    );
+
+  for (const path of [
+    ...new Set(languages),
+    model!,
+    '/',
+    '/en/method/',
+    '/en/changelog/',
+    '/en/api/',
+  ]) {
+    const html = await (await request.get(path)).text();
+    const href = html.match(/<link rel="alternate" type="text\/markdown" href="([^"]+)"/)?.[1];
+    expect(href, path).toBeTruthy();
+    const markdown = await request.get(href!);
+    expect(markdown.ok(), href).toBe(true);
+    expect(markdown.headers()['content-type'], href).toContain('text/markdown');
+    expect((await markdown.text()).startsWith('# '), href).toBe(true);
+    expect(html, path).toContain('<link rel="describedby" type="text/plain" href="/llms.txt"');
+  }
 });
 
 test('an unknown URL gets the 404 page', async ({ page }) => {
