@@ -25,17 +25,23 @@ const at = (fraction: number) => `calc((100% - ${FIGURE_ROOM}px) * ${fraction})`
 function tierStarts(metric: ChartMetric, strings: ChartStrings) {
   if (metric === 'cost') {
     const bounds = scoringConfig.cost.tiers;
-    return COST_TIERS.slice(0, -1).map((key, index) => ({
-      value: bounds[key as keyof typeof bounds],
-      label: strings.tier.cost[COST_TIERS[index + 1]!],
-    }));
+    return [
+      { value: 0, label: strings.tier.cost.very_low },
+      ...COST_TIERS.slice(0, -1).map((key, index) => ({
+        value: bounds[key as keyof typeof bounds],
+        label: strings.tier.cost[COST_TIERS[index + 1]!],
+      })),
+    ];
   }
   const kind = metric === 'int' ? 'intelligence' : 'value';
   const tiers = scoringConfig[kind].tiers;
-  return (['low', 'mid', 'high', 'top'] as const).map((key) => ({
-    value: tiers[key],
-    label: strings.tier[kind][key],
-  }));
+  return [
+    { value: 0, label: strings.tier[kind].very_low },
+    ...(['low', 'mid', 'high', 'top'] as const).map((key) => ({
+      value: tiers[key],
+      label: strings.tier[kind][key],
+    })),
+  ];
 }
 
 export function BarChart({
@@ -64,22 +70,21 @@ export function BarChart({
     return { ranked, missing, hi: axis.hi, ticks: axis.ticks, tiers };
   }, [models, metric, strings]);
 
-  const tierNames = useMemo(() => {
-    if (trackWidth === null) return [];
-    let free = 0;
-    return tiers.filter((tier) => {
-      const left = (trackWidth - FIGURE_ROOM) * (tier.value / hi);
-      if (left < free) return false;
-      free = left + 4 + textWidth(tier.label, 11) + 6;
-      return true;
+  const showTiers = useMemo(() => {
+    if (trackWidth === null) return false;
+    const span = trackWidth - FIGURE_ROOM;
+    return tiers.every((tier, index) => {
+      const next = tiers[index + 1];
+      const end = next ? span * (next.value / hi) - 6 : trackWidth;
+      return span * (tier.value / hi) + 4 + textWidth(tier.label, 11) <= end;
     });
   }, [tiers, hi, trackWidth]);
 
   const grid =
     'grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)] gap-x-3 @xl:grid-cols-[11rem_minmax(0,1fr)]';
-  const hairlines = (
+  const hairlines = showTiers && (
     <span aria-hidden="true" className="pointer-events-none absolute inset-0">
-      {tiers.map((tier) => (
+      {tiers.slice(1).map((tier) => (
         <span
           key={tier.value}
           className="bg-border absolute inset-y-0 w-px"
@@ -102,8 +107,8 @@ export function BarChart({
 
       <div className={grid} aria-hidden="true">
         <span />
-        <span ref={trackRef} className="relative h-4">
-          {tierNames.map((tier) => (
+        <span ref={trackRef} className={cn('relative', showTiers && 'h-4')}>
+          {(showTiers ? tiers : []).map((tier) => (
             <span
               key={tier.value}
               className="text-muted-foreground absolute top-0 pl-1 text-[0.6875rem] leading-none whitespace-nowrap"
