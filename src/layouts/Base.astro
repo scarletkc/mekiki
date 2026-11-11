@@ -28,6 +28,7 @@ import {
 import { latestSync, REPO_URL, SITE_URL } from '../lib/dataset';
 import { feedPath } from '../lib/feed';
 import { formatDateTime } from '../lib/format';
+import { pageJsonLd, serializeJsonLd } from '../lib/jsonld';
 import { OG_HEIGHT, OG_WIDTH, SITE_IMAGE_PATH } from '../lib/share';
 import { getDataset } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
@@ -54,6 +55,22 @@ const pageTitle = title ? `${title} | mekiki` : `mekiki | ${t.meta.tagline}`;
 const pageDescription = description ?? t.meta.description;
 const canonical = new URL(localePath(locale, path), SITE_URL).href;
 const imageUrl = new URL(image, SITE_URL).href;
+const jsonLd = noindex
+  ? null
+  : serializeJsonLd(
+      pageJsonLd(
+        {
+          locale,
+          path,
+          name: pageTitle,
+          title,
+          description: pageDescription,
+          image,
+          modified: synced,
+        },
+        t,
+      ),
+    );
 
 const nav = [
   { href: localePath(locale, '/'), label: t.nav.models, key: '/', icon: LayoutList },
@@ -164,6 +181,7 @@ const attribution = [
     <meta property="og:image:height" content={String(OG_HEIGHT)} />
     <meta property="og:image:alt" content={imageAlt ?? pageTitle} />
     <meta name="twitter:card" content="summary_large_image" />
+    {jsonLd && <script type="application/ld+json" is:inline set:html={jsonLd} />}
     <meta name="theme-color" content="#fafbfc" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#14181f" media="(prefers-color-scheme: dark)" />
     <script is:inline>
