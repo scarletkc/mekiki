@@ -636,23 +636,30 @@ build, so a rebuild does not look like news. Pages advertise their language's fe
 
 ## 8. Sync and deployment
 
-One workflow, `.github/workflows/deploy.yml`, runs on every push to `main`, once a day,
-and on manual dispatch:
+One workflow, `.github/workflows/deploy.yml`, runs on every push to `main`, once a day at
+00:00 UTC, and on manual dispatch:
 
-1. Check out and install.
-2. Daily and manual runs only: `pnpm sync` with `AA_API_KEY`, then commit and push any
-   change to the snapshots or the history.
-3. `biome ci`, `pnpm check`, `pnpm test`.
-4. `pnpm build`, upload, deploy to GitHub Pages.
-5. A separate `smoke` job runs `pnpm smoke` on the same build artifact. It is optional:
+1. Check out (with the sync deploy key) and install.
+2. Daily and manual runs only: `pnpm sync` with `AA_API_KEY`.
+3. `biome ci`, `pnpm check`, `pnpm test`, `pnpm build`.
+4. Daily and manual runs only: commit any change to the model list, the snapshots or the
+   history, and push it to `main`. Data reaches `main` only after it passed step 3.
+5. Upload and deploy to GitHub Pages.
+6. A separate `smoke` job runs `pnpm smoke` on the same build artifact. It is optional:
    it runs beside the deploy, never blocks it, and a failure only marks that job red.
 
-**Sync and deploy must share a run.** A commit pushed with the default `GITHUB_TOKEN`
-does not trigger other workflows, so a separate sync workflow would leave fresh data
-undeployed. For the same reason the workflow spells out install, test, build and upload
-as steps instead of using `withastro/action`: sync and tests have to run before the build
-in the same job. The workflow needs `contents: write`, `pages: write` and
-`id-token: write`.
+**Sync and deploy share a run.** `main` is protected (see
+[deployment](deployment.md#protected-main)), so the data commit is pushed with a deploy
+key that the ruleset lets through. A deploy-key push would start the workflow again; the
+commit carries `[skip ci]` so it doesn't, and the run that synced deploys the data
+itself. The workflow spells out install, test, build and upload as steps instead of using
+`withastro/action`: sync and tests have to run before the build in the same job. It needs
+`contents: read`, `pages: write` and `id-token: write`; the push goes through the deploy
+key, not the workflow token.
+
+Pull requests into `main` run `.github/workflows/ci.yml`: one `check` job with
+`biome ci`, `pnpm check`, `pnpm test`, `pnpm build` and `pnpm smoke`, on the committed
+data. The ruleset requires it to pass on a branch that is up to date with `main`.
 
 The custom domain is set by `public/CNAME` (`mekiki.fog.moe`) and `site` in
 `astro.config.mjs`, with no `base`. One-time setup is in [deployment](deployment.md).

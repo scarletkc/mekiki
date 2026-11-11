@@ -4,15 +4,18 @@ on:
   push:
     branches: [main]
   schedule:
-    # Once a day, 03:17 UTC (off the hour to avoid the scheduler rush).
-    - cron: '17 3 * * *'
+    # Once a day at 00:00 UTC. Runs on the hour can start late when
+    # GitHub's scheduler is busy.
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
-# Sync and deploy must stay in ONE workflow: a commit pushed with the
-# default GITHUB_TOKEN does not trigger other workflows, so a separate
-# deploy workflow would never see the synced data.
+# main is protected: changes land through pull requests (see ci.yml). The
+# sync pushes its data commit with a deploy key (secret SYNC_DEPLOY_KEY),
+# which is on the ruleset's bypass list. A deploy-key push would start this
+# workflow again, so the commit carries [skip ci] and this run deploys the
+# synced data itself.
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -26,6 +29,8 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v7
+        with:
+          ssh-key: ${{ secrets.SYNC_DEPLOY_KEY }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
@@ -50,20 +55,6 @@ jobs:
         env:
           AA_API_KEY: ${{ secrets.AA_API_KEY }}
 
-      - name: Commit the changed model list, snapshots and history
-        if: github.event_name != 'push'
-        run: |
-          if [ -z "$(git status --porcelain -- data/models.json data/snapshots data/history.jsonl)" ]; then
-            echo "Model list, snapshots and history unchanged."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/models.json data/snapshots data/history.jsonl
-          git commit -m "chore(data): sync snapshots"
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
-
       - name: Lint and check formatting
         run: pnpm exec biome ci .
 
@@ -76,6 +67,21 @@ jobs:
       # The build only reads local files; it never goes online.
       - name: Build
         run: pnpm build
+
+      # Only data that passed the checks above reaches main.
+      - name: Commit the changed model list, snapshots and history
+        if: github.event_name != 'push'
+        run: |
+          if [ -z "$(git status --porcelain -- data/models.json data/snapshots data/history.jsonl)" ]; then
+            echo "Model list, snapshots and history unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/models.json data/snapshots data/history.jsonl
+          git commit -m "chore(data): sync snapshots" -m "[skip ci]"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v5
