@@ -273,8 +273,6 @@ export const zhTW: Dictionary = {
     never: '尚未同步',
     built: '頁面產生於',
     repo: '原始碼',
-    arenaDataset: 'Arena 排行榜資料',
-    arenaLicense: '{dataset}依 CC BY 4.0 使用',
     listSeparator: '、',
     fullStop: '。',
   },

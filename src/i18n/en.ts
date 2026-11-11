@@ -283,8 +283,6 @@ export const en = {
     never: 'never',
     built: 'Page built',
     repo: 'Source',
-    arenaDataset: 'Arena leaderboard data',
-    arenaLicense: '{dataset} used under CC BY 4.0',
     listSeparator: ', ',
     fullStop: '. ',
   },

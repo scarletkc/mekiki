@@ -110,7 +110,6 @@ const headerButton = {
 const REPO_URL = 'https://github.com/scarletkc/mekiki';
 const footerLink =
   'decoration-muted-foreground/40 hover:text-foreground hover:decoration-foreground underline underline-offset-4 transition-colors';
-const [arenaBefore, arenaAfter] = t.footer.arenaLicense.split('{dataset}');
 const attribution = [
   SOURCE_INFO.aa,
   SOURCE_INFO.arena,
@@ -351,24 +350,16 @@ const attribution = [
       <div
         class="mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 py-6 leading-relaxed sm:px-6 md:flex-row md:items-start md:justify-between md:gap-8"
       >
-        <div class="space-y-1">
-          <p>
-            {t.footer.sources}{
-              attribution.map((source, index) => (
-                <>
-                  {index > 0 && t.footer.listSeparator}
-                  <a class={footerLink} href={source.url}>{source.name}</a>
-                </>
-              ))
-            }{t.footer.fullStop.trimEnd()}
-          </p>
-          <p>
-            {arenaBefore}<a
-              class={footerLink}
-              href="https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset">{t.footer.arenaDataset}</a
-            >{arenaAfter}{t.footer.fullStop.trimEnd()}
-          </p>
-        </div>
+        <p>
+          {t.footer.sources}{
+            attribution.map((source, index) => (
+              <>
+                {index > 0 && t.footer.listSeparator}
+                <a class={footerLink} href={source.url}>{source.name}</a>
+              </>
+            ))
+          }{t.footer.fullStop.trimEnd()}
+        </p>
         <p class="flex flex-wrap items-center gap-x-2 gap-y-1 md:shrink-0 md:justify-end">
           <span>
             {t.footer.synced}<span class="num">{synced ? formatDateTime(synced) : t.footer.never}</span>

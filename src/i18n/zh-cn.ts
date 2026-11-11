@@ -273,8 +273,6 @@ export const zhCN: Dictionary = {
     never: '尚未同步',
     built: '页面生成于',
     repo: '源代码',
-    arenaDataset: 'Arena 排行榜数据',
-    arenaLicense: '{dataset}按 CC BY 4.0 使用',
     listSeparator: '、',
     fullStop: '。',
   },
