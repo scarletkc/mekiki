@@ -1,6 +1,5 @@
 ---
 import type { TrendData } from '../components/charts/TrendChart';
-import MethodLink from '../components/MethodLink.astro';
 import { ModelTable, type ModelRow } from '../components/ModelTable';
 import { LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
@@ -86,10 +85,7 @@ const strings = {
 ---
 
 <Base locale={locale} path="/">
-  <h1 class="mb-6 flex items-center gap-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-    {t.home.title}
-    <MethodLink locale={locale} />
-  </h1>
+  <h1 class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">{t.home.title}</h1>
   <ModelTable
     client:load
     models={rows}
