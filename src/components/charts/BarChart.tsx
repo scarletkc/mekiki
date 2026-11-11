@@ -23,16 +23,17 @@ const at = (fraction: number) => `calc((100% - ${FIGURE_ROOM}px) * ${fraction})`
 /** Where each tier begins on a metric's axis, lowest first. */
 function tierStarts(metric: ChartMetric, strings: ChartStrings) {
   if (metric === 'cost') {
-    const { low, mid, high } = scoringConfig.cost.tiers;
-    // A cost tier begins where the one below it ends.
-    return [low, mid, high].map((value, index) => ({
-      value,
+    // Cost tiers are set by their upper bounds; each bound is where the
+    // next tier up begins.
+    const bounds = scoringConfig.cost.tiers;
+    return COST_TIERS.slice(0, -1).map((key, index) => ({
+      value: bounds[key as keyof typeof bounds],
       label: strings.tier.cost[COST_TIERS[index + 1]!],
     }));
   }
   const kind = metric === 'int' ? 'intelligence' : 'value';
   const tiers = scoringConfig[kind].tiers;
-  return (['mid', 'high', 'top'] as const).map((key) => ({
+  return (['low', 'mid', 'high', 'top'] as const).map((key) => ({
     value: tiers[key],
     label: strings.tier[kind][key],
   }));
