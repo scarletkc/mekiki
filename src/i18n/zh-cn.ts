@@ -160,6 +160,11 @@ export const zhCN: Dictionary = {
     title: '评分方法',
     intro:
       '每个模型有三个评级：智能、成本、性价比。下面的权重和阈值都直接读自评分配置，改了配置这里会跟着变。',
+    modelsTitle: '收录哪些模型',
+    modelsBody:
+      '模型名单不是手选的，每天根据数据源重新生成：Artificial Analysis 有它的智能指数、至少上了一个 Arena 榜、models.dev 上有它厂商自己的官方价格，三条都满足就收录。每个模型只占一行，取它最高的推理档位。各数据源之间按名字精确对应，不做模糊匹配，个别对不上的再手动修正。',
+    legacyBody:
+      '名单里有同一厂商、同名但版本号更高的模型时，旧版本会标为旧模型，在首页默认折叠，比如有了 Claude Opus 5.5，Claude Opus 5 就是旧模型。',
     intelligenceTitle: '智能',
     intelligenceBody:
       '每个榜单指标先归一化到 0–100，100 表示该指标当前的榜首。AA 智能指数从 0 起算。其余指标只取榜首往下固定的一段，范围见下表：Elo 分和 Agent 榜的分数都没有有意义的零点，LiveBench 的分数又挤得太近，从 0 算拉不开差距。',

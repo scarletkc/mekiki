@@ -165,6 +165,11 @@ export const en = {
     title: 'Method',
     intro:
       'Every model gets three ratings: intelligence, cost and value. The weights and thresholds below are read straight from the scoring config, so this page changes when the config does.',
+    modelsTitle: 'Which models are listed',
+    modelsBody:
+      'The list is not picked by hand. Every day it is rebuilt from the sources: a model is listed when Artificial Analysis has an Intelligence Index for it, it is on at least one Arena board, and models.dev has an official price for it, from the company that makes it. Each model gets one row, at its highest reasoning level. Names are matched exactly across the sources, never by similarity, and the few mistakes left are corrected by hand.',
+    legacyBody:
+      'A model is marked legacy, and collapsed on the home page, when the list has a newer version of it: the same name from the same company with a higher version number, as with Claude Opus 5 next to Claude Opus 5.5.',
     intelligenceTitle: 'Intelligence',
     intelligenceBody:
       'Each leaderboard metric is first normalised to 0–100, where 100 is the current leader on that metric. The AA Intelligence Index starts at 0. The other metrics only use a fixed range below the leader, listed in the table: Elo ratings and Agent Arena scores have no meaningful zero, and LiveBench scores sit too close together to tell models apart from 0.',

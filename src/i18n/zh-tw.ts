@@ -160,6 +160,11 @@ export const zhTW: Dictionary = {
     title: '評分方法',
     intro:
       '每個模型有三個評級：智慧、成本、性價比。下面的權重和門檻都直接讀自評分設定，設定改了這裡會跟著變。',
+    modelsTitle: '收錄哪些模型',
+    modelsBody:
+      '模型名單不是手選的，每天依據資料來源重新產生：Artificial Analysis 有它的智慧指數、至少上了一個 Arena 榜、models.dev 上有它廠商自己的官方價格，三個條件都符合就收錄。每個模型只佔一列，取它最高的推理檔位。各資料來源之間依名稱精確對應，不做模糊比對，少數對不上的再手動修正。',
+    legacyBody:
+      '名單裡有同一廠商、同名但版本號更高的模型時，舊版本會標為舊模型，在首頁預設收合，例如有了 Claude Opus 5.5，Claude Opus 5 就是舊模型。',
     intelligenceTitle: '智慧',
     intelligenceBody:
       '每個榜單指標先正規化到 0–100，100 代表該指標目前的榜首。AA 智慧指數從 0 起算。其餘指標只取榜首往下固定的一段，範圍見下表：Elo 分和 Agent 榜的分數都沒有有意義的零點，LiveBench 的分數又擠得太近，從 0 算拉不開差距。',
