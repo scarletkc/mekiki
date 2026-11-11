@@ -309,6 +309,7 @@ export const zhCN: Dictionary = {
     built: '页面生成于',
     repo: '源代码',
     feedback: '反馈',
+    sponsor: '赞助',
     listSeparator: '、',
     fullStop: '。',
   },

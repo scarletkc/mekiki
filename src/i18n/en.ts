@@ -317,6 +317,7 @@ export const en = {
     built: 'Page built',
     repo: 'Source',
     feedback: 'Feedback',
+    sponsor: 'Sponsor',
     listSeparator: ', ',
     fullStop: '. ',
   },
