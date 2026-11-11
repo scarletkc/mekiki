@@ -32,6 +32,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -47,7 +48,7 @@ import type { Dictionary } from '@/i18n';
 import { fmt } from '@/i18n/fmt';
 import { CHART_METRICS, type ChartMetric } from '@/lib/charts';
 import { compareQuery } from '@/lib/compare';
-import { ALL, filterModels, NO_FILTERS, type Filters } from '@/lib/filters';
+import { ALL, BEST, filterModels, NO_FILTERS, type Filters } from '@/lib/filters';
 import { formatPrice, formatScore } from '@/lib/format';
 import {
   COST_TIERS,
@@ -163,7 +164,7 @@ function readUrl(
   return {
     filters: {
       q: params.get('q') ?? '',
-      vendor: pick('vendor', vendors),
+      vendor: pick('vendor', [BEST, ...vendors]),
       int: pick('int', INTELLIGENCE_TIERS),
       cost: pick('cost', COST_TIERS),
       val: pick('val', VALUE_TIERS),
@@ -336,23 +337,32 @@ function MeasuredPrice({
   );
 }
 
+interface FilterOption {
+  value: string;
+  label: string;
+  short?: string;
+  title?: string;
+}
+
 function FilterSelect({
   label,
   value,
   onChange,
   options,
   allLabel,
+  leading = [],
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: { value: string; label: string }[];
+  options: FilterOption[];
   allLabel?: string;
+  leading?: FilterOption[];
 }) {
   const [open, setOpen] = useState(false);
   const [byPointer, setByPointer] = useState(false);
-  const selected =
-    value === ALL ? allLabel : options.find((option) => option.value === value)?.label;
+  const current = [...leading, ...options].find((option) => option.value === value);
+  const selected = value === ALL ? allLabel : (current?.short ?? current?.label);
 
   return (
     <Select value={value} onValueChange={onChange} open={open} onOpenChange={setOpen}>
@@ -366,13 +376,19 @@ function FilterSelect({
         }}
         className="w-full min-w-0 gap-1 data-[size=default]:h-9 data-[pointer]:focus-visible:border-input data-[pointer]:focus-visible:ring-0 sm:w-fit sm:data-[size=default]:h-8"
       >
-        <span className="flex min-w-0 items-center gap-1">
+        <span className="flex min-w-0 items-center gap-1 *:data-[slot=select-value]:truncate">
           <span className="text-muted-foreground shrink-0">{label}</span>
-          <SelectValue className="truncate">{selected}</SelectValue>
+          <SelectValue>{selected}</SelectValue>
         </span>
       </SelectTrigger>
       <SelectContent position="popper" align="start">
         {allLabel !== undefined && <SelectItem value={ALL}>{allLabel}</SelectItem>}
+        {leading.map((option) => (
+          <SelectItem key={option.value} value={option.value} title={option.title}>
+            {option.label}
+          </SelectItem>
+        ))}
+        {leading.length > 0 && <SelectSeparator />}
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
             {option.label}
@@ -642,6 +658,14 @@ export function ModelTable({
             onChange={(value) => setFilter('vendor', value)}
             options={vendors.map((vendor) => ({ value: vendor, label: vendor }))}
             allLabel={t.all}
+            leading={[
+              {
+                value: BEST,
+                label: t.bestOfEach,
+                short: t.bestOfEachShort,
+                title: t.bestOfEachNote,
+              },
+            ]}
           />
           <FilterSelect
             label={t.columns.intelligence}
