@@ -107,6 +107,22 @@ describe('mergeModelList', () => {
     expect(waitingOverrides(generated, overrides)).toEqual(['b/later']);
   });
 
+  it('renames a vendor on every model, unless a model sets its own', () => {
+    const list = mergeModelList(
+      [...generated, model('b/three', 'Three', 'Beta', { aa: 'three' })],
+      overridesSchema.parse({
+        vendors: { Acme: 'Acme Labs' },
+        models: { 'a/two': { vendor: 'Other' } },
+      }),
+    );
+    expect(list.map((entry) => [entry.id, entry.data.vendor, entry.data.status])).toEqual([
+      ['a/one', 'Acme Labs', 'legacy'],
+      ['a/one-2', 'Acme Labs', 'active'],
+      ['a/two', 'Other', 'active'],
+      ['b/three', 'Beta', 'active'],
+    ]);
+  });
+
   it('refuses an overrides file with unknown fields', () => {
     expect(() => overridesSchema.parse({ models: { 'a/one': { score: 90 } } })).toThrow();
     expect(() => overridesSchema.parse({ include: [] })).toThrow();
