@@ -76,6 +76,13 @@ describe('findDisallowedComments in CSS', () => {
     ].join('\n');
     expect(comments('a.css', source)).toEqual(['/* top */', '/* inner */']);
   });
+
+  it('keeps a string open across an escaped line break', () => {
+    for (const lineBreak of ['\n', '\r\n']) {
+      const source = `a { content: 'x\\${lineBreak}/* not */'; } /* real */`;
+      expect(comments('a.css', source)).toEqual(['/* real */']);
+    }
+  });
 });
 
 describe('findDisallowedComments in Astro', () => {

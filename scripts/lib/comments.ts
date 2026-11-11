@@ -109,9 +109,9 @@ function stringEnd(text: string, from: number, to: number): number {
   let index = from + 1;
   while (index < to) {
     const char = text[index];
-    if (char === '\\') index += 2;
+    if (char === '\\') index += text.startsWith('\r\n', index + 1) ? 3 : 2;
     else if (char === quote) return index + 1;
-    else if (char === '\n') return index;
+    else if (char === '\n' || char === '\r' || char === '\f') return index;
     else index += 1;
   }
   return to;
