@@ -133,6 +133,7 @@ src/
   lib/filters.ts                         home page filters and the counts around the list
   lib/history.ts, lib/changelog.ts       rating history and the changes derived from it
   lib/feed.ts                            RSS feeds
+  lib/jsonld.ts                          structured data (JSON-LD) in the head of every indexed page
   lib/giscus.config.ts, lib/giscus.ts    discussion threads on model pages (giscus)
   i18n/                                  dictionaries and locale helpers
   views/                                 page bodies, shared by all languages
