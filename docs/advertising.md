@@ -4,6 +4,9 @@ mekiki sells a few fixed ad slots, each priced per month. This document lists th
 and their prices, and the rules every ad follows. The rules come first: a site that rates
 AI models is only worth reading while nobody can pay to change what it says.
 
+The slots are not live yet. A booking can be made now and starts on the 1st of the first
+month in which its slot is live; nothing is paid before then.
+
 ## Ground rules
 
 1. **Money never touches the ratings.** Scores, tiers, sort order, the model list, the
@@ -119,7 +122,8 @@ company, the link and the ad.
   days. A booking cancelled before it starts is refunded in full; once a month has
   started, that month is not refunded.
 - **Downtime.** There is no uptime guarantee. If mekiki is down for more than three days of
-  a booked month, those days are added to the end of the booking.
+  a booked month, those days are added to the end of the booking when the next month of
+  that slot is unsold, and refunded when it is not.
 - **After a booking ends.** Sites cache preview images, and the repository keeps its
   history, so a credit can still be seen for a while after a booking ends.
 
