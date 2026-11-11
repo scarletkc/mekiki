@@ -2,8 +2,7 @@ import type { GiscusConfig } from './giscus';
 
 /**
  * Where the discussion thread on each model page lives: a GitHub Discussions
- * category, embedded with giscus (https://giscus.app). See docs/SPEC.md,
- * "Model page".
+ * category, embedded with giscus (https://giscus.app).
  *
  * The category uses the Announcement format, so only maintainers and the
  * giscus app can open threads. The IDs come from giscus.app, or from the
