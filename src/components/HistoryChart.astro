@@ -1,5 +1,7 @@
 ---
+import Check from '@lucide/astro/icons/check';
 import ImageDown from '@lucide/astro/icons/image-down';
+import X from '@lucide/astro/icons/x';
 import { buttonVariants } from '@/components/ui/button';
 import type { Dictionary } from '../i18n';
 import { formatScore } from '../lib/format';
@@ -78,13 +80,21 @@ const label =
         type="button"
         data-chart-export
         data-name={name}
+        data-state="idle"
         data-label={strings.export}
         data-done={strings.exported}
         data-failed={strings.exportFailed}
-        class={buttonVariants({ variant: 'outline', size: 'sm', className: 'text-foreground h-8 sm:h-7' })}
+        aria-label={strings.export}
+        title={strings.export}
+        class={buttonVariants({
+          variant: 'outline',
+          size: 'icon-sm',
+          className: 'group/export text-foreground size-8 sm:size-7',
+        })}
       >
-        <ImageDown />
-        <span data-chart-export-label>{strings.export}</span>
+        <ImageDown class="group-data-[state=done]/export:hidden group-data-[state=failed]/export:hidden" />
+        <Check class="hidden group-data-[state=done]/export:block" />
+        <X class="text-destructive hidden group-data-[state=failed]/export:block" />
       </button>
       <span class="sr-only" aria-live="polite"></span>
     </span>
@@ -178,29 +188,31 @@ const label =
   import { chartImageName, exportChartImage } from '../lib/chart-image';
 
   for (const button of document.querySelectorAll<HTMLButtonElement>('[data-chart-export]')) {
-    const label = button.querySelector<HTMLElement>('[data-chart-export-label]');
     const status = button.nextElementSibling as HTMLElement | null;
     let timer: number | undefined;
+
+    const show = (state: 'idle' | 'done' | 'failed') => {
+      const result = state === 'idle' ? '' : (button.dataset[state] ?? '');
+      button.dataset.state = state;
+      button.title = result || (button.dataset.label ?? '');
+      if (status) status.textContent = result;
+    };
 
     button.addEventListener('click', async () => {
       const figure = button.closest('figure');
       if (!figure) return;
       window.clearTimeout(timer);
       button.disabled = true;
-      let result: string;
+      let state: 'done' | 'failed';
       try {
         await exportChartImage(figure, chartImageName([button.dataset.name ?? '']));
-        result = button.dataset.done ?? '';
+        state = 'done';
       } catch {
-        result = button.dataset.failed ?? '';
+        state = 'failed';
       }
       button.disabled = false;
-      if (label) label.textContent = result;
-      if (status) status.textContent = result;
-      timer = window.setTimeout(() => {
-        if (label) label.textContent = button.dataset.label ?? '';
-        if (status) status.textContent = '';
-      }, 2000);
+      show(state);
+      timer = window.setTimeout(() => show('idle'), 2000);
     });
   }
 </script>
