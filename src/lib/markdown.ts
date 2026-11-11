@@ -161,7 +161,8 @@ export function modelMarkdown(
   const t = useTranslations(locale);
   const d = t.detail;
   const { intelligence, value } = model.rating;
-  const detail = modelDetail(model, dataset, t);
+  const detail = modelDetail(model, t);
+  const about = link(d.about, markdownUrl(locale, '/method'));
   const rating = ratingText(model, t);
   const none = t.empty.noData;
   const period = usagePeriod(dataset);
@@ -184,7 +185,7 @@ export function modelMarkdown(
     [model.vendor, `\`${model.id}\``, ...badges(model, t, period)].join(' · '),
     [
       `- ${t.rating.intelligence}: ${rating.intelligence}`,
-      `- ${t.rating.cost}: ${rating.cost} (${detail.costNote})`,
+      `- ${t.rating.cost}: ${rating.cost}${detail.costNote ? ` (${detail.costNote})` : ''}`,
       `- ${t.rating.value}: ${rating.value} (${detail.valueNote})`,
     ].join('\n'),
     `## ${d.breakdown}`,
@@ -199,10 +200,13 @@ export function modelMarkdown(
       ]),
       [1, 2, 3, 4],
     ),
-    detail.scoreNote,
-    `## ${d.facts}`,
-    detail.facts.map((fact) => `- ${fact.label}: ${fact.value ?? fact.empty}`).join('\n'),
-    detail.priceNotes.join('\n\n'),
+    about,
+    ...detail.groups.flatMap((group) => [
+      `## ${group.title}`,
+      group.facts.map((fact) => `- ${fact.label}: ${fact.value ?? fact.empty}`).join('\n'),
+      ...group.notes,
+      group.method !== null && about,
+    ]),
     usage && `## ${t.usage.title}`,
     usage &&
       (usage.notFound ??

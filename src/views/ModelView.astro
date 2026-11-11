@@ -34,11 +34,8 @@ const { locale, model } = Astro.props;
 const t = useTranslations(locale);
 const dataset = await getDataset();
 const { intelligence, cost, value } = model.rating;
-const { metrics, scoreNote, links, priceNotes, costNote, valueNote, facts } = modelDetail(
-  model,
-  dataset,
-  t,
-);
+const { metrics, links, costNote, valueNote, groups } = modelDetail(model, t);
+const methodHref = (section: string) => `${localePath(locale, '/method')}#${section}`;
 
 const period = usagePeriod(dataset);
 const usage = period ? usageDetail(model, period, t) : null;
@@ -134,7 +131,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           figure={cost.free ? t.empty.free : cost.blended === null ? null : formatPrice(cost.blended)}
         />
       </dd>
-      <dd class="text-muted-foreground mt-1 text-xs">{costNote}</dd>
+      {costNote && <dd class="text-muted-foreground mt-1 text-xs">{costNote}</dd>}
     </div>
     <div class="bg-card rounded-xl border px-4 py-3.5">
       <dt class="text-muted-foreground text-xs">{t.rating.value}</dt>
@@ -153,7 +150,17 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
   <div class="grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
     <div class="min-w-0">
       <section aria-labelledby="breakdown">
-        <h2 id="breakdown" class="mb-3 text-lg font-semibold tracking-tight">{t.detail.breakdown}</h2>
+        <h2 id="breakdown" class="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight">
+          {t.detail.breakdown}
+          <a
+            href={methodHref('intelligence')}
+            class="text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={t.detail.about}
+            title={t.detail.about}
+          >
+            <Info class="size-4" />
+          </a>
+        </h2>
         <div class="table-wrap my-0">
           <table class="data-table">
             <caption>{t.detail.breakdown}</caption>
@@ -200,7 +207,6 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
             {intelligence.score === null ? <span class="text-muted-foreground font-normal">{t.empty.unrated}</span> : formatScore(intelligence.score)}
           </dd>
         </dl>
-        <p class="text-muted-foreground mt-2 max-w-[68ch] text-sm">{scoreNote}</p>
       </section>
 
       <section aria-labelledby="history" class="mt-10">
@@ -294,34 +300,50 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
     </div>
 
     <aside class="min-w-0 text-sm">
-      <h2 class="mb-3 text-lg font-semibold tracking-tight">{t.detail.facts}</h2>
-      <dl
-        class="bg-card grid grid-cols-[auto_1fr] rounded-xl border px-4 py-1 [&>dd]:border-b [&>dd]:py-2 [&>dd]:text-end [&>dt]:border-b [&>dt]:py-2 [&>dt]:pr-4 [&>dt]:text-muted-foreground [&>:nth-last-child(-n+2)]:border-b-0"
-      >
-        {
-          facts.map((fact) => (
-            <>
-              <dt>{fact.label}</dt>
-              <dd class={fact.numeric ? 'num' : undefined}>
-                {fact.value === null ? (
-                  <span class="text-muted-foreground">{fact.empty}</span>
-                ) : fact.key === 'modalities' && model.facts.modalities ? (
-                  <>
-                    <span class="text-muted-foreground">{t.detail.modalityIn}</span> {model.facts.modalities.input.join(', ') || t.empty.noData}
-                    <br />
-                    <span class="text-muted-foreground">{t.detail.modalityOut}</span> {model.facts.modalities.output.join(', ') || t.empty.noData}
-                  </>
-                ) : (
-                  fact.value
-                )}
-              </dd>
-            </>
-          ))
-        }
-      </dl>
-      <div class="text-muted-foreground mt-3 space-y-1.5 text-xs leading-relaxed">
-        {priceNotes.map((note) => <p>{note}</p>)}
-      </div>
+      {
+        groups.map((group, index) => (
+          <section aria-labelledby={group.key} class={index > 0 ? 'mt-8' : undefined}>
+            <h2 id={group.key} class="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight">
+              {group.title}
+              {group.method && (
+                <a
+                  href={methodHref(group.method)}
+                  class="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={t.detail.about}
+                  title={t.detail.about}
+                >
+                  <Info class="size-4" />
+                </a>
+              )}
+            </h2>
+            <dl class="bg-card grid grid-cols-[auto_1fr] rounded-xl border px-4 py-1 [&>dd]:border-b [&>dd]:py-2 [&>dd]:text-end [&>dt]:border-b [&>dt]:py-2 [&>dt]:pr-4 [&>dt]:text-muted-foreground [&>:nth-last-child(-n+2)]:border-b-0">
+              {group.facts.map((fact) => (
+                <>
+                  <dt>{fact.label}</dt>
+                  <dd class={fact.numeric ? 'num' : undefined}>
+                    {fact.value === null ? (
+                      <span class="text-muted-foreground">{fact.empty}</span>
+                    ) : fact.key === 'modalities' && model.facts.modalities ? (
+                      <>
+                        <span class="text-muted-foreground">{t.detail.modalityIn}</span> {model.facts.modalities.input.join(', ') || t.empty.noData}
+                        <br />
+                        <span class="text-muted-foreground">{t.detail.modalityOut}</span> {model.facts.modalities.output.join(', ') || t.empty.noData}
+                      </>
+                    ) : (
+                      fact.value
+                    )}
+                  </dd>
+                </>
+              ))}
+            </dl>
+            {group.notes.length > 0 && (
+              <div class="text-muted-foreground mt-3 space-y-1.5 text-xs leading-relaxed">
+                {group.notes.map((note) => <p>{note}</p>)}
+              </div>
+            )}
+          </section>
+        ))
+      }
 
       {
         usage && (

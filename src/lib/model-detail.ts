@@ -1,7 +1,6 @@
 import { fmt, type Dictionary } from '../i18n';
-import type { Dataset, ModelRecord } from './dataset';
-import { formatCount, formatPrice, formatTokens } from './format';
-import { cacheHitPercent } from './scoring';
+import type { ModelRecord } from './dataset';
+import { formatPrice, formatTokens } from './format';
 import { METRIC_KEYS, scoringConfig } from './scoring.config';
 import { SOURCE_INFO } from './snapshots';
 
@@ -13,9 +12,16 @@ export interface ModelFact {
   numeric: boolean;
 }
 
-export function modelDetail(model: ModelRecord, dataset: Dataset, t: Dictionary) {
+export interface FactGroup {
+  key: 'price' | 'facts';
+  title: string;
+  method: 'cost' | null;
+  facts: ModelFact[];
+  notes: string[];
+}
+
+export function modelDetail(model: ModelRecord, t: Dictionary) {
   const { intelligence, cost, value } = model.rating;
-  const typicalTokenUse = dataset.run_cost.typical_token_use;
 
   const metrics = METRIC_KEYS.map((key) => {
     const config = scoringConfig.intelligence.metrics[key];
@@ -37,14 +43,6 @@ export function modelDetail(model: ModelRecord, dataset: Dataset, t: Dictionary)
       url: 'url' in config ? config.url : null,
     };
   });
-  const covered = metrics.filter((metric) => metric.normalized !== null).length;
-  const scoreNote =
-    intelligence.score === null
-      ? t.detail.unratedNote
-      : covered < metrics.length
-        ? `${t.detail.scoreNote} ${fmt(t.detail.coverageNote, { n: covered, total: metrics.length })}`
-        : t.detail.scoreNote;
-
   const links = [
     model.source_ids.aa
       ? {
@@ -60,20 +58,7 @@ export function modelDetail(model: ModelRecord, dataset: Dataset, t: Dictionary)
     { href: `/api/models/${model.id}.json`, label: t.detail.linkJson, json: true },
   ].filter((link) => link !== null);
 
-  const priceNotes = [
-    fmt(t.detail.priceNote, {
-      cache: scoringConfig.cost.cacheReadWeight,
-      input: scoringConfig.cost.inputWeight,
-      output: scoringConfig.cost.outputWeight,
-      hit: cacheHitPercent(scoringConfig.cost),
-    }),
-    model.price_source === 'override' ? t.detail.priceOverride : null,
-    value.cost_basis === 'run_cost' && typicalTokenUse !== null
-      ? fmt(t.detail.runCostNote, { typical: formatCount(typicalTokenUse) })
-      : null,
-  ].filter((note) => note !== null);
-
-  const costNote = cost.blended === null ? t.empty.noPrice : t.detail.blendedUnit;
+  const costNote = cost.blended === null || cost.free ? null : t.detail.blendedUnit;
   const valueNote =
     value.effective_price === null
       ? t.empty.noPrice
@@ -98,11 +83,14 @@ export function modelDetail(model: ModelRecord, dataset: Dataset, t: Dictionary)
     empty: string = t.empty.noData,
     numeric = true,
   ): ModelFact => ({ key, label, value: text, empty, numeric });
-  const facts: ModelFact[] = [
+  const prices: ModelFact[] = [
     fact('input', t.detail.input, listed(cost.input), t.empty.noPrice),
     fact('output', t.detail.output, listed(cost.output), t.empty.noPrice),
     fact('cache_read', t.detail.cacheRead, price(cost.cache_read)),
     fact('blended', t.detail.blended, price(cost.blended), t.empty.noPrice),
+    fact('effective_price', t.detail.effectivePrice, price(value.effective_price), t.empty.noPrice),
+  ];
+  const facts: ModelFact[] = [
     fact(
       'context',
       t.detail.context,
@@ -118,8 +106,17 @@ export function modelDetail(model: ModelRecord, dataset: Dataset, t: Dictionary)
     ),
     fact('modalities', t.detail.modalities, modalities, t.empty.noData, false),
     fact('index_cost', t.detail.indexCost, price(known.index_cost_usd)),
-    fact('effective_price', t.detail.effectivePrice, price(value.effective_price), t.empty.noPrice),
+  ];
+  const groups: FactGroup[] = [
+    {
+      key: 'price',
+      title: t.detail.price,
+      method: 'cost',
+      facts: prices,
+      notes: model.price_source === 'override' ? [t.detail.priceOverride] : [],
+    },
+    { key: 'facts', title: t.detail.facts, method: null, facts, notes: [] },
   ];
 
-  return { metrics, covered, scoreNote, links, priceNotes, costNote, valueNote, facts };
+  return { metrics, links, costNote, valueNote, groups };
 }
