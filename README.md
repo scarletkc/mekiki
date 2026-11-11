@@ -48,7 +48,7 @@ official prices, and refresh every day.
   scores are computed with.
 - **JSON API**: the full dataset, a model list, one file per model, and the history.
 - **Readable by AI agents**: [`/llms.txt`](https://mekiki.fog.moe/llms.txt) indexes the
-  site, and every page has a Markdown version, such as
+  site, and every page but Compare has a Markdown version, such as
   [`/en/method.md`](https://mekiki.fog.moe/en/method.md).
 - **Daily updates**: prices and leaderboard scores are fetched again every day.
 - **Changelog and RSS**: what changed in the ratings, day by day, with a feed per

@@ -12,6 +12,8 @@ import {
   modelMarkdown,
   table,
 } from '@/lib/markdown';
+import { buildChangelog } from '@/lib/changelog';
+import { historyEntry, type HistoryEntry } from '@/lib/history';
 import { getDataset, getHistory } from '@/lib/site-data';
 
 const dataset = await getDataset();
@@ -130,5 +132,41 @@ describe('Markdown pages', () => {
     for (const path of ['/api.json', '/api/models.json', '/api/history.json']) {
       expect(text).toContain(`](${SITE_URL}${path})`);
     }
+  });
+});
+
+describe('Markdown pages with a recorded history', () => {
+  const [first, second, third] = dataset.models.map((model) => model.id);
+  const latest = historyEntry(dataset, '2026-11-05');
+  const before = structuredClone(historyEntry(dataset, '2026-11-01'));
+  const moved = before.models[first!]!;
+  moved.intelligence = { score: 12, tier: 'very_low' };
+  moved.value = { score: 12, tier: 'very_low' };
+  moved.cost.input = (moved.cost.input ?? 0) + 1;
+  before.models[second!]!.status =
+    latest.models[second!]!.status === 'legacy' ? 'active' : 'legacy';
+  delete before.models[third!];
+  const entries: HistoryEntry[] = [before, latest];
+  const recorded = { entries, changelog: buildChangelog(entries) };
+
+  it.each(LOCALES)('list the changes of each day in %s', (locale) => {
+    const text = changelogMarkdown(recorded.changelog, dataset, locale);
+    expect(recorded.changelog.days.length).toBeGreaterThan(0);
+    expect(text).toContain('\n## 2026-11-05 (');
+    expect(text).toContain(`](${SITE_URL}/${locale}/m/${first}.md)`);
+    expect(text).toContain(`](${SITE_URL}/${locale}/m/${third}.md)`);
+    expect(text).not.toMatch(/\b(null|undefined|NaN)\b/);
+  });
+
+  it.each(LOCALES)('give a model its recorded scores and changes in %s', (locale) => {
+    const t = useTranslations(locale);
+    for (const model of dataset.models) {
+      const text = modelMarkdown(model, dataset, recorded, locale);
+      expect(text, model.id).not.toMatch(/\b(null|undefined|NaN)\b/);
+    }
+    const text = modelMarkdown(dataset.models[0]!, dataset, recorded, locale);
+    expect(text).toContain(`| ${t.detail.date} | ${t.rating.intelligence} | ${t.rating.value} |`);
+    expect(text).toContain('| 2026-11-01 | 12.0 | 12.0 |');
+    expect(text).toContain('\n- 2026-11-05: ');
   });
 });

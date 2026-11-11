@@ -17,7 +17,7 @@ export function buildLlmsTxt(dataset: Dataset): string {
   const languages = LOCALES.map((each) => `${LOCALE_INFO[each].name} (/${each}/)`).join(', ');
 
   const notes = [
-    'Every page has a Markdown version: the address of the page with `.md` in place of the trailing slash, or `index.md` for a home page. The links below go to those versions, and each HTML page names its own in `<link rel="alternate" type="text/markdown">`.',
+    'Every page except the compare page has a Markdown version: the address of the page with `.md` in place of the trailing slash, or `index.md` for a home page. The links below go to those versions, and each HTML page names its own in `<link rel="alternate" type="text/markdown">`. To compare models, read the model table or the JSON API.',
     `Pages exist in ${languages}. An address without a language prefix redirects with JavaScript, so fetch the prefixed one.`,
     `A missing value is written as "${t.empty.unrated}", "${t.empty.noData}" or "${t.empty.noPrice}" on pages and as null in the JSON API. It is never 0.`,
     `The data is refreshed every day. ${t.footer.synced}${synced ? formatDateTime(synced) : t.footer.never}.`,

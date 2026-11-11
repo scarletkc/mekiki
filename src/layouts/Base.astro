@@ -28,10 +28,10 @@ import {
 import { latestSync, REPO_URL, SITE_URL } from '../lib/dataset';
 import { feedPath } from '../lib/feed';
 import { formatDateTime } from '../lib/format';
-import { LLMS_PATH, markdownPath } from '../lib/markdown';
 import { OG_HEIGHT, OG_WIDTH, SITE_IMAGE_PATH } from '../lib/share';
 import { getDataset } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
+import { LLMS_PATH, markdownPath } from '../lib/markdown';
 
 interface Props {
   locale: Locale;
@@ -48,12 +48,12 @@ const { locale, path, title, description, image = SITE_IMAGE_PATH, imageAlt, noi
 const t = useTranslations(locale);
 const dataset = await getDataset();
 const synced = latestSync(dataset);
+const markdown = noindex ? null : markdownPath(locale, path);
 
 const pageTitle = title ? `${title} | mekiki` : `mekiki | ${t.meta.tagline}`;
 const pageDescription = description ?? t.meta.description;
 const canonical = new URL(localePath(locale, path), SITE_URL).href;
 const imageUrl = new URL(image, SITE_URL).href;
-const markdown = noindex ? null : markdownPath(locale, path);
 
 const nav = [
   { href: localePath(locale, '/'), label: t.nav.models, key: '/', icon: LayoutList },

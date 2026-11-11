@@ -138,7 +138,7 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
       ],
       rows,
     ),
-    `${t.table.priceNote}. ${syncedLine(dataset, t)}.`,
+    `${t.table.priceNote}${t.footer.fullStop}${syncedLine(dataset, t)}${t.footer.fullStop.trimEnd()}`,
     siteLinks(locale, t),
   ]);
 }
