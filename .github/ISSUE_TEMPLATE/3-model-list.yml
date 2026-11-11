@@ -1,0 +1,36 @@
+name: Missing or wrong model
+description: A model is missing, listed by mistake, or has the wrong name or data.
+labels: ['model list']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The list is rebuilt from the sources every day; [the model list](https://github.com/scarletkc/mekiki/blob/main/docs/model-list.md) explains who gets listed and how names are matched. A model is listed automatically only when every required source has it, so check there first if a model is missing.
+
+        English or Chinese are both fine.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is wrong
+      options:
+        - A model is missing
+        - A model is listed by mistake
+        - Wrong name, company or version
+        - Matched to another model's data
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: Its models.dev ID, its page on mekiki, or its name.
+      placeholder: <provider>/<model>
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What should change, with links to the sources that show it.
+    validations:
+      required: true

@@ -307,6 +307,7 @@ export const zhTW: Dictionary = {
     never: '尚未同步',
     built: '頁面產生於',
     repo: '原始碼',
+    feedback: '意見回饋',
     listSeparator: '、',
     fullStop: '。',
   },

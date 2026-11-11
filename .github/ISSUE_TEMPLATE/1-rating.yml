@@ -1,0 +1,48 @@
+name: A rating looks wrong
+description: A model's intelligence, cost or value rating seems off.
+labels: ['rating']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ratings are computed from public leaderboards and official prices by the formulas on the [Method page](https://mekiki.fog.moe/method); nothing is scored by hand. The most useful reports point to a number that differs from its source, a model matched to the wrong data, or a formula that treats this model unfairly. If the problem is the method itself, use the "The method seems unreasonable" form instead.
+
+        English or Chinese are both fine.
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: Its page on mekiki, or its name.
+      placeholder: https://mekiki.fog.moe/en/m/<provider>/<model>
+    validations:
+      required: true
+  - type: dropdown
+    id: rating
+    attributes:
+      label: Which rating
+      multiple: true
+      options:
+        - Intelligence
+        - Cost
+        - Value
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What looks wrong
+      description: What mekiki shows, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Links to leaderboards, pricing pages or benchmark results that support your view.
+  - type: checkboxes
+    id: read
+    attributes:
+      label: Before you submit
+      options:
+        - label: I have read how this rating is computed on the Method page.
+          required: true

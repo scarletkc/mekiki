@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Method
+    url: https://mekiki.fog.moe/method
+    about: How every rating is computed, with the current weights and thresholds.
+  - name: API reference
+    url: https://mekiki.fog.moe/api
+    about: Every field of the JSON API, with a live example.

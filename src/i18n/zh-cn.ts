@@ -307,6 +307,7 @@ export const zhCN: Dictionary = {
     never: '尚未同步',
     built: '页面生成于',
     repo: '源代码',
+    feedback: '反馈',
     listSeparator: '、',
     fullStop: '。',
   },

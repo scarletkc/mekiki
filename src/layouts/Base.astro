@@ -8,6 +8,7 @@ import ChevronDown from '@lucide/astro/icons/chevron-down';
 import Globe from '@lucide/astro/icons/globe';
 import LayoutList from '@lucide/astro/icons/layout-list';
 import Menu from '@lucide/astro/icons/menu';
+import MessageSquare from '@lucide/astro/icons/message-square';
 import Moon from '@lucide/astro/icons/moon';
 import ScrollText from '@lucide/astro/icons/scroll-text';
 import Sun from '@lucide/astro/icons/sun';
@@ -108,6 +109,8 @@ const headerButton = {
 };
 
 const REPO_URL = 'https://github.com/scarletkc/mekiki';
+// All feedback goes through the repository's issue forms (.github/ISSUE_TEMPLATE).
+const FEEDBACK_URL = `${REPO_URL}/issues/new/choose`;
 const footerLink =
   'decoration-muted-foreground/40 hover:text-foreground hover:decoration-foreground underline underline-offset-4 transition-colors';
 const attribution = [
@@ -361,9 +364,20 @@ const attribution = [
           }{t.footer.fullStop.trimEnd()}
         </p>
         <p class="flex flex-wrap items-center gap-x-2 gap-y-1 md:shrink-0 md:justify-end">
-          <span>
+          <span class="max-md:basis-full">
             {t.footer.synced}<span class="num">{synced ? formatDateTime(synced) : t.footer.never}</span>
           </span>
+          <span aria-hidden="true" class="max-md:hidden">·</span>
+          <a
+            href={FEEDBACK_URL}
+            class="group hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+          >
+            <MessageSquare class="size-3.5" />
+            <span
+              class="decoration-muted-foreground/40 group-hover:decoration-foreground underline underline-offset-4 transition-colors"
+              >{t.footer.feedback}</span
+            >
+          </a>
           <span aria-hidden="true">·</span>
           <a
             href={REPO_URL}

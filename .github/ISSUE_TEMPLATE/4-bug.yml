@@ -1,0 +1,33 @@
+name: Site or API bug
+description: A page or an API response that is broken or shows the wrong thing.
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a rating you disagree with, use the "A rating looks wrong" form instead.
+
+        English or Chinese are both fine.
+  - type: input
+    id: url
+    attributes:
+      label: Page or API URL
+      placeholder: https://mekiki.fog.moe/en/
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      description: Optional, for display problems.
+      placeholder: Safari on iPhone, Chrome on Windows…

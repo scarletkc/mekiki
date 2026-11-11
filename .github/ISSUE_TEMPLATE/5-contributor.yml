@@ -1,0 +1,21 @@
+name: Ask to become a contributor
+description: mekiki does not accept outside pull requests. Ask here before writing code.
+labels: ['contributor']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pull requests are open to contributors only; see [CONTRIBUTING.md](https://github.com/scarletkc/mekiki/blob/main/CONTRIBUTING.md). Tell the owner what you would like to work on. If the owner agrees, you are added as a collaborator on the repository and can then open pull requests.
+
+        English or Chinese are both fine.
+  - type: textarea
+    id: plan
+    attributes:
+      label: What you would like to work on
+    validations:
+      required: true
+  - type: textarea
+    id: about
+    attributes:
+      label: About you
+      description: Optional. Relevant experience, or links to your work.

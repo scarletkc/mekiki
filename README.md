@@ -89,12 +89,17 @@ Missing values are `null`, and fields are only ever added: a breaking change bum
 `version`. The [API page](https://mekiki.fog.moe/api) documents every field with a live
 example.
 
-## Missing a model?
+## Feedback
 
-[Open an issue](https://github.com/scarletkc/mekiki/issues) with its
-[models.dev](https://models.dev) ID. The list is built from the sources every day
-([the model list](docs/model-list.md) explains who gets in); a model left out can be
+A rating looks wrong, the method seems unreasonable, a model is missing, or something is
+broken? [Open an issue](https://github.com/scarletkc/mekiki/issues/new/choose) and pick
+the form that fits; the feedback link on the site leads there too. For a missing model,
+give its [models.dev](https://models.dev) ID: the list is built from the sources every day
+([the model list](docs/model-list.md) explains who gets in), and a model left out can be
 added by hand in `data/model-overrides.yaml`.
+
+mekiki does not accept pull requests from outside contributors.
+[Contributing](CONTRIBUTING.md) explains how to become one.
 
 ## Documentation
 
