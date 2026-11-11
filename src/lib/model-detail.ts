@@ -87,8 +87,6 @@ export function modelDetail(model: ModelRecord, t: Dictionary) {
     fact('input', t.detail.input, listed(cost.input), t.empty.noPrice),
     fact('output', t.detail.output, listed(cost.output), t.empty.noPrice),
     fact('cache_read', t.detail.cacheRead, price(cost.cache_read)),
-    fact('blended', t.detail.blended, price(cost.blended), t.empty.noPrice),
-    fact('effective_price', t.detail.effectivePrice, price(value.effective_price), t.empty.noPrice),
   ];
   const facts: ModelFact[] = [
     fact(

@@ -201,12 +201,6 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
             </tbody>
           </table>
         </div>
-        <dl class="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
-          <dt class="text-muted-foreground">{t.rating.intelligence}</dt>
-          <dd class="num font-medium">
-            {intelligence.score === null ? <span class="text-muted-foreground font-normal">{t.empty.unrated}</span> : formatScore(intelligence.score)}
-          </dd>
-        </dl>
       </section>
 
       <section aria-labelledby="history" class="mt-10">

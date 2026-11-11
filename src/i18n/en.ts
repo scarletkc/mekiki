@@ -153,7 +153,6 @@ export const en = {
     modalityIn: 'In',
     modalityOut: 'Out',
     indexCost: 'Cost to run the AA Intelligence Index',
-    effectivePrice: 'Price counted in value',
     valueFromRunCost: 'Counted at {price} per 1M tokens, from the measured run cost',
     valueFromListPrice: 'From the blended price; no run cost measured',
     links: 'Source data',

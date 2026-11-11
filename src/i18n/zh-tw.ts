@@ -154,7 +154,6 @@ export const zhTW: Dictionary = {
     modalityIn: '輸入',
     modalityOut: '輸出',
     indexCost: 'AA 智慧指數評測總花費',
-    effectivePrice: '計入性價比的價格',
     valueFromRunCost: '依實測花費折算為 {price} / 百萬 token',
     valueFromListPrice: '以混合價計，尚無實測花費',
     links: '原始資料',

@@ -154,7 +154,6 @@ export const zhCN: Dictionary = {
     modalityIn: '输入',
     modalityOut: '输出',
     indexCost: 'AA 智能指数评测总花费',
-    effectivePrice: '计入性价比的价格',
     valueFromRunCost: '按实测花费折算为 {price} / 百万 token',
     valueFromListPrice: '按混合价计，暂无实测花费',
     links: '原始数据',
