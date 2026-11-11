@@ -5,6 +5,9 @@ import { giscusAttributes } from '../src/lib/giscus';
 import { giscusConfig } from '../src/lib/giscus.config';
 import { SITE_HOST } from '../src/lib/share';
 import { EXPORT_WIDTH } from '../src/lib/chart-image';
+import { en } from '../src/i18n/en';
+import { fmt } from '../src/i18n/fmt';
+import { BEST } from '../src/lib/filters';
 
 const GISCUS = 'https://giscus.app';
 
@@ -221,6 +224,47 @@ test('the home page switches between the table and the charts', async ({ page })
   await views.nth(0).click();
   await expect(page.locator('table tbody tr').first()).toBeVisible();
   expect(new URL(page.url()).searchParams.get('view')).toBeNull();
+  expect(problems).toEqual([]);
+});
+
+test('the best of each vendor leaves one model per vendor, in the table and the quadrant', async ({
+  page,
+}) => {
+  const problems = trackProblems(page);
+  await page.goto('/en/');
+  const rows = page.locator('table tbody tr');
+  await expect(rows.first()).toBeVisible();
+  const total = await rows.count();
+
+  const vendorSelect = page.getByRole('combobox', { name: en.table.vendor });
+  await vendorSelect.click();
+  await page.getByRole('option', { name: en.table.bestOfEach }).click();
+  await expect.poll(() => new URL(page.url()).searchParams.get('vendor')).toBe(BEST);
+  await expect(vendorSelect).toContainText(en.table.bestOfEachShort);
+
+  const vendors = await rows.locator('td:nth-child(2)').allTextContents();
+  expect(vendors.length).toBeGreaterThan(1);
+  expect(vendors.length).toBeLessThan(total);
+  expect(new Set(vendors).size).toBe(vendors.length);
+  await expect(
+    page.getByText(fmt(en.table.count, { shown: vendors.length, total }), { exact: true }),
+  ).toBeVisible();
+  const names = await rows.locator('td:first-child a').allTextContents();
+
+  await page.reload();
+  await expect(rows).toHaveCount(names.length);
+  await expect(vendorSelect).toContainText(en.table.bestOfEachShort);
+
+  await page.locator('fieldset button[aria-pressed]').nth(1).click();
+  const dots = page.locator('figure svg a[href]');
+  await expect(dots.first()).toBeAttached();
+  const plotted = await dots.evaluateAll((links) =>
+    links.map((link) => link.getAttribute('aria-label')!.split(': ')[0]!),
+  );
+  expect(plotted.length).toBeLessThanOrEqual(names.length);
+  expect(new Set(plotted).size).toBe(plotted.length);
+  for (const name of plotted) expect(names).toContain(name);
+  expect(new URL(page.url()).searchParams.get('vendor')).toBe(BEST);
   expect(problems).toEqual([]);
 });
 
