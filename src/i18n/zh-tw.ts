@@ -309,6 +309,7 @@ export const zhTW: Dictionary = {
     built: '頁面產生於',
     repo: '原始碼',
     feedback: '意見回饋',
+    sponsor: '贊助',
     listSeparator: '、',
     fullStop: '。',
   },

@@ -6,6 +6,7 @@ import Braces from '@lucide/astro/icons/braces';
 import Check from '@lucide/astro/icons/check';
 import ChevronDown from '@lucide/astro/icons/chevron-down';
 import Globe from '@lucide/astro/icons/globe';
+import Heart from '@lucide/astro/icons/heart';
 import LayoutList from '@lucide/astro/icons/layout-list';
 import Menu from '@lucide/astro/icons/menu';
 import MessageSquare from '@lucide/astro/icons/message-square';
@@ -99,6 +100,7 @@ const headerButton = {
 
 const REPO_URL = 'https://github.com/scarletkc/mekiki';
 const FEEDBACK_URL = `${REPO_URL}/issues/new/choose`;
+const SPONSOR_URL = 'https://github.com/sponsors/scarletkc';
 const footerLink =
   'decoration-muted-foreground/40 hover:text-foreground hover:decoration-foreground underline underline-offset-4 transition-colors';
 const attribution = [
@@ -374,6 +376,17 @@ const attribution = [
             <span
               class="decoration-muted-foreground/40 group-hover:decoration-foreground underline underline-offset-4 transition-colors"
               >{t.footer.repo}</span
+            >
+          </a>
+          <span aria-hidden="true">·</span>
+          <a
+            href={SPONSOR_URL}
+            class="group hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+          >
+            <Heart class="size-3.5" />
+            <span
+              class="decoration-muted-foreground/40 group-hover:decoration-foreground underline underline-offset-4 transition-colors"
+              >{t.footer.sponsor}</span
             >
           </a>
         </p>
