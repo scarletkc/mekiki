@@ -3,6 +3,14 @@ name: Sync and deploy
 on:
   push:
     branches: [main]
+    # The prose that the `changes` step in ci.yml skips (keep the two in
+    # step), plus README.md: the site never reads it, and the pull request's
+    # CI already ran the one test that does.
+    paths-ignore:
+      - 'docs/**/*.md'
+      - CONTRIBUTING.md
+      - LICENSE
+      - README.md
   schedule:
     # Once a day at 00:00 UTC. Runs on the hour can start late when
     # GitHub's scheduler is busy.

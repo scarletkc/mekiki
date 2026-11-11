@@ -2,7 +2,9 @@ name: CI
 
 # Checks every pull request into main. The ruleset on main requires the
 # `check` job to pass on a branch that is up to date with main, so keep the
-# job id stable (and add no path filters, or the check never reports).
+# job id stable. Path filters on the trigger would leave that check pending
+# forever, so the job always starts and skips its own steps when a pull
+# request only changes prose (see the `changes` step).
 on:
   pull_request:
     branches: [main]
@@ -19,43 +21,73 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # Depth 2 holds both parents of the merge commit that is checked out.
       - name: Check out
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      # Prose is the Markdown under docs/, CONTRIBUTING.md and LICENSE; no
+      # check or build reads it. Everything else counts as code: README.md and
+      # docs/assets are read by tests, and Biome checks YAML and JSON. Renames
+      # count as a deletion plus an addition, so moving code into docs/ still
+      # runs. When the diff fails or comes back empty, the checks run.
+      - name: Look for changes beyond prose
+        id: changes
+        run: |
+          files=$(git diff --name-only --no-renames HEAD^1 HEAD) || files=''
+          printf '%s\n' "$files"
+          if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qvxE 'docs/.+\.md|CONTRIBUTING\.md|LICENSE'; then
+            echo 'code=false' >> "$GITHUB_OUTPUT"
+            echo 'Only prose changed; the checks are skipped.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'code=true' >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up pnpm
+        if: steps.changes.outputs.code == 'true'
         uses: pnpm/action-setup@v6
 
       - name: Set up Node
+        if: steps.changes.outputs.code == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.changes.outputs.code == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Lint and check formatting
+        if: steps.changes.outputs.code == 'true'
         run: pnpm exec biome ci .
 
       - name: Check for comments
+        if: steps.changes.outputs.code == 'true'
         run: pnpm lint:comments
 
       - name: Type check
+        if: steps.changes.outputs.code == 'true'
         run: pnpm check
 
       - name: Test
+        if: steps.changes.outputs.code == 'true'
         run: pnpm test
 
       # Tests the committed data; the sync runs only in deploy.yml.
       - name: Build
+        if: steps.changes.outputs.code == 'true'
         run: pnpm build
 
       # No --with-deps: the runner already has the libraries, and the flag
       # only adds fonts through apt, which hangs when the mirrors are down.
       - name: Install Chromium
+        if: steps.changes.outputs.code == 'true'
         run: pnpm exec playwright install --only-shell chromium
 
       - name: Smoke test
+        if: steps.changes.outputs.code == 'true'
         run: pnpm smoke
 
       - name: Upload traces
