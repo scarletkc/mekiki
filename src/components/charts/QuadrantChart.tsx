@@ -18,12 +18,20 @@ import {
 const SPLIT_SCORE = scoringConfig.intelligence.tiers.high;
 const SPLIT_PRICE = scoringConfig.cost.tiers.mid;
 
-const PAD = { top: 8, right: 12, bottom: 22, left: 32 };
 const DOT = 5;
 /** Largest hover radius of a dot. */
 const HIT = 14;
 const LABEL_SIZE = 11;
 const LABEL_HEIGHT = 14;
+/** How far a name keeps from the centre of its dot. */
+const LABEL_RING = DOT + 2;
+/**
+ * The best model usually scores close to 100, so its dot sits on the plot's
+ * top edge. A narrow chart can leave no room beside it (the right edge on one
+ * side, the quadrant name on the other), so the top padding holds a row for
+ * a name placed diagonally above it (`placeLabels` offsets those by r + 1).
+ */
+const PAD = { top: LABEL_RING + 1 + LABEL_HEIGHT + 2, right: 12, bottom: 22, left: 32 };
 
 /**
  * Intelligence against blended price, one dot per model. Price runs on a
@@ -44,7 +52,7 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
     return [models.filter(onAxis), models.filter((model) => !onAxis(model))];
   }, [models]);
 
-  const height = width !== null && width < 560 ? 340 : 420;
+  const height = PAD.top + PAD.bottom + (width !== null && width < 560 ? 310 : 390);
   const layout = useMemo(() => {
     if (width === null) return null;
     const plotWidth = width - PAD.left - PAD.right;
@@ -96,7 +104,7 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
         id: point.model.id,
         x: point.x,
         y: point.y,
-        r: DOT + 2,
+        r: LABEL_RING,
         width: textWidth(point.model.name, LABEL_SIZE, 500),
         height: LABEL_HEIGHT,
       })),

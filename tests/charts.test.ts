@@ -100,6 +100,17 @@ describe('placeLabels', () => {
     const placed = placeLabels([label('a', 100, 100)], 400, 300, [obstacle]);
     expect(placed.get('a')?.anchor).not.toBe('start');
   });
+
+  it('labels a mark on the top edge beside a corner name when there is a row above it', () => {
+    // The quadrant chart on a phone: the best model near the right edge, the
+    // corner name just below and to its left.
+    const corner = (top: number) => ({ left: 244, top: top + 4, right: 299, bottom: top + 18 });
+    const mark = (top: number) => ({ id: 'a', x: 276, y: top, r: 7, width: 88, height: 14 });
+    expect(placeLabels([mark(8)], 317, 330, [corner(8)]).has('a')).toBe(false);
+    const placed = placeLabels([mark(24)], 317, 346, [corner(24)]).get('a');
+    expect(placed?.anchor).toBe('end');
+    expect(placed?.box.bottom).toBeLessThanOrEqual(24);
+  });
 });
 
 function historyModel(intelligence: number | null, blended: number | null): HistoryModel {
