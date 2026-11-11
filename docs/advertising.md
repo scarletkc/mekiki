@@ -5,7 +5,7 @@ and their prices, and the rules every ad follows. The rules come first: a site t
 AI models is only worth reading while nobody can pay to change what it says.
 
 The slots are not live yet. A booking can be made now and starts on the 1st of the first
-month in which its slot is live; nothing is paid before then.
+month in which its slot is live, and nothing is paid until that slot is live.
 
 ## Ground rules
 
