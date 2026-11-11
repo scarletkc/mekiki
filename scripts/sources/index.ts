@@ -4,6 +4,7 @@ import { aaAdapter } from './aa';
 import { arenaAdapter } from './arena';
 import { livebenchAdapter } from './livebench';
 import { modelsdevAdapter } from './modelsdev';
+import { openrouterAdapter } from './openrouter';
 import type { SourceAdapter, TrackedModel } from './types';
 
 export const adapters: { [S in SourceId]: SourceAdapter<S> } = {
@@ -11,6 +12,7 @@ export const adapters: { [S in SourceId]: SourceAdapter<S> } = {
   aa: aaAdapter,
   arena: arenaAdapter,
   livebench: livebenchAdapter,
+  openrouter: openrouterAdapter,
 };
 
 export function trackedModels(entries: ModelEntry[]): TrackedModel[] {

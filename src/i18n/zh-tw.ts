@@ -40,6 +40,22 @@ export const zhTW: Dictionary = {
     legacy: '舊模型',
     openWeights: '開放權重',
   },
+  usage: {
+    toggle: 'OpenRouter 排名',
+    column: 'OpenRouter',
+    notRanked: '未上榜',
+    badge: 'OpenRouter #{rank}',
+    badgeTitle: 'OpenRouter 用量第 {rank} 名：{start} 至 {end} 共 {tokens} tokens',
+    title: 'OpenRouter 用量',
+    rank: '排名',
+    tokens: 'Tokens',
+    period: '統計期間',
+    notFound: '這段期間沒有 OpenRouter 用量資料。',
+    citation: 'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}.',
+    partialRank: '未上榜（{days}/{total} 天）',
+    license: 'Licensed under CC BY 4.0.',
+    about: '說明',
+  },
   home: {
     title: '模型',
     intro:
@@ -206,6 +222,9 @@ export const zhTW: Dictionary = {
     tierRating: '評級',
     tierConditions: '級距與條件',
     blendedShort: '混合價',
+    usageTitle: 'OpenRouter 用量',
+    usageBody:
+      '模型頁和首頁的選用欄位會顯示每個模型透過 OpenRouter 的用量。資料來自 OpenRouter 的排行資料集，取每次同步前 7 個完整的 UTC 日。每個模型的 token 數按這 7 天加總，名次是這個總數在資料集全部模型中的位置。只有 7 天都在 OpenRouter 每日前 50 的模型才顯示名次，缺了幾天的模型總數會偏低。每個模型只精確比對一個 OpenRouter 版本。用量僅供參考，不列入任何評分。',
     sourcesTitle: '資料來源與標示',
     sourcesBody: '外部資料由排程工作同步成快照，網站建置時只讀快照，不連網。',
     sourcesCaption: '資料來源與更新時間',
@@ -217,6 +236,7 @@ export const zhTW: Dictionary = {
     useAa: '智慧指數、評測總花費',
     useArena: '文字榜、WebDev 榜和 Agent 榜的分數',
     useLivebench: 'AA 沒有測的那幾個分類的得分',
+    useOpenrouter: '用量排名，顯示在首頁的選用欄位和模型頁中，不列入任何評分',
     licenseAa: '依其條款標示來源',
     licenseNone: '未聲明授權，標示來源',
     caveatsTitle: '注意',
@@ -249,11 +269,13 @@ export const zhTW: Dictionary = {
       'value.effective_price 是計算性價比時使用的價格（美元 / 百萬 token），value.cost_index 是它的 0–100 成本指數。value.cost_basis 說明這個價格的來源：有 Artificial Analysis 實測花費（value.run_cost，美元）時為 run_cost，否則為 list_price。',
     fieldHistory:
       'history.json 每個記錄日一筆：日期，以及當天收錄的每個模型的名稱、狀態、分數、級距和價格。只有發生變化的日子才會記錄，所以每一筆一直有效到下一筆。',
+    fieldUsage:
+      'openrouter 是 sources.openrouter.edition 這段期間在 OpenRouter 上的用量：permaslug 是比對到的版本，tokens 是總數，days 是進入每日前 50 的天數，rank 是依 token 數的名次（不是每天都在前 50 時為 null）。找不到這個模型時整個欄位為 null。它不列入任何評分。',
     versionTitle: '版本',
     versionBody: '欄位只增不改。有破壞性變更時，version 加一。目前是 version {version}。',
     attributionTitle: '標示來源',
     attributionBody:
-      '榜單資料來自 Artificial Analysis、Arena 和 LiveBench，價格來自 models.dev。轉載這些數字時請同樣標示來源。',
+      '榜單資料來自 Artificial Analysis、Arena 和 LiveBench，價格來自 models.dev。轉載這些數字時請同樣標示來源。用量資料來自 OpenRouter，採 CC BY 4.0 授權，引用時請寫 "Source: OpenRouter (openrouter.ai/rankings), as of"，後接 sources.openrouter.as_of。',
   },
   compare: {
     title: '比較模型',

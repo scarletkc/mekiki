@@ -9,6 +9,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import {
+  Activity,
   ArrowDown,
   ArrowDownWideNarrow,
   ArrowUp,
@@ -85,11 +86,12 @@ export interface ModelRow {
     measuredPrice: number | null;
   };
   openWeights: boolean | null;
+  usage: { rank: number; title: string } | null;
 }
 
 export type ModelTableStrings = Pick<
   Dictionary,
-  'table' | 'tier' | 'empty' | 'badge' | 'chart' | 'rating'
+  'table' | 'tier' | 'empty' | 'badge' | 'chart' | 'rating' | 'usage'
 > & {
   compare: Pick<Dictionary['compare'], 'select' | 'selected' | 'action' | 'clear' | 'limit'>;
 };
@@ -100,6 +102,7 @@ interface ModelTableProps {
   lang: string;
   compareHref: string;
   trend: TrendData;
+  usageAvailable: boolean;
 }
 
 const features = tableFeatures({
@@ -133,10 +136,14 @@ const VIEW_ICONS: Record<View, LucideIcon> = {
 interface Display {
   view: View;
   metric: ChartMetric;
+  usage: boolean;
 }
-const DEFAULT_DISPLAY: Display = { view: 'table', metric: 'int' };
+const DEFAULT_DISPLAY: Display = { view: 'table', metric: 'int', usage: false };
 
-function readUrl(vendors: string[]): {
+function readUrl(
+  vendors: string[],
+  usageAvailable: boolean,
+): {
   filters: Filters;
   sorting: SortingState;
   display: Display;
@@ -146,6 +153,7 @@ function readUrl(vendors: string[]): {
     const value = params.get(key);
     return value !== null && allowed.includes(value) ? value : ALL;
   };
+  const usage = usageAvailable && params.get('usage') === '1';
   const sort = params.get('sort');
   const sorting =
     sort !== null && (COLUMN_IDS as readonly string[]).includes(sort)
@@ -169,6 +177,7 @@ function readUrl(vendors: string[]): {
       metric: (CHART_METRICS as readonly string[]).includes(params.get('metric') ?? '')
         ? (params.get('metric') as ChartMetric)
         : DEFAULT_DISPLAY.metric,
+      usage,
     },
   };
 }
@@ -177,6 +186,7 @@ function writeUrl(filters: Filters, sorting: SortingState, display: Display) {
   const params = new URLSearchParams();
   if (display.view !== DEFAULT_DISPLAY.view) params.set('view', display.view);
   if (display.metric !== DEFAULT_DISPLAY.metric) params.set('metric', display.metric);
+  if (display.usage) params.set('usage', '1');
   if (filters.q.trim()) params.set('q', filters.q.trim());
   for (const key of ['vendor', 'int', 'cost', 'val', 'open'] as const) {
     if (filters[key] !== ALL) params.set(key, filters[key]);
@@ -425,8 +435,24 @@ function ViewSwitch({
   );
 }
 
-export function ModelTable({ models, strings, lang, compareHref, trend }: ModelTableProps) {
-  const { table: t, tier, empty, badge, compare, chart } = strings;
+function UsageRank({ model, strings }: { model: ModelRow; strings: ModelTableStrings['usage'] }) {
+  if (!model.usage) return <span className="text-muted-foreground">{strings.notRanked}</span>;
+  return (
+    <span className="num" title={model.usage.title}>
+      #{model.usage.rank}
+    </span>
+  );
+}
+
+export function ModelTable({
+  models,
+  strings,
+  lang,
+  compareHref,
+  trend,
+  usageAvailable,
+}: ModelTableProps) {
+  const { table: t, tier, empty, badge, compare, chart, usage: u } = strings;
 
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORT);
@@ -440,12 +466,12 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   );
 
   useEffect(() => {
-    const fromUrl = readUrl(vendors);
+    const fromUrl = readUrl(vendors, usageAvailable);
     setFilters(fromUrl.filters);
     setSorting(fromUrl.sorting);
     setDisplay(fromUrl.display);
     setUrlRead(true);
-  }, [vendors]);
+  }, [vendors, usageAvailable]);
 
   useEffect(() => {
     if (urlRead) writeUrl(filters, sorting, display);
@@ -506,6 +532,11 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
                   {model.name}
                 </a>
                 <ModelBadges model={model} badge={badge} className="lg:flex-nowrap" />
+                {display.usage && model.usage && (
+                  <span className="text-muted-foreground num text-xs" title={model.usage.title}>
+                    #{model.usage.rank}
+                  </span>
+                )}
               </span>
             </span>
           );
@@ -550,7 +581,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         cell: ({ row }) => <Price model={row.original} empty={empty} />,
       }),
     ]);
-  }, [t, tier, empty, badge, compare, lang]);
+  }, [t, tier, empty, badge, compare, lang, display.usage]);
 
   const table = useTable({
     features,
@@ -582,6 +613,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
 
   const sort = sorting[0] ?? DEFAULT_SORT[0]!;
   const sortOptions = COLUMN_IDS.map((id) => ({ value: id, label: t.columns[id] }));
+  const setUsage = (on: boolean) => setDisplay((current) => ({ ...current, usage: on }));
   const SortIcon = sort.desc ? ArrowDownWideNarrow : ArrowUpNarrowWide;
 
   return (
@@ -675,6 +707,18 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
           <p className="text-muted-foreground num text-sm" aria-live="polite">
             {fmt(t.count, { shown: rows.length, total: filtered.total })}
           </p>
+          {usageAvailable && display.view === 'table' && (
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn('h-9 sm:h-7', display.usage && 'bg-muted text-foreground')}
+              aria-pressed={display.usage}
+              onClick={() => setUsage(!display.usage)}
+            >
+              <Activity aria-hidden="true" />
+              {u.toggle}
+            </Button>
+          )}
         </div>
         {(display.view === 'line' || display.view === 'bar') && (
           <FilterSelect
@@ -786,6 +830,14 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
                       <MeasuredPrice price={model.value.measuredPrice} strings={t} />
                     </dd>
                   </div>
+                  {display.usage && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt>{u.column}</dt>
+                      <dd className="text-foreground">
+                        <UsageRank model={model} strings={u} />
+                      </dd>
+                    </div>
+                  )}
                 </dl>
               </li>
             );

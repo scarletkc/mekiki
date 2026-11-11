@@ -97,6 +97,11 @@ models:
   shown, never the IDs. A model's own `vendor` correction wins.
 - A price override replaces the models.dev input and output prices. Without
   `cache_read`, the models.dev cache price is kept.
+- OpenRouter usage is matched by ID, not by discovery: vendor names (`x-ai`, `z-ai`,
+  `mistralai`), dots against dashes and a trailing build date are normalised, then the
+  match must be exact. When OpenRouter has several builds of a model, nothing is matched
+  and the sync lists them; pin one with `sources.openrouter: <permaslug>`, or turn
+  matching off with `sources.openrouter: null`.
 - An invalid overrides file fails `pnpm test`, `pnpm build` and `pnpm sync` with the field
   that is wrong.
 

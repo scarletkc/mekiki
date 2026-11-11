@@ -45,14 +45,28 @@ pnpm exec playwright install --only-shell chromium
 - Intelligence scores come from leaderboards only. No score is entered or adjusted by hand.
 - The build never goes online. `pnpm sync` writes external data to committed snapshots in
   `data/`, and the build reads local files only.
-- Secrets stay out of the front end and the repository. The Artificial Analysis key lives
-  in the `AA_API_KEY` secret (locally, in `.env`) and is read only by `pnpm sync`.
+- Secrets stay out of the front end and the repository. The Artificial Analysis and
+  OpenRouter keys live in the `AA_API_KEY` and `OPENROUTER_API_KEY` secrets (locally, in
+  `.env`) and are read only by `pnpm sync`.
+- OpenRouter usage is shown next to the ratings, never inside them. It is not a rating
+  source: discovery, `matched` and `pnpm report` use `RATING_SOURCE_IDS`, which leaves it
+  out.
 - Every tunable number of the rating lives in `src/lib/scoring.config.ts`. The algorithm in
   `src/lib/scoring.ts` is pure functions with unit tests.
 - Pages and the API read the same dataset, built by `src/lib/dataset.ts`.
 - Look at a real response from a source before writing its adapter and Zod schema.
 - Missing data is shown as missing ("Not rated", "No data", "No price"), never as a blank
   or a 0.
+- Pages stay clean. Visible text has to help a reader use the page: figures, units, empty
+  states, what is missing, source credits. How something is computed, usage hints and
+  caveats belong on the Method page, said once there rather than repeated on every page.
+  Where a section needs that explanation, link to its Method section (a small icon by the
+  heading works) instead of adding a sentence.
+- Secondary information must not cost the main table its layout. Use the lightest form
+  that does the job; if an addition makes rows wrap or the table scroll at the page's full
+  width, look for a lighter form, or put it behind a toggle.
+- Check visual changes in the preview, at full width and on a phone, in English and in
+  Chinese.
 - In the JSON API, missing values are `null` and no field is omitted. Fields are only
   added; a breaking change bumps `API_VERSION` in `src/lib/api.ts`.
 - API responses must carry `Access-Control-Allow-Origin: *`.
@@ -69,9 +83,10 @@ pnpm exec playwright install --only-shell chromium
 
 ## Sync data locally
 
-`pnpm sync` fetches models.dev, Arena and LiveBench without a key. To include Artificial Analysis,
-copy `.env.example` to `.env` and set `AA_API_KEY`; without it that source is skipped.
-The key is read only by `pnpm sync` and must never be committed.
+`pnpm sync` fetches models.dev, Arena and LiveBench without a key. To include Artificial Analysis
+and OpenRouter, copy `.env.example` to `.env` and set `AA_API_KEY` and `OPENROUTER_API_KEY`;
+without a key that source is skipped. The keys are read only by `pnpm sync` and must never
+be committed.
 
 `pnpm sync --only=arena` syncs one source, and `pnpm sync --dry-run` fetches and reports
 without writing.

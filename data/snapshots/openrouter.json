@@ -1,0 +1,154 @@
+{
+  "source": "openrouter",
+  "fetched_at": "2026-11-11T18:09:09.728Z",
+  "total": 60,
+  "edition": "2026-11-04/2026-11-10",
+  "as_of": "2026-11-11T18:09:08.969Z",
+  "frontier": {},
+  "models": {
+    "anthropic/claude-fable-5-2": {
+      "permaslug": "anthropic/claude-fable-5.2-20261109",
+      "tokens": 179398520921,
+      "days": 1,
+      "rank": null
+    },
+    "anthropic/claude-haiku-5-5": {
+      "permaslug": "anthropic/claude-haiku-5.5-20261007",
+      "tokens": 2737571111500,
+      "days": 7,
+      "rank": 19
+    },
+    "anthropic/claude-opus-5": {
+      "permaslug": "anthropic/claude-opus-5-20260723",
+      "tokens": 67353121877,
+      "days": 1,
+      "rank": null
+    },
+    "anthropic/claude-opus-5-5": {
+      "permaslug": "anthropic/claude-opus-5.5-20260921",
+      "tokens": 6760892200834,
+      "days": 7,
+      "rank": 7
+    },
+    "anthropic/claude-sonnet-5-5": {
+      "permaslug": "anthropic/claude-sonnet-5.5-20260928",
+      "tokens": 2389950543340,
+      "days": 7,
+      "rank": 20
+    },
+    "deepseek/deepseek-flash": {
+      "permaslug": "deepseek/deepseek-v4.1-flash-20261017",
+      "tokens": 53751860049088,
+      "days": 7,
+      "rank": 1
+    },
+    "deepseek/deepseek-v4-pro": {
+      "permaslug": "deepseek/deepseek-v4-pro-20260813",
+      "tokens": 788564987041,
+      "days": 7,
+      "rank": 35
+    },
+    "google/gemini-3.8-flash": {
+      "permaslug": "google/gemini-3.8-flash-20260902",
+      "tokens": 1560972428515,
+      "days": 7,
+      "rank": 25
+    },
+    "google/gemini-4-argon": {
+      "permaslug": "google/gemini-4-argon-20261013",
+      "tokens": 1107716194385,
+      "days": 7,
+      "rank": 31
+    },
+    "meta/muse-spark-1.3": {
+      "permaslug": "meta/muse-spark-1.3-contributor-20260902",
+      "tokens": 2892138977637,
+      "days": 7,
+      "rank": 16
+    },
+    "minimax/MiniMax-M3": {
+      "permaslug": "minimax/minimax-m3-20260531",
+      "tokens": 661787831553,
+      "days": 7,
+      "rank": 38
+    },
+    "minimax/MiniMax-M3.1-Flash": {
+      "permaslug": "minimax/minimax-m3.1-flash-20261019",
+      "tokens": 4330502192361,
+      "days": 7,
+      "rank": 10
+    },
+    "moonshotai/kimi-k3": {
+      "permaslug": "moonshotai/kimi-k3-20260715",
+      "tokens": 1628563849913,
+      "days": 7,
+      "rank": 24
+    },
+    "moonshotai/kimi-k3.1-pro": {
+      "permaslug": "moonshotai/kimi-k3.1-pro-20261023",
+      "tokens": 4421648756810,
+      "days": 7,
+      "rank": 9
+    },
+    "openai/gpt-5.6-luna": {
+      "permaslug": "openai/gpt-5.6-luna-20260709",
+      "tokens": 1461543839600,
+      "days": 7,
+      "rank": 26
+    },
+    "openai/gpt-6-astra": {
+      "permaslug": "openai/gpt-6-astra-20260903",
+      "tokens": 123368031753,
+      "days": 2,
+      "rank": null
+    },
+    "openai/gpt-6-luna": {
+      "permaslug": "openai/gpt-6-luna-20260922",
+      "tokens": 7041544215961,
+      "days": 7,
+      "rank": 5
+    },
+    "openai/gpt-6.1-sol": {
+      "permaslug": "openai/gpt-6.1-sol-20260929",
+      "tokens": 4085144343122,
+      "days": 7,
+      "rank": 11
+    },
+    "openai/gpt-6.1-terra": {
+      "permaslug": "openai/gpt-6.1-terra-20261026",
+      "tokens": 1135636146581,
+      "days": 7,
+      "rank": 29
+    },
+    "xai/grok-4.7": {
+      "permaslug": "x-ai/grok-4.7-20260916",
+      "tokens": 194186228327,
+      "days": 2,
+      "rank": null
+    },
+    "xiaomi/mimo-v2.6-flash": {
+      "permaslug": "xiaomi/mimo-v2.6-flash-20260921",
+      "tokens": 2851214665243,
+      "days": 7,
+      "rank": 18
+    },
+    "xiaomi/mimo-v2.6-pro": {
+      "permaslug": "xiaomi/mimo-v2.6-pro-20260921",
+      "tokens": 1133269800561,
+      "days": 7,
+      "rank": 30
+    },
+    "zai/glm-5.3": {
+      "permaslug": "z-ai/glm-5.3-20260816",
+      "tokens": 3646933118436,
+      "days": 7,
+      "rank": 12
+    },
+    "zai/glm-5.3-flash": {
+      "permaslug": "z-ai/glm-5.3-flash-20260826",
+      "tokens": 11279942868221,
+      "days": 7,
+      "rank": 4
+    }
+  }
+}

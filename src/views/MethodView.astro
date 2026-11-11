@@ -3,6 +3,7 @@ import { useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import { formatDateTime } from '../lib/format';
 import { methodContent } from '../lib/method';
+import { SOURCE_INFO } from '../lib/snapshots';
 import { getDataset } from '../lib/site-data';
 
 interface Props {
@@ -21,6 +22,7 @@ const {
   costIndexBody,
   valueRunCostBody,
   valueBody,
+  usage,
   sources,
 } = methodContent(await getDataset(), locale);
 ---
@@ -103,6 +105,10 @@ const {
         </tbody>
       </table>
     </div>
+
+    <h2 id="usage">{m.usageTitle}</h2>
+    <p>{usage.body}</p>
+    {usage.citation && <p><a href={SOURCE_INFO.openrouter.url}>{usage.citation}</a></p>}
 
     <h2 id="sources">{m.sourcesTitle}</h2>
     <p>{m.sourcesBody}</p>

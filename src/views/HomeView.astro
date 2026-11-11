@@ -6,6 +6,7 @@ import Base from '../layouts/Base.astro';
 import { trendSeries } from '../lib/charts';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
+import { usageCell, usagePeriod } from '../lib/usage';
 
 interface Props {
   locale: Locale;
@@ -14,6 +15,9 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 const dataset = await getDataset();
+const period = usagePeriod(dataset);
+const usageAvailable =
+  period !== null && dataset.models.some((model) => model.openrouter?.rank != null);
 
 const rows: ModelRow[] = dataset.models.map((model) => ({
   id: model.id,
@@ -39,6 +43,7 @@ const rows: ModelRow[] = dataset.models.map((model) => ({
       model.rating.value.cost_basis === 'run_cost' ? model.rating.value.effective_price : null,
   },
   openWeights: model.facts.open_weights,
+  usage: usageCell(model, period, t),
 }));
 
 const { entries } = getHistory();
@@ -68,6 +73,7 @@ const strings = {
   tier: t.tier,
   empty: t.empty,
   badge: t.badge,
+  usage: t.usage,
   compare: {
     select: t.compare.select,
     selected: t.compare.selected,
@@ -90,5 +96,6 @@ const strings = {
     lang={LOCALE_INFO[locale].tag}
     compareHref={localePath(locale, '/compare')}
     trend={trend}
+    usageAvailable={usageAvailable}
   />
 </Base>

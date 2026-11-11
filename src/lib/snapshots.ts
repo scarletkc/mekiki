@@ -4,7 +4,9 @@ import { z } from 'astro/zod';
 
 export const SNAPSHOT_DIR = 'data/snapshots';
 
-export const SOURCE_IDS = ['modelsdev', 'aa', 'arena', 'livebench'] as const;
+export const RATING_SOURCE_IDS = ['modelsdev', 'aa', 'arena', 'livebench'] as const;
+export type RatingSourceId = (typeof RATING_SOURCE_IDS)[number];
+export const SOURCE_IDS = [...RATING_SOURCE_IDS, 'openrouter'] as const;
 export type SourceId = (typeof SOURCE_IDS)[number];
 
 export const SOURCE_INFO: Record<SourceId, { name: string; url: string; license: string | null }> =
@@ -13,6 +15,11 @@ export const SOURCE_INFO: Record<SourceId, { name: string; url: string; license:
     aa: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', license: null },
     arena: { name: 'Arena', url: 'https://arena.ai/leaderboard', license: 'CC BY 4.0' },
     livebench: { name: 'LiveBench', url: 'https://livebench.ai/', license: null },
+    openrouter: {
+      name: 'OpenRouter',
+      url: 'https://openrouter.ai/rankings',
+      license: 'CC BY 4.0',
+    },
   };
 
 const frontier = z.record(z.string(), z.number().nullable());
@@ -24,6 +31,7 @@ function snapshotOf<S extends string, M extends z.ZodType>(source: S, model: M) 
     fetched_at: z.string(),
     total: z.number().int().nonnegative().optional(),
     edition: z.string().optional(),
+    as_of: z.string().optional(),
     frontier,
     models: z.record(z.string(), model),
   });
@@ -57,27 +65,38 @@ export const livebenchModelSchema = z.object({
   livebench: nullableNumber,
 });
 
+export const openrouterModelSchema = z.object({
+  permaslug: z.string(),
+  tokens: z.number().nonnegative(),
+  days: z.number().int().positive(),
+  rank: z.number().int().positive().nullable(),
+});
+
 export const snapshotSchemas = {
   modelsdev: snapshotOf('modelsdev', modelsdevModelSchema),
   aa: snapshotOf('aa', aaModelSchema),
   arena: snapshotOf('arena', arenaModelSchema),
   livebench: snapshotOf('livebench', livebenchModelSchema),
+  openrouter: snapshotOf('openrouter', openrouterModelSchema),
 };
 
 export type ModelsdevSnapshot = z.infer<typeof snapshotSchemas.modelsdev>;
 export type AaSnapshot = z.infer<typeof snapshotSchemas.aa>;
 export type ArenaSnapshot = z.infer<typeof snapshotSchemas.arena>;
 export type LivebenchSnapshot = z.infer<typeof snapshotSchemas.livebench>;
+export type OpenrouterSnapshot = z.infer<typeof snapshotSchemas.openrouter>;
 export type ModelsdevModel = z.infer<typeof modelsdevModelSchema>;
 export type AaModel = z.infer<typeof aaModelSchema>;
 export type ArenaModel = z.infer<typeof arenaModelSchema>;
 export type LivebenchModel = z.infer<typeof livebenchModelSchema>;
+export type OpenrouterModel = z.infer<typeof openrouterModelSchema>;
 
 export interface Snapshots {
   modelsdev: ModelsdevSnapshot | null;
   aa: AaSnapshot | null;
   arena: ArenaSnapshot | null;
   livebench: LivebenchSnapshot | null;
+  openrouter: OpenrouterSnapshot | null;
 }
 
 export type SnapshotOf<S extends SourceId> = NonNullable<Snapshots[S]>;
@@ -115,5 +134,6 @@ export function loadSnapshots(root: string = process.cwd()): Snapshots {
     aa: readSnapshot('aa', root),
     arena: readSnapshot('arena', root),
     livebench: readSnapshot('livebench', root),
+    openrouter: readSnapshot('openrouter', root),
   };
 }

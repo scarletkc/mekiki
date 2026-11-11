@@ -4,6 +4,7 @@ import { aaAdapter } from '../scripts/sources/aa';
 import { arenaAdapter } from '../scripts/sources/arena';
 import { categoryChanges, latestRelease, livebenchAdapter } from '../scripts/sources/livebench';
 import { modelsdevAdapter } from '../scripts/sources/modelsdev';
+import { matchKey, openrouterAdapter, rankingWindow } from '../scripts/sources/openrouter';
 import type { TrackedModel } from '../scripts/sources/types';
 import { snapshotSchemas } from '@/lib/snapshots';
 
@@ -400,5 +401,141 @@ describe('LiveBench adapter', () => {
     );
     expect(() => livebenchAdapter.transform({ ...raw, release: 'latest' }, [])).toThrow();
     expect(() => livebenchAdapter.transform(table, [])).toThrow();
+  });
+});
+
+describe('OpenRouter adapter', () => {
+  const days = ['2026-11-04', '2026-11-05', '2026-11-06'];
+  const daily: Record<string, number> = {
+    'openai/gpt-6.1-sol-20260929': 100,
+    'anthropic/claude-opus-5.5-20260921': 60,
+    'z-ai/glm-5.3-20260816': 50,
+    'meta/muse-spark-1.3-contributor-20260902': 40,
+    'deepseek/deepseek-v4-pro-20260813': 30,
+    'deepseek/deepseek-v4-pro-20260423': 20,
+    'nvidia/nemotron-20260604:free': 10,
+    other: 999,
+  };
+  const rows = [
+    ...days.flatMap((date) =>
+      Object.entries(daily).map(([slug, tokens]) => ({
+        date,
+        model_permaslug: slug,
+        total_tokens: String(tokens),
+      })),
+    ),
+    {
+      date: '2026-11-06',
+      model_permaslug: 'anthropic/claude-fable-5.2-20261109',
+      total_tokens: '500',
+    },
+  ];
+  const raw = (data: unknown[] = rows) => ({
+    window: { start: '2026-11-04', end: '2026-11-06' },
+    body: {
+      data,
+      meta: { as_of: '2026-11-07T01:00:00.000Z', version: 'v1', start_date: '2026-11-04' },
+    },
+  });
+
+  it('sums the window, ranks by tokens and ranks only models present every day', () => {
+    const { snapshot } = openrouterAdapter.transform(raw(), [
+      tracked('openai/gpt-6.1-sol', 'GPT-6.1 Sol'),
+      tracked('anthropic/claude-fable-5-2', 'Claude Fable 5.2'),
+    ]);
+    expect(snapshot.total).toBe(8);
+    expect(snapshot.edition).toBe('2026-11-04/2026-11-06');
+    expect(snapshot.as_of).toBe('2026-11-07T01:00:00.000Z');
+    expect(snapshot.models).toEqual({
+      'openai/gpt-6.1-sol': {
+        permaslug: 'openai/gpt-6.1-sol-20260929',
+        tokens: 300,
+        days: 3,
+        rank: 2,
+      },
+      'anthropic/claude-fable-5-2': {
+        permaslug: 'anthropic/claude-fable-5.2-20261109',
+        tokens: 500,
+        days: 1,
+        rank: null,
+      },
+    });
+    expect(() =>
+      snapshotSchemas.openrouter.parse(withTimestamp({ ...snapshot, models: snapshot.models })),
+    ).not.toThrow();
+  });
+
+  it('matches exactly across vendor names, dots and build dates, never by prefix', () => {
+    const { snapshot, unmatched } = openrouterAdapter.transform(raw(), [
+      tracked('zai/glm-5.3', 'GLM-5.3'),
+      tracked('anthropic/claude-opus-5-5', 'Claude Opus 5.5'),
+      tracked('anthropic/claude-opus-5', 'Claude Opus 5'),
+      tracked('meta/muse-spark-1.3', 'Muse Spark 1.3'),
+      tracked('nvidia/nemotron', 'Nemotron'),
+    ]);
+    expect(Object.keys(snapshot.models).sort()).toEqual([
+      'anthropic/claude-opus-5-5',
+      'zai/glm-5.3',
+    ]);
+    expect(unmatched).toEqual([]);
+  });
+
+  it('reports several builds instead of picking one, and honours a pinned build or null', () => {
+    const { snapshot, unmatched } = openrouterAdapter.transform(raw(), [
+      tracked('deepseek/deepseek-v4-pro', 'DeepSeek V4 Pro'),
+      tracked('deepseek/pinned', 'DeepSeek V4 Pro 0813', {
+        openrouter: 'deepseek/deepseek-v4-pro-20260813',
+      }),
+      tracked('openai/gpt-6.1-sol', 'GPT-6.1 Sol', { openrouter: null }),
+    ]);
+    expect(snapshot.models).toEqual({
+      'deepseek/pinned': {
+        permaslug: 'deepseek/deepseek-v4-pro-20260813',
+        tokens: 90,
+        days: 3,
+        rank: 6,
+      },
+    });
+    expect(unmatched.map(({ field, value, candidates }) => ({ field, value, candidates }))).toEqual(
+      [
+        {
+          field: 'sources.openrouter',
+          value: 'deepseek/deepseek-v4-pro',
+          candidates: ['deepseek/deepseek-v4-pro-20260813', 'deepseek/deepseek-v4-pro-20260423'],
+        },
+      ],
+    );
+  });
+
+  it('refuses a window with a missing day or data it cannot read', () => {
+    expect(() =>
+      openrouterAdapter.transform(raw(rows.filter((row) => row.date !== '2026-11-05')), []),
+    ).toThrow(/Only 2 of the 3 days/);
+    expect(() => openrouterAdapter.transform({ window: {}, body: {} }, [])).toThrow(
+      /Unexpected response shape/,
+    );
+    expect(() =>
+      openrouterAdapter.transform(raw(rows.map((row) => ({ ...row, total_tokens: 'lots' }))), []),
+    ).toThrow(/failed validation/);
+  });
+
+  it('asks for the seven whole UTC days before today', () => {
+    expect(rankingWindow(new Date('2026-11-12T03:00:00.000Z'))).toEqual({
+      start: '2026-11-05',
+      end: '2026-11-11',
+    });
+  });
+
+  it('normalises IDs for matching', () => {
+    expect(matchKey('xai/grok-4.7')).toBe('x-ai/grok-4-7');
+    expect(matchKey('x-ai/grok-4.7-20260916')).toBe('x-ai/grok-4-7');
+    expect(matchKey('minimax/MiniMax-M3.1-Flash')).toBe('minimax/minimax-m3-1-flash');
+    expect(matchKey('openai/gpt-4o-2024-05-13')).toBe('openai/gpt-4o');
+  });
+
+  it('skips instead of failing when there is no API key', async () => {
+    expect(await openrouterAdapter.fetch({ env: {} })).toEqual({
+      skip: 'OPENROUTER_API_KEY is not set.',
+    });
   });
 });

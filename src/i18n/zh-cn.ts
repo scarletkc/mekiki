@@ -40,6 +40,22 @@ export const zhCN: Dictionary = {
     legacy: '旧模型',
     openWeights: '开源权重',
   },
+  usage: {
+    toggle: 'OpenRouter 排名',
+    column: 'OpenRouter',
+    notRanked: '未上榜',
+    badge: 'OpenRouter #{rank}',
+    badgeTitle: 'OpenRouter 用量第 {rank} 名：{start} 至 {end} 共 {tokens} tokens',
+    title: 'OpenRouter 用量',
+    rank: '排名',
+    tokens: 'Tokens',
+    period: '统计期',
+    notFound: '这段时间没有 OpenRouter 用量数据。',
+    citation: 'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}.',
+    partialRank: '未上榜（{days}/{total} 天）',
+    license: 'Licensed under CC BY 4.0.',
+    about: '说明',
+  },
   home: {
     title: '模型',
     intro:
@@ -206,6 +222,9 @@ export const zhCN: Dictionary = {
     tierRating: '评级',
     tierConditions: '档位与条件',
     blendedShort: '混合价',
+    usageTitle: 'OpenRouter 用量',
+    usageBody:
+      '模型页和首页的可选列会显示每个模型通过 OpenRouter 的用量。数据来自 OpenRouter 的排行数据集，取每次同步前 7 个完整的 UTC 日。每个模型的 token 数按这 7 天加总，名次是这个总数在数据集全部模型中的位置。只有 7 天都在 OpenRouter 每日前 50 的模型才显示名次，缺了几天的模型总数会偏低。每个模型只精确匹配一个 OpenRouter 版本。用量仅供参考，不参与任何评分。',
     sourcesTitle: '数据来源与署名',
     sourcesBody: '外部数据由定时任务同步成快照，站点构建时只读快照，不联网。',
     sourcesCaption: '数据来源与更新时间',
@@ -217,6 +236,7 @@ export const zhCN: Dictionary = {
     useAa: '智能指数、评测总花费',
     useArena: '文本榜、WebDev 榜和 Agent 榜的分数',
     useLivebench: 'AA 没有测的那几个分类的得分',
+    useOpenrouter: '用量排名，显示在首页的可选列和模型页中，不参与任何评分',
     licenseAa: '按其条款署名',
     licenseNone: '未声明许可，注明来源',
     caveatsTitle: '注意',
@@ -249,11 +269,13 @@ export const zhCN: Dictionary = {
       'value.effective_price 是计算性价比时使用的价格（美元 / 百万 token），value.cost_index 是它的 0–100 成本指数。value.cost_basis 说明这个价格的来源：有 Artificial Analysis 实测花费（value.run_cost，美元）时为 run_cost，否则为 list_price。',
     fieldHistory:
       'history.json 每个记录日一项：日期，以及当天收录的每个模型的名称、状态、分数、档位和价格。只有发生变化的日子才会记录，所以每一项一直有效到下一项。',
+    fieldUsage:
+      'openrouter 是 sources.openrouter.edition 这段时间在 OpenRouter 上的用量：permaslug 是匹配到的版本，tokens 是总数，days 是进入每日前 50 的天数，rank 是按 token 数的名次（不是每天都在前 50 时为 null）。没有找到这个模型时整个字段为 null。它不参与任何评分。',
     versionTitle: '版本',
     versionBody: '字段只加不改。有破坏性变更时，version 加一。当前是 version {version}。',
     attributionTitle: '署名',
     attributionBody:
-      '榜单数据来自 Artificial Analysis、Arena 和 LiveBench，价格来自 models.dev。转载这些数字时请同样注明来源。',
+      '榜单数据来自 Artificial Analysis、Arena 和 LiveBench，价格来自 models.dev。转载这些数字时请同样注明来源。用量数据来自 OpenRouter，按 CC BY 4.0 许可，引用时请写 "Source: OpenRouter (openrouter.ai/rankings), as of"，后接 sources.openrouter.as_of。',
   },
   compare: {
     title: '对比模型',

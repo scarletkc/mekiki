@@ -21,6 +21,7 @@ export const modelSchema = z.object({
         arena_webdev: optionalString,
         arena_agent: optionalString,
         livebench: optionalString,
+        openrouter: z.string().trim().min(1).nullable().optional(),
       }),
     )
     .default({}),
