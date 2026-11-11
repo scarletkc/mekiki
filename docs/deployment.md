@@ -4,12 +4,12 @@ mekiki is deployed to GitHub Pages by `.github/workflows/deploy.yml`, on every p
 `main` that changes more than prose or `README.md`, once a day at 00:00 UTC, and on manual
 dispatch. Prose is the Markdown under `docs/`, `CONTRIBUTING.md` and `LICENSE`; no check or
 build reads it. The site does not read `README.md` either, but a test does, so pull
-requests that change it are still checked. Daily and manual runs sync the snapshots and record the day's ratings first;
-every run then lints, type-checks, tests and builds, daily and manual runs commit any data
-change that passed, and the site is deployed. A separate `smoke` job runs the browser
-smoke test against the built site; it never blocks the deploy, and a failure only marks
-that job red. Pull requests into `main` are checked by `.github/workflows/ci.yml`; one that
-only changes prose passes without running the checks.
+requests that change it are still checked. Daily and manual runs sync the snapshots and
+record the day's ratings first; every run then lints, type-checks, tests and builds, daily
+and manual runs commit any data change that passed, and the site is deployed. A separate
+`smoke` job runs the browser smoke test against the built site; it never blocks the
+deploy, and a failure only marks that job red. Pull requests into `main` are checked by
+`.github/workflows/ci.yml`; one that only changes prose passes without running the checks.
 
 ## One-time setup
 
