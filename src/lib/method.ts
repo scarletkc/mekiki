@@ -12,6 +12,7 @@ import {
   scoringConfig,
 } from './scoring.config';
 import { SOURCE_IDS, SOURCE_INFO } from './snapshots';
+import { usageCitation, usagePeriod } from './usage';
 
 export function methodContent(dataset: Dataset, locale: Locale) {
   const t = useTranslations(locale);
@@ -121,6 +122,12 @@ export function methodContent(dataset: Dataset, locale: Locale) {
     licenseText: dataset.sources[id].license ?? unlicensed[id],
   }));
 
+  const period = usagePeriod(dataset);
+  const usage = {
+    body: m.usageBody,
+    citation: period ? `${usageCitation(period, t)} ${t.usage.license}` : null,
+  };
+
   return {
     metrics,
     livebenchNote,
@@ -130,6 +137,7 @@ export function methodContent(dataset: Dataset, locale: Locale) {
     costIndexBody,
     valueRunCostBody,
     valueBody,
+    usage,
     sources,
   };
 }

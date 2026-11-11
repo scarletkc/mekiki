@@ -147,8 +147,7 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
       rows,
     ),
     `${t.table.priceNote}${t.footer.fullStop}${syncedLine(dataset, t)}${t.footer.fullStop.trimEnd()}`,
-    ranked &&
-      `${fmt(t.usage.homeNote, { start: period.start, end: period.end })} ${usageCitation(period, t)}`,
+    ranked && `${usageCitation(period, t)} ${link(t.usage.about, markdownUrl(locale, '/method'))}`,
     siteLinks(locale, t),
   ]);
 }
@@ -208,7 +207,7 @@ export function modelMarkdown(
     usage &&
       (usage.notFound ??
         usage.rows.map((row) => `- ${row.label}: ${row.value ?? none}`).join('\n')),
-    usage && [...usage.notes, usage.citation].join('\n\n'),
+    usage && `${usage.citation} ${link(t.usage.about, markdownUrl(locale, '/method'))}`,
     `## ${d.history}`,
     series.length < 2
       ? fmt(d.historyStart, { date: historyStart })
@@ -268,6 +267,9 @@ export function methodMarkdown(dataset: Dataset, locale: Locale): string {
           `- ${row.rating}: ${row.tiers.map((tier) => `\`${tier.key}\` ${tier.label} ${tier.rule}`).join('; ')}`,
       )
       .join('\n'),
+    `## ${m.usageTitle}`,
+    content.usage.body,
+    content.usage.citation,
     `## ${m.sourcesTitle}`,
     m.sourcesBody,
     table(

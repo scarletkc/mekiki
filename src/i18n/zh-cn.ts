@@ -50,13 +50,11 @@ export const zhCN: Dictionary = {
     rank: '排名',
     tokens: 'Tokens',
     period: '统计期',
-    partial: '只有 {days}/{total} 天进入每日前 50，不参与排名。',
-    notFound: '这段时间没有在 OpenRouter 每日前 50 中找到这个模型。',
-    note: '排名是统计期内通过 OpenRouter 处理的 token 总数的名次。只有每天都在每日前 50 的模型才显示名次，缺了几天的模型总数会偏低。仅供参考，不参与任何评分。',
-    homeNote:
-      'OpenRouter 列是 {start} 至 {end} 通过 OpenRouter 处理的 token 总数的名次，只有每天都在每日前 50 的模型才有名次。仅供参考，不参与任何评分。',
-    citation:
-      'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}. Licensed under CC BY 4.0.',
+    notFound: '这段时间没有 OpenRouter 用量数据。',
+    citation: 'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}.',
+    partialRank: '未上榜（{days}/{total} 天）',
+    license: 'Licensed under CC BY 4.0.',
+    about: '说明',
   },
   home: {
     title: '模型',
@@ -224,6 +222,9 @@ export const zhCN: Dictionary = {
     tierRating: '评级',
     tierConditions: '档位与条件',
     blendedShort: '混合价',
+    usageTitle: 'OpenRouter 用量',
+    usageBody:
+      '模型页和首页的可选列会显示每个模型通过 OpenRouter 的用量。数据来自 OpenRouter 的排行数据集，取每次同步前 7 个完整的 UTC 日。每个模型的 token 数按这 7 天加总，名次是这个总数在数据集全部模型中的位置。只有 7 天都在 OpenRouter 每日前 50 的模型才显示名次，缺了几天的模型总数会偏低。每个模型只精确匹配一个 OpenRouter 版本。用量仅供参考，不参与任何评分。',
     sourcesTitle: '数据来源与署名',
     sourcesBody: '外部数据由定时任务同步成快照，站点构建时只读快照，不联网。',
     sourcesCaption: '数据来源与更新时间',

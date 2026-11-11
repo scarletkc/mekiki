@@ -48,13 +48,11 @@ export const en = {
     rank: 'Rank',
     tokens: 'Tokens',
     period: 'Period',
-    partial: 'In the daily top 50 on {days} of {total} days, so not ranked.',
-    notFound: "Not found in OpenRouter's daily top 50 for this period.",
-    note: "The rank is the model's place by total tokens processed through OpenRouter over the period. It is shown only for models in OpenRouter's daily top 50 on every day, since a model missing some days is undercounted. Shown for reference; not part of any rating.",
-    homeNote:
-      "The OpenRouter column is each model's place by the tokens processed through OpenRouter from {start} to {end}, shown only for models in its daily top 50 on every day. Shown for reference; not part of any rating.",
-    citation:
-      'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}. Licensed under CC BY 4.0.',
+    notFound: 'No OpenRouter usage data for this period.',
+    citation: 'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}.',
+    partialRank: 'Not ranked ({days} of {total} days)',
+    license: 'Licensed under CC BY 4.0.',
+    about: 'How this works',
   },
   home: {
     title: 'Models',
@@ -225,6 +223,9 @@ export const en = {
     tierRating: 'Rating',
     tierConditions: 'Tiers and conditions',
     blendedShort: 'blended',
+    usageTitle: 'OpenRouter usage',
+    usageBody:
+      "Model pages, and an optional column on the home page, show how much each model was used through OpenRouter. The figures come from OpenRouter's rankings dataset, for the 7 whole UTC days before each sync. Tokens are summed per model, and the rank is the model's place by that total among every model in the dataset. A rank is shown only for models in OpenRouter's daily top 50 on every one of those days, since a model missing some days is undercounted. Each model is matched to exactly one OpenRouter build. Usage is shown for reference and is not part of any rating.",
     sourcesTitle: 'Data sources and attribution',
     sourcesBody:
       'A scheduled job syncs external data into snapshot files. The site build only reads those files and never goes online.',

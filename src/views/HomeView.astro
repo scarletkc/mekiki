@@ -1,7 +1,7 @@
 ---
 import type { TrendData } from '../components/charts/TrendChart';
 import { ModelTable, type ModelRow } from '../components/ModelTable';
-import { fmt, LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
+import { LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import { trendSeries } from '../lib/charts';
 import { utcDate } from '../lib/history';
@@ -20,9 +20,10 @@ const period = usagePeriod(dataset);
 const usageNote =
   period && dataset.models.some((model) => model.openrouter?.rank != null)
     ? {
-        text: fmt(t.usage.homeNote, { start: period.start, end: period.end }),
         citation: usageCitation(period, t),
         href: SOURCE_INFO.openrouter.url,
+        about: t.usage.about,
+        aboutHref: `${localePath(locale, '/method')}#usage`,
       }
     : null;
 

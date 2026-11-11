@@ -102,7 +102,7 @@ interface ModelTableProps {
   lang: string;
   compareHref: string;
   trend: TrendData;
-  usageNote: { text: string; citation: string; href: string } | null;
+  usageNote: { citation: string; href: string; about: string; aboutHref: string } | null;
 }
 
 const features = tableFeatures({
@@ -122,7 +122,6 @@ const COLUMN_IDS = [
   'price',
 ] as const;
 
-const USAGE_COLUMN = 'usage';
 const DEFAULT_SORT: SortingState = [{ id: 'intelligence', desc: true }];
 
 const VIEWS = ['table', 'quadrant', 'line', 'bar'] as const;
@@ -155,10 +154,9 @@ function readUrl(
     return value !== null && allowed.includes(value) ? value : ALL;
   };
   const usage = usageAvailable && params.get('usage') === '1';
-  const sortable: readonly string[] = usage ? [...COLUMN_IDS, USAGE_COLUMN] : COLUMN_IDS;
   const sort = params.get('sort');
   const sorting =
-    sort !== null && sortable.includes(sort)
+    sort !== null && (COLUMN_IDS as readonly string[]).includes(sort)
       ? [{ id: sort, desc: params.get('dir') !== 'asc' }]
       : DEFAULT_SORT;
   return {
@@ -534,6 +532,11 @@ export function ModelTable({
                   {model.name}
                 </a>
                 <ModelBadges model={model} badge={badge} className="lg:flex-nowrap" />
+                {display.usage && model.usage && (
+                  <span className="text-muted-foreground num text-xs" title={model.usage.title}>
+                    #{model.usage.rank}
+                  </span>
+                )}
               </span>
             </span>
           );
@@ -577,20 +580,8 @@ export function ModelTable({
         ...figure,
         cell: ({ row }) => <Price model={row.original} empty={empty} />,
       }),
-      ...(display.usage
-        ? [
-            helper.accessor((row) => row.usage?.rank ?? undefined, {
-              id: USAGE_COLUMN,
-              header: u.column,
-              sortFn: sortFn_basic,
-              sortUndefined: 'last' as const,
-              sortDescFirst: false,
-              cell: ({ row }) => <UsageRank model={row.original} strings={u} />,
-            }),
-          ]
-        : []),
     ]);
-  }, [t, tier, empty, badge, compare, lang, display.usage, u]);
+  }, [t, tier, empty, badge, compare, lang, display.usage]);
 
   const table = useTable({
     features,
@@ -621,14 +612,8 @@ export function ModelTable({
     keys.map((key) => ({ value: key, label: labels[key] }));
 
   const sort = sorting[0] ?? DEFAULT_SORT[0]!;
-  const sortOptions = [
-    ...COLUMN_IDS.map((id) => ({ value: id, label: t.columns[id] })),
-    ...(display.usage ? [{ value: USAGE_COLUMN, label: u.column }] : []),
-  ];
-  const setUsage = (on: boolean) => {
-    setDisplay((current) => ({ ...current, usage: on }));
-    if (!on && sort.id === USAGE_COLUMN) setSorting(DEFAULT_SORT);
-  };
+  const sortOptions = COLUMN_IDS.map((id) => ({ value: id, label: t.columns[id] }));
+  const setUsage = (on: boolean) => setDisplay((current) => ({ ...current, usage: on }));
   const SortIcon = sort.desc ? ArrowDownWideNarrow : ArrowUpNarrowWide;
 
   return (
@@ -755,9 +740,7 @@ export function ModelTable({
             label={t.sort}
             value={sort.id}
             onChange={(id) =>
-              setSorting([
-                { id, desc: id !== 'model' && id !== 'vendor' && id !== USAGE_COLUMN },
-              ] satisfies SortingState)
+              setSorting([{ id, desc: id !== 'model' && id !== 'vendor' }] satisfies SortingState)
             }
             options={sortOptions}
           />
@@ -931,7 +914,7 @@ export function ModelTable({
               {rows.length === 0 && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell
-                    colSpan={COLUMN_IDS.length + (display.usage ? 1 : 0)}
+                    colSpan={COLUMN_IDS.length}
                     className="text-muted-foreground px-4 py-10 text-center"
                   >
                     {t.noResults}
@@ -984,10 +967,16 @@ export function ModelTable({
         )}
       </div>
       {usageNote && display.usage && display.view === 'table' && (
-        <p className="text-muted-foreground mt-3 max-w-[68ch] text-xs leading-relaxed">
-          {usageNote.text}{' '}
+        <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
           <a className="hover:text-foreground underline underline-offset-4" href={usageNote.href}>
             {usageNote.citation}
+          </a>
+          <span aria-hidden="true"> · </span>
+          <a
+            className="hover:text-foreground underline underline-offset-4"
+            href={usageNote.aboutHref}
+          >
+            {usageNote.about}
           </a>
         </p>
       )}

@@ -334,17 +334,16 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
                 {usage.rows.map((row) => (
                   <>
                     <dt>{row.label}</dt>
-                    <dd class="num">{row.value ?? <span class="text-muted-foreground">{t.empty.noData}</span>}</dd>
+                    <dd class={row.muted ? 'text-muted-foreground' : 'num'}>{row.value}</dd>
                   </>
                 ))}
               </dl>
             )}
-            <div class="text-muted-foreground mt-3 space-y-1.5 text-xs leading-relaxed">
-              {usage.notes.map((note) => <p>{note}</p>)}
-              <p>
-                <a class="underline underline-offset-4 hover:text-foreground" href={SOURCE_INFO.openrouter.url}>{usage.citation}</a>
-              </p>
-            </div>
+            <p class="text-muted-foreground mt-3 text-xs leading-relaxed">
+              <a class="hover:text-foreground underline underline-offset-4" href={SOURCE_INFO.openrouter.url}>{usage.citation}</a>
+              <span aria-hidden="true"> · </span>
+              <a class="hover:text-foreground underline underline-offset-4" href={`${localePath(locale, '/method')}#usage`}>{t.usage.about}</a>
+            </p>
           </section>
         )
       }

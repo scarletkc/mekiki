@@ -54,21 +54,21 @@ export function usageDetail(model: ModelRecord, period: UsagePeriod, t: Dictiona
   const usage = model.openrouter;
   const rows = usage
     ? [
-        { label: t.usage.rank, value: usage.rank === null ? null : `#${usage.rank}` },
-        { label: t.usage.tokens, value: formatTokens(usage.tokens) },
-        { label: t.usage.period, value: `${period.start} – ${period.end}` },
+        {
+          label: t.usage.rank,
+          value:
+            usage.rank === null
+              ? fmt(t.usage.partialRank, { days: usage.days, total: period.days })
+              : `#${usage.rank}`,
+          muted: usage.rank === null,
+        },
+        { label: t.usage.tokens, value: formatTokens(usage.tokens), muted: false },
+        { label: t.usage.period, value: `${period.start} – ${period.end}`, muted: false },
       ]
     : [];
-  const notes = [
-    usage && usage.rank === null
-      ? fmt(t.usage.partial, { days: usage.days, total: period.days })
-      : null,
-    t.usage.note,
-  ].filter((note) => note !== null);
   return {
     rows,
     notFound: usage ? null : t.usage.notFound,
-    notes,
     citation: usageCitation(period, t),
   };
 }
