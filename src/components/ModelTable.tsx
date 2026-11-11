@@ -709,8 +709,8 @@ export function ModelTable({
         </div>
       </search>
 
-      <div className="mb-3 flex min-h-9 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex items-center gap-3">
+      <div className="mb-3 flex min-h-9 flex-wrap items-center gap-x-3 gap-y-2 sm:justify-between">
+        <div className="flex items-center gap-3 max-sm:contents">
           <ViewSwitch
             view={display.view}
             onChange={(view) => setDisplay((current) => ({ ...current, view }))}
