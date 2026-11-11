@@ -16,11 +16,16 @@ import {
   ArrowDownWideNarrow,
   ArrowUp,
   ArrowUpNarrowWide,
+  ChartBarDecreasing,
+  ChartLine,
+  ChartScatter,
   ChevronsUpDown,
   GitCompareArrows,
   History,
   RotateCcw,
+  Rows3,
   Search,
+  type LucideIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,6 +47,7 @@ import {
 } from '@/components/ui/table';
 import type { Dictionary } from '@/i18n';
 import { fmt } from '@/i18n/fmt';
+import { CHART_METRICS, type ChartMetric } from '@/lib/charts';
 import { compareQuery } from '@/lib/compare';
 import { formatPrice, formatScore } from '@/lib/format';
 import {
@@ -54,6 +60,10 @@ import {
 } from '@/lib/scoring.config';
 import { COMPARE_MAX } from '@/lib/share';
 import { cn } from '@/lib/utils';
+import { BarChart } from './charts/BarChart';
+import { QuadrantChart } from './charts/QuadrantChart';
+import { metricLabel } from './charts/shared';
+import { TrendChart, type TrendData } from './charts/TrendChart';
 import { TierMeter, type RatingKind } from './TierMeter';
 
 /** What the table needs to know about a model; a slimmed-down ModelRecord. */
@@ -77,7 +87,10 @@ export interface ModelRow {
 }
 
 /** The UI strings the table uses, picked from the page's dictionary. */
-export type ModelTableStrings = Pick<Dictionary, 'table' | 'tier' | 'empty' | 'badge'> & {
+export type ModelTableStrings = Pick<
+  Dictionary,
+  'table' | 'tier' | 'empty' | 'badge' | 'chart' | 'rating'
+> & {
   compare: Pick<Dictionary['compare'], 'select' | 'selected' | 'action' | 'clear' | 'limit'>;
 };
 
@@ -88,6 +101,8 @@ interface ModelTableProps {
   lang: string;
   /** The compare page in the page's locale; the selection is appended as a query. */
   compareHref: string;
+  /** Recorded history, for the trend chart. */
+  trend: TrendData;
 }
 
 const features = tableFeatures({
@@ -103,6 +118,23 @@ const COLUMN_IDS = ['model', 'vendor', 'intelligence', 'cost', 'value', 'price']
 
 const DEFAULT_SORT: SortingState = [{ id: 'intelligence', desc: true }];
 const ALL = 'all';
+
+/** How the models are shown. Keys double as the `view` URL parameter. */
+const VIEWS = ['table', 'quadrant', 'line', 'bar'] as const;
+type View = (typeof VIEWS)[number];
+const VIEW_ICONS: Record<View, LucideIcon> = {
+  table: Rows3,
+  quadrant: ChartScatter,
+  line: ChartLine,
+  bar: ChartBarDecreasing,
+};
+
+/** What the table shows besides filters and sort: the view and the charted metric. */
+interface Display {
+  view: View;
+  metric: ChartMetric;
+}
+const DEFAULT_DISPLAY: Display = { view: 'table', metric: 'int' };
 
 /** Filter state. Keys double as the (locale-independent) URL query parameters. */
 interface Filters {
@@ -125,7 +157,11 @@ const NO_FILTERS: Filters = {
   legacy: false,
 };
 
-function readUrl(vendors: string[]): { filters: Filters; sorting: SortingState } {
+function readUrl(vendors: string[]): {
+  filters: Filters;
+  sorting: SortingState;
+  display: Display;
+} {
   const params = new URLSearchParams(window.location.search);
   const pick = (key: string, allowed: readonly string[]) => {
     const value = params.get(key);
@@ -147,11 +183,21 @@ function readUrl(vendors: string[]): { filters: Filters; sorting: SortingState }
       legacy: params.get('legacy') === '1',
     },
     sorting,
+    display: {
+      view: (VIEWS as readonly string[]).includes(params.get('view') ?? '')
+        ? (params.get('view') as View)
+        : DEFAULT_DISPLAY.view,
+      metric: (CHART_METRICS as readonly string[]).includes(params.get('metric') ?? '')
+        ? (params.get('metric') as ChartMetric)
+        : DEFAULT_DISPLAY.metric,
+    },
   };
 }
 
-function writeUrl(filters: Filters, sorting: SortingState) {
+function writeUrl(filters: Filters, sorting: SortingState, display: Display) {
   const params = new URLSearchParams();
+  if (display.view !== DEFAULT_DISPLAY.view) params.set('view', display.view);
+  if (display.metric !== DEFAULT_DISPLAY.metric) params.set('metric', display.metric);
   if (filters.q.trim()) params.set('q', filters.q.trim());
   for (const key of ['vendor', 'int', 'cost', 'val', 'open'] as const) {
     if (filters[key] !== ALL) params.set(key, filters[key]);
@@ -350,11 +396,51 @@ function FilterSelect({
   );
 }
 
-export function ModelTable({ models, strings, lang, compareHref }: ModelTableProps) {
-  const { table: t, tier, empty, badge, compare } = strings;
+/** The Table / Quadrant / Trend / Bars switch; icons only on phones. */
+function ViewSwitch({
+  view,
+  onChange,
+  strings,
+}: {
+  view: View;
+  onChange: (view: View) => void;
+  strings: ModelTableStrings['chart'];
+}) {
+  return (
+    <fieldset className="bg-muted inline-flex min-w-0 shrink-0 rounded-lg p-0.5">
+      <legend className="sr-only">{strings.view}</legend>
+      {VIEWS.map((item) => {
+        const Icon = VIEW_ICONS[item];
+        const selected = item === view;
+        return (
+          <button
+            key={item}
+            type="button"
+            aria-pressed={selected}
+            title={strings.views[item]}
+            onClick={() => onChange(item)}
+            className={cn(
+              'focus-visible:ring-ring/50 flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors outline-none focus-visible:ring-[3px] sm:h-7',
+              selected
+                ? 'bg-card text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Icon aria-hidden="true" className="size-4 sm:size-3.5" />
+            <span className="sr-only sm:not-sr-only">{strings.views[item]}</span>
+          </button>
+        );
+      })}
+    </fieldset>
+  );
+}
+
+export function ModelTable({ models, strings, lang, compareHref, trend }: ModelTableProps) {
+  const { table: t, tier, empty, badge, compare, chart } = strings;
 
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORT);
+  const [display, setDisplay] = useState<Display>(DEFAULT_DISPLAY);
   // The page is prerendered with the default view; the view in the URL is
   // applied right after hydration, then every change is written back.
   const [urlRead, setUrlRead] = useState(false);
@@ -370,12 +456,13 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
     const fromUrl = readUrl(vendors);
     setFilters(fromUrl.filters);
     setSorting(fromUrl.sorting);
+    setDisplay(fromUrl.display);
     setUrlRead(true);
   }, [vendors]);
 
   useEffect(() => {
-    if (urlRead) writeUrl(filters, sorting);
-  }, [urlRead, filters, sorting]);
+    if (urlRead) writeUrl(filters, sorting, display);
+  }, [urlRead, filters, sorting, display]);
 
   const setFilter = <K extends keyof Filters>(key: K, value: Filters[K]) =>
     setFilters((current) => ({ ...current, [key]: value }));
@@ -517,6 +604,12 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
   });
 
   const rows = table.getRowModel().rows;
+  // The charts show the same models as the table, in the table's order.
+  const shown = useMemo(() => rows.map((row) => row.original), [rows]);
+  const chartStrings = useMemo(
+    () => ({ chart, tier, empty, rating: strings.rating }),
+    [chart, tier, empty, strings.rating],
+  );
   const filtersActive =
     filters.q.trim() !== '' ||
     filters.vendor !== ALL ||
@@ -608,11 +701,33 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
         </div>
       </search>
 
-      <div className="mb-3 flex min-h-9 items-center justify-between gap-3">
-        <p className="text-muted-foreground num text-sm" aria-live="polite">
-          {fmt(t.count, { shown: rows.length, total: data.length })}
-        </p>
-        <div className="flex items-center gap-1 md:hidden">
+      <div className="mb-3 flex min-h-9 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex items-center gap-3">
+          <ViewSwitch
+            view={display.view}
+            onChange={(view) => setDisplay((current) => ({ ...current, view }))}
+            strings={chart}
+          />
+          <p className="text-muted-foreground num text-sm" aria-live="polite">
+            {fmt(t.count, { shown: rows.length, total: data.length })}
+          </p>
+        </div>
+        {(display.view === 'line' || display.view === 'bar') && (
+          <FilterSelect
+            label={chart.metric}
+            value={display.metric}
+            onChange={(metric) =>
+              setDisplay((current) => ({ ...current, metric: metric as ChartMetric }))
+            }
+            options={CHART_METRICS.map((metric) => ({
+              value: metric,
+              label: metricLabel(metric, chartStrings),
+            }))}
+          />
+        )}
+        <div
+          className={cn('flex items-center gap-1 md:hidden', display.view !== 'table' && 'hidden')}
+        >
           <FilterSelect
             label={t.sort}
             value={sort.id}
@@ -634,9 +749,22 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
         </div>
       </div>
 
+      {display.view === 'quadrant' && <QuadrantChart models={shown} strings={chartStrings} />}
+      {display.view === 'bar' && (
+        <BarChart models={shown} metric={display.metric} strings={chartStrings} />
+      )}
+      {display.view === 'line' && (
+        <TrendChart models={shown} metric={display.metric} data={trend} strings={chartStrings} />
+      )}
+
       <PickContext.Provider value={pickValue}>
         {/* Cards, below the md breakpoint. */}
-        <ul className="bg-card divide-y overflow-hidden rounded-xl border md:hidden">
+        <ul
+          className={cn(
+            'bg-card divide-y overflow-hidden rounded-xl border md:hidden',
+            display.view !== 'table' && 'hidden',
+          )}
+        >
           {rows.map((row) => {
             const model = row.original;
             const meters = meterProps(model, { tier, empty });
@@ -691,7 +819,12 @@ export function ModelTable({ models, strings, lang, compareHref }: ModelTablePro
         </ul>
 
         {/* The table, from the md breakpoint up. */}
-        <div className="bg-card hidden overflow-hidden rounded-xl border md:block">
+        <div
+          className={cn(
+            'bg-card hidden overflow-hidden rounded-xl border',
+            display.view === 'table' && 'md:block',
+          )}
+        >
           <Table className="text-sm">
             <caption className="sr-only">{t.caption}</caption>
             <TableHeader>

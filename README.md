@@ -35,6 +35,8 @@ official prices, and refresh every day.
 
 - **Model table**: sort by any column, filter by vendor, tier or open weights, and search
   by name. The URL keeps the view, so you can share it.
+- **Charts**: the same models as a quadrant of intelligence against price, as ranked bars,
+  or as a trend over the recorded history.
 - **Model pages**: how the intelligence score is built, leaderboard by leaderboard; price,
   context window, release date and modalities; links to the source data.
 - **Compare**: up to four models side by side, with the best figure in each row in bold.

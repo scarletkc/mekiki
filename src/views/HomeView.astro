@@ -1,8 +1,11 @@
 ---
+import type { TrendData } from '../components/charts/TrendChart';
 import { ModelTable, type ModelRow } from '../components/ModelTable';
 import { LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
-import { getDataset } from '../lib/site-data';
+import { trendSeries } from '../lib/charts';
+import { utcDate } from '../lib/history';
+import { getDataset, getHistory } from '../lib/site-data';
 
 interface Props {
   locale: Locale;
@@ -33,8 +36,31 @@ const rows: ModelRow[] = dataset.models.map((model) => ({
   openWeights: model.facts.open_weights,
 }));
 
+// History for the trend chart: recorded days, ending on what the table shows today.
+const { entries } = getHistory();
+const today = utcDate(new Date(dataset.generated_at));
+const recorded = entries.filter((entry) => entry.date < today);
+const trend: TrendData = {
+  start: recorded[0]?.date ?? today,
+  end: today,
+  days: recorded.length + 1,
+  series: Object.fromEntries(
+    dataset.models.map((model) => [
+      model.id,
+      trendSeries(entries, model.id, {
+        date: today,
+        int: model.rating.intelligence.score,
+        val: model.rating.value.score,
+        cost: model.rating.cost.blended,
+      }),
+    ]),
+  ),
+};
+
 const strings = {
   table: t.table,
+  chart: t.chart,
+  rating: t.rating,
   tier: t.tier,
   empty: t.empty,
   badge: t.badge,
@@ -59,5 +85,6 @@ const strings = {
     strings={strings}
     lang={LOCALE_INFO[locale].tag}
     compareHref={localePath(locale, '/compare')}
+    trend={trend}
   />
 </Base>

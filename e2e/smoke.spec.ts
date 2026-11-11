@@ -130,3 +130,33 @@ test('models ticked on the home page open side by side on the compare page', asy
   await expect(page.locator('thead th[scope="col"]')).toHaveCount(2);
   expect(problems).toEqual([]);
 });
+
+test('the home page switches between the table and the charts', async ({ page }) => {
+  const problems = trackProblems(page);
+  await page.goto('/');
+  await expect(page.locator('table tbody tr').first()).toBeVisible();
+  // The switch lists the table, quadrant, trend and bar views, in that order.
+  const views = page.locator('fieldset button[aria-pressed]');
+  await expect(views).toHaveCount(4);
+
+  await views.nth(1).click();
+  await expect(views.nth(1)).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('figure svg a[href]').first()).toBeAttached();
+  await expect(page.locator('table')).toBeHidden();
+  expect(new URL(page.url()).searchParams.get('view')).toBeTruthy();
+
+  await views.nth(2).click();
+  await expect(page.locator('figure')).toBeVisible();
+
+  await views.nth(3).click();
+  await expect(page.locator('figure ol li a[href]').first()).toBeVisible();
+
+  // The view is part of the URL, so a reload keeps it.
+  await page.reload();
+  await expect(page.locator('figure ol li a[href]').first()).toBeVisible();
+
+  await views.nth(0).click();
+  await expect(page.locator('table tbody tr').first()).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('view')).toBeNull();
+  expect(problems).toEqual([]);
+});

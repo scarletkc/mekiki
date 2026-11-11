@@ -77,6 +77,30 @@ export const en = {
     reverse: 'Reverse the order',
     caption: 'AI model ratings',
   },
+  chart: {
+    view: 'View',
+    views: { table: 'Table', quadrant: 'Quadrant', line: 'Trend', bar: 'Bars' },
+    metric: 'Show',
+    blended: 'Blended price',
+    quadrantCaption: 'Intelligence against blended price',
+    priceAxis: 'Blended price, USD per 1M tokens (log scale)',
+    areas: {
+      smartCheap: 'Smart, affordable',
+      smartPricey: 'Smart, expensive',
+      basicCheap: 'Affordable, less smart',
+      basicPricey: 'Expensive, less smart',
+    },
+    dividers:
+      'The lines mark where High intelligence ({score}) and High cost ({price} blended) begin.',
+    notPlotted: 'Not plotted (no price or not rated): {names}',
+    barCaption: '{metric} by model',
+    tierLines: 'Hairlines mark where each tier begins.',
+    trendCaption: '{metric} over time',
+    trendNote:
+      'As recorded each day; a figure holds until the next recorded change. Point at a line or pick a model below to follow it.',
+    trendEmpty: 'The trend appears once a second day has been recorded.',
+    follow: 'Follow {name}',
+  },
   detail: {
     back: 'All models',
     breakdown: 'How the intelligence score is built',

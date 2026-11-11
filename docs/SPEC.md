@@ -523,9 +523,29 @@ column shows a tier badge and the score.
 - Filter by vendor, by each rating's tier and by open weights; search by name.
 - Sorting and filters live in the URL so a view can be shared. The parameters are the
   same in every language: `q`, `vendor`, `int`, `cost`, `val`, `open`, `sort`, `dir`,
-  `legacy`.
+  `legacy`, `view`, `metric`.
 - Legacy models are collapsed by default.
 - Each row has a checkbox. Ticking up to four models shows a bar with a Compare button.
+
+A switch above the table shows the same models as charts instead (`view`): the filters,
+the legacy toggle and the table's order apply to every chart. The charts are drawn in
+the browser at their real width, with no chart library; the prerendered page is the
+table.
+
+- **Quadrant** (`quadrant`): intelligence against blended price, one dot per model, with
+  price on a log axis. Two lines split the plot where the High intelligence and High
+  cost tiers begin (`scoringConfig`), so a quadrant means the same thing whatever the
+  filters show. Models without a price, free ones or unrated ones are listed under the
+  chart instead. Names sit beside their dots wherever they fit; a dot shows all three
+  ratings on hover, keyboard focus or a first tap, and opens the model page.
+- **Trend** (`line`): each model's intelligence, value or blended price (`metric`:
+  `int`, `val`, `cost`) over the recorded history (§4.5), as step lines ending on
+  today's figures. Every line is drawn quietly and one is picked out: the one pointed
+  at, the one chosen below the chart, or else the first in the table's order. A
+  crosshair snaps to the recorded days and lists every model's figure; the arrow keys
+  move it. Before a second day is recorded the chart is a note saying so.
+- **Bars** (`bar`): models ranked by the same `metric`, as horizontal bars from zero,
+  with a hairline where each tier begins. Models without the figure come last.
 
 ### Model page
 
