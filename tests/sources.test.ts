@@ -23,7 +23,6 @@ const tracked = (
 });
 
 describe('models.dev adapter', () => {
-  // Trimmed copy of a real api.json entry, plus noise the adapter must tolerate.
   const raw = {
     anthropic: {
       id: 'anthropic',
@@ -110,8 +109,6 @@ describe('models.dev adapter', () => {
 });
 
 describe('Arena adapter', () => {
-  // Rows as hyparquet returns them, taken from the live files. The two
-  // boards list different reasoning levels of the same model.
   const row = (name: string, rating: number, category = 'overall') => ({
     model_name: name,
     rating,
@@ -137,7 +134,6 @@ describe('Arena adapter', () => {
       row('Claude Opus 5 (Max)', 1700.4),
       row('Claude Opus 5 (Max)', 1650, 'webdev-react'),
     ],
-    // The agent board has a `score` column instead of `rating`.
     arena_agent: [
       agentRow('Claude Opus 5.5 (Max)', 0.1995562589597002),
       agentRow('Claude Opus 5 (Max)', 0.07495110951590737),
@@ -158,7 +154,6 @@ describe('Arena adapter', () => {
       }),
     ]);
     expect(snapshot.total).toBe(4);
-    // Agent scores keep four decimals; ratings keep two.
     expect(snapshot.frontier).toEqual({
       arena_text: 1538.28,
       arena_webdev: 1817.7,
@@ -177,7 +172,6 @@ describe('Arena adapter', () => {
         arena_agent: 0.1996,
         published: '2026-11-09',
       },
-      // Same name on every board: one entry carrying all the ratings.
       'Claude Opus 5 (Max)': {
         arena_text: 1506.3,
         arena_webdev: 1700.4,
@@ -210,7 +204,6 @@ describe('Arena adapter', () => {
     expect(() => arenaAdapter.transform(raw.arena_text, [])).toThrow();
     expect(() => arenaAdapter.transform({ arena_text: raw.arena_text }, [])).toThrow();
     expect(() => arenaAdapter.transform({ ...raw, arena_webdev: [] }, [])).toThrow();
-    // An agent row read by the rating column would have no score.
     expect(() =>
       arenaAdapter.transform(
         {
@@ -230,7 +223,6 @@ describe('Arena adapter', () => {
 });
 
 describe('Artificial Analysis adapter', () => {
-  // The example response from the API reference, verbatim, plus two more models.
   const raw = [
     {
       id: 'cd684ea4-b475-4269-b001-d469d06d8a7a',
@@ -323,7 +315,6 @@ describe('suggest', () => {
 });
 
 describe('LiveBench adapter', () => {
-  // The shape of data/<release>/categories.json and table.csv on the live site.
   const categories = {
     'Long Agentic': ['long_agentic'],
     Reasoning: ['reasoning'],
@@ -355,10 +346,6 @@ describe('LiveBench adapter', () => {
     const { snapshot, unmatched, warnings } = livebenchAdapter.transform(raw, [
       tracked('openai/gpt-6.1-sol', 'GPT-6.1 Sol', { livebench: 'gpt-6.1-sol' }),
     ]);
-    // Coding and Long Agentic are left out; Design weighs 1.5:
-    // (90 + 60 + 70 + 80 + 1.5 × 90) ÷ 5.5 = 79.09 for the leader,
-    // (70 + 60 + 50 + 40 + 1.5 × 80) ÷ 5.5 = 61.82 for GPT-6.1 Sol.
-    // "coder" only has scores in the dropped categories, so it is not listed.
     expect(snapshot.total).toBe(3);
     expect(snapshot.edition).toBe('2026-11-06');
     expect(snapshot.frontier).toEqual({ livebench: 79.09 });

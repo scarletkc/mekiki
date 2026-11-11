@@ -38,5 +38,5 @@ collaborator and can then open pull requests.
 - Repository documents are written in English.
 - Setup, commands and tuning the ratings are in the
   [development guide](docs/development.md); adding or correcting a model is in
-  [the model list](docs/model-list.md); the rules and the rating algorithm are in the
-  [design document](docs/SPEC.md).
+  [the model list](docs/model-list.md); the formulas, weights and thresholds are on the
+  [Method page](https://mekiki.fog.moe/method).

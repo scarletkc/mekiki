@@ -2,7 +2,6 @@
 
 Running mekiki locally, the project commands, and the changes that come up most: tuning
 the rating and adding a language. For the models on the site, see [the model list](model-list.md).
-The rules these guides rely on are in the [design](SPEC.md).
 
 ## Run it locally
 
@@ -26,12 +25,18 @@ snapshots in `data/snapshots/`, so it works offline and needs no API key.
 | `pnpm preview` | Serve the built site. |
 | `pnpm test` | Run the unit tests. |
 | `pnpm check` | Type-check the project (`astro check`). |
-| `pnpm lint` | Lint and check formatting with [Biome](https://biomejs.dev), as CI does. |
+| `pnpm lint` | Lint and check formatting with [Biome](https://biomejs.dev), then run `pnpm lint:comments`, as CI does. |
+| `pnpm lint:comments` | Fail on any comment in the code. |
 | `pnpm format` | Format with Biome. Markdown files are left alone. |
 | `pnpm smoke` | Browser smoke test of the built site (Playwright). Run `pnpm build` first. |
 | `pnpm sync` | Fetch the data sources, rebuild `data/models.json` and update `data/snapshots/`. |
 | `pnpm report` | Print every model's scores and the tier distribution. |
 | `pnpm history` | Record today's ratings in `data/history.jsonl` from the files as they are. Never goes online. |
+
+Code carries no comments: `pnpm lint:comments` fails on any comment in `.ts`, `.tsx`, `.js`,
+`.mjs`, `.cjs`, `.astro` and `.css` files, except tool directives (`@ts-check`, `@ts-nocheck`,
+`@ts-expect-error`, `@ts-ignore`, `/// <reference>`, `biome-ignore` and JSX pragmas such as
+`@jsxImportSource`).
 
 `pnpm smoke` needs a Chromium build once:
 
@@ -46,11 +51,10 @@ copy `.env.example` to `.env` and set `AA_API_KEY`; without it that source is sk
 The key is read only by `pnpm sync` and must never be committed.
 
 `pnpm sync --only=arena` syncs one source, and `pnpm sync --dry-run` fetches and reports
-without writing. What happens when a source fails is in
-[design §4.4](SPEC.md#44-sync).
+without writing.
 
 `pnpm sync` also records today's ratings in `data/history.jsonl`, the file the changelog,
-the RSS feeds and the trend charts are built from ([design §4.5](SPEC.md#45-history)).
+the RSS feeds and the trend charts are built from.
 Recording has been on since the site launched on 2026-11-11 (`changelogConfig.recordHistory`
 in `src/lib/scoring.config.ts`; with it off, neither `pnpm sync` nor `pnpm history` writes
 the file). The daily workflow commits it. A local run writes it too; commit
@@ -62,7 +66,7 @@ Every number of the rating lives in `scoringConfig` in
 [`src/lib/scoring.config.ts`](../src/lib/scoring.config.ts): the leaderboard metrics with
 their weight and zero point, the blended-price weights (cache read, input, output) and
 the cost index bounds, how far value trusts the measured run cost (`runCostWeight`), the
-value exponents and the tier thresholds. The formulas are in [design §5](SPEC.md#5-rating).
+value exponents and the tier thresholds. The formulas are on the [Method page](https://mekiki.fog.moe/method).
 
 1. Edit `src/lib/scoring.config.ts`.
 2. Run `pnpm report` to see the scores and how the models spread across the tiers.
@@ -87,8 +91,7 @@ dictionary in `src/i18n/`.
 4. Check that [giscus](https://giscus.app) has the language under the same tag as
    `LOCALE_INFO`: the discussion on model pages is shown in it.
 
-To change the default language, change `DEFAULT_LOCALE` in `src/i18n/locales.ts`. How
-unprefixed URLs pick a language is in [design §7](SPEC.md#7-site).
+To change the default language, change `DEFAULT_LOCALE` in `src/i18n/locales.ts`.
 
 ## Project layout
 
@@ -115,8 +118,9 @@ data/snapshots/                          one JSON file per data source
 data/history.jsonl                       the ratings, one line per recorded day
 scripts/sync.ts, scripts/report.ts       pnpm sync, pnpm report
 scripts/history.ts                       pnpm history
+scripts/check-comments.ts                pnpm lint:comments
 scripts/sources/                         one adapter per data source
 tests/                                   unit tests
 e2e/                                     browser smoke test
-docs/                                    design and guides
+docs/                                    guides
 ```

@@ -7,11 +7,6 @@ import type { ModelRow } from '../ModelTable';
 
 export type ChartStrings = Pick<Dictionary, 'chart' | 'tier' | 'empty' | 'rating'>;
 
-/**
- * Width of an element in CSS pixels, kept up to date as it resizes. Null
- * until the first measurement, so charts draw only at their real size and
- * their text and strokes never scale.
- */
 export function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [width, setWidth] = useState<number | null>(null);
@@ -29,7 +24,6 @@ export function useWidth<T extends HTMLElement>() {
 
 let canvas: CanvasRenderingContext2D | null | undefined;
 
-/** Rendered width of a line of text in the page's font, for label placement. */
 export function textWidth(text: string, size: number, weight = 400): number {
   canvas ??= document.createElement('canvas').getContext('2d');
   if (!canvas) return text.length * size * 0.6;
@@ -37,26 +31,22 @@ export function textWidth(text: string, size: number, weight = 400): number {
   return canvas.measureText(text).width;
 }
 
-/** A metric's figure as the site prints it. */
 export function formatMetric(metric: ChartMetric, value: number): string {
   return metric === 'cost' ? formatPrice(value) : formatScore(value);
 }
 
-/** The figure a model has for a metric now, or null. */
 export function metricOf(model: ModelRow, metric: ChartMetric): number | null {
   if (metric === 'int') return model.intelligence.score;
   if (metric === 'val') return model.value.score;
   return model.cost.blended;
 }
 
-/** Name of a metric, as the charts' metric picker shows it. */
 export function metricLabel(metric: ChartMetric, strings: ChartStrings): string {
   if (metric === 'int') return strings.rating.intelligence;
   if (metric === 'val') return strings.rating.value;
   return strings.chart.blended;
 }
 
-/** The three ratings of a model as label / figure / tier rows, for tooltips. */
 export function ratingRows(model: ModelRow, strings: ChartStrings) {
   const { tier, empty, rating, chart } = strings;
   const { intelligence, cost, value } = model;
@@ -83,7 +73,6 @@ export function ratingRows(model: ModelRow, strings: ChartStrings) {
   ];
 }
 
-/** Plain-text summary of a model's ratings, for accessible names and titles. */
 export function ratingSummary(model: ModelRow, strings: ChartStrings): string {
   const rows = ratingRows(model, strings).map(
     (row) => `${row.label} ${row.figure}${row.tier ? ` (${row.tier})` : ''}`,
@@ -91,10 +80,6 @@ export function ratingSummary(model: ModelRow, strings: ChartStrings): string {
   return `${model.name}: ${rows.join(', ')}`;
 }
 
-/**
- * A tooltip pinned to a point inside a chart, flipped to the left of the
- * point on the right half so it stays inside the chart.
- */
 export function ChartTooltip({
   x,
   y,
@@ -104,7 +89,6 @@ export function ChartTooltip({
 }: {
   x: number;
   y: number;
-  /** Width of the chart, to decide which side the tooltip goes. */
   width: number;
   children: ReactNode;
   className?: string;
@@ -128,7 +112,6 @@ export function ChartTooltip({
   );
 }
 
-/** Tooltip body listing a model's three ratings, figures first. */
 export function RatingTooltipBody({ model, strings }: { model: ModelRow; strings: ChartStrings }) {
   return (
     <>

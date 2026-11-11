@@ -5,8 +5,6 @@ import type { ModelRecord } from '../../lib/dataset';
 import { modelImagePath, modelShareText } from '../../lib/share';
 import { getDataset } from '../../lib/site-data';
 
-// `/m/<provider>/<model>` is the language-neutral link to a model (the JSON
-// API's `url` field). It forwards to the page in the visitor's language.
 export async function getStaticPaths() {
   const { models } = await getDataset();
   return models.map((model) => ({ params: { id: model.id }, props: { model } }));

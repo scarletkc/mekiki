@@ -1,17 +1,10 @@
-/**
- * RSS 2.0 feed of the changelog, one item per day with changes. Everything
- * in it is dated by the history, never by the build, so rebuilding the site
- * does not change the feed.
- */
 import { LOCALE_INFO, fmt, localePath, useTranslations, type Locale } from '../i18n';
 import { describeChange } from './change-text';
 import type { Changelog } from './changelog';
 import { SITE_URL } from './dataset';
 
-/** How many days the feed carries. */
 export const FEED_DAYS = 50;
 
-/** Path of a locale's feed. Feeds are files, so `localePath` would not prefix them. */
 export const feedPath = (locale: Locale) => `/${locale}/feed.xml`;
 
 export function escapeXml(text: string): string {
@@ -23,15 +16,10 @@ export function escapeXml(text: string): string {
     .replace(/'/g, '&apos;');
 }
 
-/** RFC 822 date, as RSS wants it, for the start of a UTC day. */
 const rfc822 = (date: string) => new Date(`${date}T00:00:00Z`).toUTCString();
 
 const absolute = (path: string) => new URL(path, SITE_URL).href;
 
-/**
- * The feed of one locale. Model names are linked to their pages; pass
- * `linkable` to link only models that still have one.
- */
 export function buildFeed(changelog: Changelog, locale: Locale, linkable?: Set<string>): string {
   const t = useTranslations(locale);
   const c = t.changelog;
@@ -83,7 +71,6 @@ export function buildFeed(changelog: Changelog, locale: Locale, linkable?: Set<s
   ].join('\n');
 }
 
-/** A static RSS response. */
 export function feedResponse(xml: string): Response {
   return new Response(xml, { headers: { 'Content-Type': 'application/rss+xml; charset=utf-8' } });
 }

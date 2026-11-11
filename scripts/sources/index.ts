@@ -6,7 +6,6 @@ import { livebenchAdapter } from './livebench';
 import { modelsdevAdapter } from './modelsdev';
 import type { SourceAdapter, TrackedModel } from './types';
 
-/** Every data source. To add one, write an adapter and list it here. */
 export const adapters: { [S in SourceId]: SourceAdapter<S> } = {
   modelsdev: modelsdevAdapter,
   aa: aaAdapter,
@@ -14,7 +13,6 @@ export const adapters: { [S in SourceId]: SourceAdapter<S> } = {
   livebench: livebenchAdapter,
 };
 
-/** The listed models as the adapters see them. */
 export function trackedModels(entries: ModelEntry[]): TrackedModel[] {
   return entries.map((entry) => ({
     id: entry.id,

@@ -66,13 +66,11 @@ import { metricLabel } from './charts/shared';
 import { TrendChart, type TrendData } from './charts/TrendChart';
 import { TierMeter, type RatingKind } from './TierMeter';
 
-/** What the table needs to know about a model; a slimmed-down ModelRecord. */
 export interface ModelRow {
   id: string;
   name: string;
   vendor: string;
   legacy: boolean;
-  /** Link to the detail page, already localised. */
   href: string;
   intelligence: { score: number | null; tier: IntelligenceTier | null };
   cost: {
@@ -85,16 +83,11 @@ export interface ModelRow {
   value: {
     score: number | null;
     tier: ValueTier | null;
-    /**
-     * Price per 1M tokens that value is computed from, when it comes from the
-     * measured run cost rather than the list price; null otherwise.
-     */
     measuredPrice: number | null;
   };
   openWeights: boolean | null;
 }
 
-/** The UI strings the table uses, picked from the page's dictionary. */
 export type ModelTableStrings = Pick<
   Dictionary,
   'table' | 'tier' | 'empty' | 'badge' | 'chart' | 'rating'
@@ -105,11 +98,8 @@ export type ModelTableStrings = Pick<
 interface ModelTableProps {
   models: ModelRow[];
   strings: ModelTableStrings;
-  /** BCP 47 tag, for locale-aware text sorting. */
   lang: string;
-  /** The compare page in the page's locale; the selection is appended as a query. */
   compareHref: string;
-  /** Recorded history, for the trend chart. */
   trend: TrendData;
 }
 
@@ -135,7 +125,6 @@ const COLUMN_IDS = [
 const DEFAULT_SORT: SortingState = [{ id: 'intelligence', desc: true }];
 const ALL = 'all';
 
-/** How the models are shown. Keys double as the `view` URL parameter. */
 const VIEWS = ['table', 'quadrant', 'line', 'bar'] as const;
 type View = (typeof VIEWS)[number];
 const VIEW_ICONS: Record<View, LucideIcon> = {
@@ -145,14 +134,12 @@ const VIEW_ICONS: Record<View, LucideIcon> = {
   bar: ChartBarDecreasing,
 };
 
-/** What the table shows besides filters and sort: the view and the charted metric. */
 interface Display {
   view: View;
   metric: ChartMetric;
 }
 const DEFAULT_DISPLAY: Display = { view: 'table', metric: 'int' };
 
-/** Filter state. Keys double as the (locale-independent) URL query parameters. */
 interface Filters {
   q: string;
   vendor: string;
@@ -229,11 +216,6 @@ function writeUrl(filters: Filters, sorting: SortingState, display: Display) {
   window.history.replaceState(window.history.state, '', url);
 }
 
-/**
- * The compare selection, passed to the checkboxes by context. Reading it in
- * the column definitions instead would rebuild every cell on each tick,
- * which replaces the checkbox and loses keyboard focus.
- */
 const PickContext = createContext<{ picked: string[]; toggle: (id: string) => void }>({
   picked: [],
   toggle: () => {},
@@ -249,7 +231,6 @@ function PickBox({
   id: string;
   name: string;
   strings: ModelTableStrings['compare'];
-  /** For a label that widens the hit area. */
   inputId?: string;
   className?: string;
 }) {
@@ -288,7 +269,6 @@ function SortArrow({ direction }: { direction: 'asc' | 'desc' | false }) {
   );
 }
 
-/** Props for the three rating meters of a model; shared by the table and the cards. */
 function meterProps(model: ModelRow, { tier, empty }: Pick<ModelTableStrings, 'tier' | 'empty'>) {
   const { intelligence, cost, value } = model;
   return {
@@ -354,11 +334,6 @@ function Price({ model, empty }: { model: ModelRow; empty: ModelTableStrings['em
   );
 }
 
-/**
- * The price value is computed from, when it comes from the measured run cost.
- * Shown next to the list price because the two can be far apart: a model that
- * is cheap per token can still use many more tokens.
- */
 function MeasuredPrice({
   price,
   strings,
@@ -385,17 +360,10 @@ function FilterSelect({
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
-  /** Label of the "no filter" choice; leave out for a select without one. */
   allLabel?: string;
 }) {
-  // When the menu closes, focus goes back to the trigger so keyboard users
-  // can carry on from there. Browsers then draw the focus ring even if the
-  // menu was used with a mouse, which reads as a stuck "selected" state. So
-  // the ring is hidden after pointer use and comes back with the keyboard.
   const [open, setOpen] = useState(false);
   const [byPointer, setByPointer] = useState(false);
-  // Radix only knows the selected item's text after hydration; passing it in
-  // keeps the prerendered trigger from showing up empty and then jumping.
   const selected =
     value === ALL ? allLabel : options.find((option) => option.value === value)?.label;
 
@@ -407,8 +375,6 @@ function FilterSelect({
         onPointerDown={() => setByPointer(true)}
         onKeyDown={() => setByPointer(false)}
         onBlur={() => {
-          // Focus also leaves the trigger while the menu is open; only a
-          // real departure resets the state.
           if (!open) setByPointer(false);
         }}
         className="w-full min-w-0 gap-1 data-[size=default]:h-9 data-[pointer]:focus-visible:border-input data-[pointer]:focus-visible:ring-0 sm:w-fit sm:data-[size=default]:h-8"
@@ -418,8 +384,6 @@ function FilterSelect({
           <SelectValue className="truncate">{selected}</SelectValue>
         </span>
       </SelectTrigger>
-      {/* Drop down below the trigger. The default ("item-aligned") lays the
-          list over the trigger, which hides the filter's label. */}
       <SelectContent position="popper" align="start">
         {allLabel !== undefined && <SelectItem value={ALL}>{allLabel}</SelectItem>}
         {options.map((option) => (
@@ -432,7 +396,6 @@ function FilterSelect({
   );
 }
 
-/** The Table / Quadrant / Trend / Bars switch; icons only on phones. */
 function ViewSwitch({
   view,
   onChange,
@@ -477,8 +440,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORT);
   const [display, setDisplay] = useState<Display>(DEFAULT_DISPLAY);
-  // The page is prerendered with the default view; the view in the URL is
-  // applied right after hydration, then every change is written back.
   const [urlRead, setUrlRead] = useState(false);
 
   const vendors = useMemo(
@@ -503,7 +464,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   const setFilter = <K extends keyof Filters>(key: K, value: Filters[K]) =>
     setFilters((current) => ({ ...current, [key]: value }));
 
-  // Models ticked for the compare page, in the order they were ticked.
   const [picked, setPicked] = useState<string[]>([]);
   const toggle = useCallback(
     (id: string) =>
@@ -518,8 +478,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   );
   const pickValue = useMemo(() => ({ picked, toggle }), [picked, toggle]);
 
-  // Legacy and open-weights have no column of their own, so they narrow the
-  // data before it reaches the table.
   const data = useMemo(
     () =>
       models.filter((model) => {
@@ -543,8 +501,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
 
   const columns = useMemo(() => {
     const collator = new Intl.Collator(lang, { numeric: true, sensitivity: 'base' });
-    // Empty cells are returned as undefined and `sortUndefined: 'last'`
-    // keeps them at the bottom in both directions.
     const text = {
       sortFn: (
         a: { getValue: (id: string) => unknown },
@@ -570,8 +526,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         cell: ({ row }) => {
           const model = row.original;
           return (
-            // The checkbox stays beside the first line of the name; only the
-            // name and badges wrap on narrow screens.
             <span className="flex items-start gap-2.5">
               <span className="flex h-[1.5em] items-center">
                 <PickBox id={model.id} name={model.name} strings={compare} />
@@ -646,8 +600,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   });
 
   const rows = table.getRowModel().rows;
-  // The charts show the same models as the table. Quadrant labels and the
-  // trend's default line follow the table's order; the bars rank by metric.
   const shown = useMemo(() => rows.map((row) => row.original), [rows]);
   const chartStrings = useMemo(
     () => ({ chart, tier, empty, rating: strings.rating }),
@@ -664,14 +616,11 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   const tierOptions = <T extends string>(keys: readonly T[], labels: Record<T, string>) =>
     keys.map((key) => ({ value: key, label: labels[key] }));
 
-  // Narrow screens get cards instead of the table, so sorting needs its own
-  // control there. It drives the same state as the column headers.
   const sort = sorting[0] ?? DEFAULT_SORT[0]!;
   const sortOptions = COLUMN_IDS.map((id) => ({ value: id, label: t.columns[id] }));
   const SortIcon = sort.desc ? ArrowDownWideNarrow : ArrowUpNarrowWide;
 
   return (
-    // Room at the bottom so the compare bar never covers the last controls.
     <div className={cn(picked.length > 0 && 'pb-20')}>
       <search
         aria-label={t.filters}
@@ -808,7 +757,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
       )}
 
       <PickContext.Provider value={pickValue}>
-        {/* Cards, below the md breakpoint. */}
         <ul
           className={cn(
             'bg-card divide-y overflow-hidden rounded-xl border md:hidden',
@@ -821,7 +769,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
             return (
               <li key={row.id} className="hover:bg-muted/50 relative px-4 py-3.5 transition-colors">
                 <div className="flex items-start gap-3">
-                  {/* A wider hit area than the box, and above the card's link. */}
                   <label
                     htmlFor={`pick-card-${model.id}`}
                     className="relative z-10 -m-2.5 flex h-[calc(1.5em+1.25rem)] items-center p-2.5"
@@ -876,7 +823,6 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
           )}
         </ul>
 
-        {/* The table, from the md breakpoint up. */}
         <div
           className={cn(
             'bg-card hidden overflow-hidden rounded-xl border',

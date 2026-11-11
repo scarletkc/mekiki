@@ -14,38 +14,22 @@ import {
   type ChartStrings,
 } from './shared';
 
-/** Where the quadrants split: the start of the High intelligence and High cost tiers. */
 const SPLIT_SCORE = scoringConfig.intelligence.tiers.high;
 const SPLIT_PRICE = scoringConfig.cost.tiers.mid;
 
 const DOT = 5;
-/** Largest hover radius of a dot. */
 const HIT = 14;
 const LABEL_SIZE = 11;
 const LABEL_HEIGHT = 14;
-/** How far a name keeps from the centre of its dot. */
 const LABEL_RING = DOT + 2;
-/**
- * The best model usually scores close to 100, so its dot sits on the plot's
- * top edge. A narrow chart can leave no room beside it (the right edge on one
- * side, the quadrant name on the other), so the top padding holds a row for
- * a name placed diagonally above it (`placeLabels` offsets those by r + 1).
- */
 const PAD = { top: LABEL_RING + 1 + LABEL_HEIGHT + 2, right: 12, bottom: 22, left: 32 };
 
-/**
- * Intelligence against blended price, one dot per model. Price runs on a
- * log axis (the cheapest and dearest models are 50× apart). Two lines split
- * the plot at the start of the High intelligence and High cost tiers, so
- * the quadrants mean the same thing whatever the filters show.
- */
 export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings: ChartStrings }) {
   const { chart } = strings;
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<string | null>(null);
   const lastPointer = useRef<string>('mouse');
 
-  // A log axis has no place for a free model, and an unrated one has no height.
   const [plotted, skipped] = useMemo(() => {
     const onAxis = (model: ModelRow) =>
       model.intelligence.score !== null && model.cost.blended !== null && model.cost.blended > 0;
@@ -70,8 +54,6 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
       x: x(model.cost.blended!),
       y: y(model.intelligence.score!),
     }));
-    // Each dot answers the pointer up to halfway to its nearest neighbour,
-    // so dots close together never steal each other's hover.
     const points = centres.map((point) => {
       const nearest = Math.min(
         ...centres
@@ -81,7 +63,6 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
       return { ...point, hit: Math.max(DOT + 1, Math.min(HIT, nearest / 2)) };
     });
 
-    // Quadrant names sit in the plot's corners; labels keep clear of them.
     const corner = (text: string, side: 'left' | 'right', edge: 'top' | 'bottom') => {
       const w = textWidth(text, LABEL_SIZE);
       const left = side === 'left' ? PAD.left + 6 : PAD.left + plotWidth - 6 - w;
@@ -95,7 +76,6 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
       corner(chart.areas.basicPricey, 'right', 'bottom'),
     ];
 
-    // Most intelligent first, so the leaders get their labels.
     const byScore = [...points].sort(
       (a, b) => b.model.intelligence.score! - a.model.intelligence.score!,
     );
@@ -135,7 +115,6 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
         <span className="text-muted-foreground text-xs">{strings.rating.intelligence} ↑</span>
       </figcaption>
       <div ref={ref} className="relative" style={{ height }}>
-        {/* Grid, axes and names: decoration, as each dot below has its own name. */}
         {layout && width !== null && (
           <svg
             width={width}
@@ -184,7 +163,6 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
               />
             </g>
 
-            {/* A halo in the card colour keeps text readable over grid lines. */}
             <g
               className="fill-muted-foreground stroke-card"
               fontSize="11"
@@ -267,7 +245,6 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
             viewBox={`0 0 ${width} ${height}`}
             className="absolute inset-0 overflow-visible"
             aria-label={chart.quadrantCaption}
-            // A tap on an empty part of the plot, or Escape, closes the details.
             onClick={(event) => {
               if (event.target === event.currentTarget) setActive(null);
             }}
@@ -286,8 +263,6 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
                   onPointerDown={(event) => {
                     lastPointer.current = event.pointerType;
                   }}
-                  // Touch has no hover: lifting the finger fires a leave before
-                  // the click, so touch is left to the click handler below.
                   onPointerEnter={(event) => {
                     if (event.pointerType !== 'touch') setActive(model.id);
                   }}
@@ -296,13 +271,11 @@ export function QuadrantChart({ models, strings }: { models: ModelRow[]; strings
                       setActive((current) => (current === model.id ? null : current));
                     }
                   }}
-                  // Only keyboard focus: a tap focuses the dot before its click.
                   onFocus={(event) => {
                     if (event.currentTarget.matches(':focus-visible')) setActive(model.id);
                   }}
                   onBlur={() => setActive((current) => (current === model.id ? null : current))}
                   onClick={(event) => {
-                    // On touch, the first tap shows the details, the second opens the page.
                     if (lastPointer.current === 'touch' && active !== model.id) {
                       event.preventDefault();
                       setActive(model.id);

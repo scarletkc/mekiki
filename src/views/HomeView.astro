@@ -41,7 +41,6 @@ const rows: ModelRow[] = dataset.models.map((model) => ({
   openWeights: model.facts.open_weights,
 }));
 
-// History for the trend chart: recorded days, ending on what the table shows today.
 const { entries } = getHistory();
 const today = utcDate(new Date(dataset.generated_at));
 const recorded = entries.filter((entry) => entry.date < today);

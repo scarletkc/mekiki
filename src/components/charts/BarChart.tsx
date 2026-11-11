@@ -15,16 +15,11 @@ import {
   type ChartStrings,
 } from './shared';
 
-/** Room kept right of the longest bar for its figure, in pixels. */
 const FIGURE_ROOM = 60;
-/** Horizontal position of a fraction of the axis, inside a bar track. */
 const at = (fraction: number) => `calc((100% - ${FIGURE_ROOM}px) * ${fraction})`;
 
-/** Where each tier begins on a metric's axis, lowest first. */
 function tierStarts(metric: ChartMetric, strings: ChartStrings) {
   if (metric === 'cost') {
-    // Cost tiers are set by their upper bounds; each bound is where the
-    // next tier up begins.
     const bounds = scoringConfig.cost.tiers;
     return COST_TIERS.slice(0, -1).map((key, index) => ({
       value: bounds[key as keyof typeof bounds],
@@ -39,10 +34,6 @@ function tierStarts(metric: ChartMetric, strings: ChartStrings) {
   }));
 }
 
-/**
- * Models ranked by one metric, as horizontal bars from zero. Hairlines mark
- * where each tier begins; models without the figure are listed last.
- */
 export function BarChart({
   models,
   metric,
@@ -69,8 +60,6 @@ export function BarChart({
     return { ranked, missing, hi: axis.hi, ticks: axis.ticks, tiers };
   }, [models, metric, strings]);
 
-  // Tier names that would run into the one before are left out; the
-  // hairlines stay.
   const tierNames = useMemo(() => {
     if (trackWidth === null) return [];
     let free = 0;
@@ -102,7 +91,6 @@ export function BarChart({
         {fmt(chart.barCaption, { metric: label })}
       </figcaption>
 
-      {/* Tier names above the hairlines. */}
       <div className={grid} aria-hidden="true">
         <span />
         <span ref={trackRef} className="relative h-4">
@@ -162,7 +150,6 @@ export function BarChart({
         ))}
       </ol>
 
-      {/* Axis ticks under the bars. */}
       <div className={cn(grid, 'mt-1')} aria-hidden="true">
         <span />
         <span className="relative h-4">

@@ -102,8 +102,6 @@ describe('placeLabels', () => {
   });
 
   it('labels a mark on the top edge beside a corner name when there is a row above it', () => {
-    // The quadrant chart on a phone: the best model near the right edge, the
-    // corner name just below and to its left.
     const corner = (top: number) => ({ left: 244, top: top + 4, right: 299, bottom: top + 18 });
     const mark = (top: number) => ({ id: 'a', x: 276, y: top, r: 7, width: 88, height: 14 });
     expect(placeLabels([mark(8)], 317, 330, [corner(8)]).has('a')).toBe(false);

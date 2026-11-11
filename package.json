@@ -16,7 +16,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "lint": "biome check .",
+    "lint": "biome check . && pnpm lint:comments",
+    "lint:comments": "tsx scripts/check-comments.ts",
     "format": "biome format --write .",
     "test": "vitest run",
     "smoke": "playwright test",
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
+    "@astrojs/compiler-rs": "^0.5.3",
     "@biomejs/biome": "2.6.6",
     "@fontsource/instrument-sans": "^5.3.0",
     "@playwright/test": "1.65.0",

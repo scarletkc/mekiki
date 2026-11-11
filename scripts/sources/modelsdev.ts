@@ -1,15 +1,3 @@
-/**
- * models.dev: prices, context window, release date, open weights and
- * modalities. No key needed.
- *
- * Response shape (checked against the live API on 2026-11-11):
- *   { [provider]: { id, name, models: { [model]: {
- *       name, release_date, open_weights, modalities: { input[], output[] },
- *       limit: { context, output }, cost: { input, output, cache_read, … }, …
- *   } } } }
- * Prices are per provider, which is why the mapping carries a provider
- * prefix: `anthropic/claude-opus-5-5`.
- */
 import { z } from 'astro/zod';
 import type { ModelsdevModel } from '../../src/lib/snapshots';
 import { suggest, type Candidate } from '../lib/candidates';
@@ -18,9 +6,6 @@ import { SourceDataError, type SourceAdapter, type Unmatched } from './types';
 
 export const MODELSDEV_URL = 'https://models.dev/api.json';
 
-// Only the outer structure is validated for the whole payload; individual
-// models are parsed one by one, so a malformed entry for a model nobody
-// tracks cannot break the sync.
 const payloadSchema = z.record(
   z.string(),
   z.object({ models: z.record(z.string(), z.unknown()) }).loose(),

@@ -16,7 +16,6 @@ import { COMPARE_MAX } from '@/lib/share';
 import { cn } from '@/lib/utils';
 import { TierMeter } from './TierMeter';
 
-/** The UI strings the compare table uses, picked from the page's dictionary. */
 export type CompareStrings = Pick<
   Dictionary,
   'compare' | 'rating' | 'tier' | 'empty' | 'metric' | 'badge'
@@ -37,9 +36,7 @@ export type CompareStrings = Pick<
 };
 
 interface CompareTableProps {
-  /** Every model, in the order the "add" menu lists them. */
   models: CompareModel[];
-  /** Selection rendered before the address is read. */
   initial: string[];
   strings: CompareStrings;
 }
@@ -47,9 +44,7 @@ interface CompareTableProps {
 interface Row {
   label: string;
   cell: (model: CompareModel) => ReactNode;
-  /** The figure compared across models; null when the model has none. */
   figure?: (model: CompareModel) => number | null;
-  /** Which end of the figure is best. */
   best?: 'high' | 'low';
 }
 
@@ -58,7 +53,6 @@ interface Group {
   rows: Row[];
 }
 
-/** IDs whose figure is the best in the row; empty unless at least two figures differ. */
 function bestIds(models: CompareModel[], row: Row): Set<string> {
   if (!row.figure || !row.best) return new Set();
   const figures = models
@@ -73,8 +67,6 @@ function bestIds(models: CompareModel[], row: Row): Set<string> {
 
 export function CompareTable({ models, initial, strings: s }: CompareTableProps) {
   const [ids, setIds] = useState<string[]>(initial);
-  // The page is prerendered with the default selection; the one in the
-  // address is applied after hydration, and every change is written back.
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
@@ -302,7 +294,6 @@ export function CompareTable({ models, initial, strings: s }: CompareTableProps)
                       colSpan={selected.length + 1}
                       className="text-muted-foreground px-3 pt-4 pb-1 text-start text-xs font-medium sm:pl-3"
                     >
-                      {/* Sticky so the group name stays in view when the table scrolls sideways. */}
                       <span className="sticky left-3">{group.label}</span>
                     </th>
                   </tr>

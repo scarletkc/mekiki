@@ -33,16 +33,11 @@ import { SOURCE_INFO } from '../lib/snapshots';
 
 interface Props {
   locale: Locale;
-  /** Page path without the locale prefix, e.g. `/method` or `/m/openai/gpt-6.1-sol`. */
   path: string;
-  /** Page title; omitted on the home page. */
   title?: string;
   description?: string;
-  /** Share image, site-relative; defaults to the site card. */
   image?: string;
-  /** Text alternative of the share image. */
   imageAlt?: string;
-  /** For pages that are not real content (404): no canonical, no hreflang, not indexed. */
   noindex?: boolean;
 }
 
@@ -68,8 +63,6 @@ const nav = [
   { href: localePath(locale, '/method'), label: t.nav.method, key: '/method', icon: BookOpen },
   { href: localePath(locale, '/api'), label: t.nav.api, key: '/api', icon: Braces },
 ];
-// Both language lists (desktop menu, mobile panel) need the same attributes:
-// the script at the bottom keeps the query string and remembers the choice.
 const languages = LOCALES.map((item) => ({
   locale: item,
   href: localePath(item, path),
@@ -82,10 +75,6 @@ const section = noindex
     ? '/'
     : path;
 
-// Header controls take their look from shadcn's button, rendered here as
-// plain classes. The two menus stay <details> with a small inline script:
-// shadcn's DropdownMenu and Sheet are React, which every page would then
-// have to load, and they would not open without JavaScript.
 const headerButton = {
   language: buttonVariants({
     variant: 'ghost',
@@ -109,7 +98,6 @@ const headerButton = {
 };
 
 const REPO_URL = 'https://github.com/scarletkc/mekiki';
-// All feedback goes through the repository's issue forms (.github/ISSUE_TEMPLATE).
 const FEEDBACK_URL = `${REPO_URL}/issues/new/choose`;
 const footerLink =
   'decoration-muted-foreground/40 hover:text-foreground hover:decoration-foreground underline underline-offset-4 transition-colors';
@@ -174,7 +162,6 @@ const attribution = [
     <meta name="theme-color" content="#fafbfc" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#14181f" media="(prefers-color-scheme: dark)" />
     <script is:inline>
-      // Runs before first paint so the page never flashes the wrong theme.
       (function () {
         var stored = null;
         try {
@@ -406,7 +393,6 @@ const attribution = [
             } catch (_error) {}
           });
         }
-        // Follow the system while the visitor has not chosen a theme.
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (event) {
           var stored = null;
           try {
@@ -414,8 +400,6 @@ const attribution = [
           } catch (_error) {}
           if (!stored) root.classList.toggle('dark', event.matches);
         });
-        // Keep the current filters and sort when switching language, and
-        // remember the choice for the unprefixed URLs (src/layouts/Redirect.astro).
         document.querySelectorAll('[data-locale-link]').forEach(function (link) {
           link.addEventListener('click', function () {
             link.setAttribute('href', link.pathname + window.location.search + window.location.hash);
@@ -424,9 +408,6 @@ const attribution = [
             } catch (_error) {}
           });
         });
-        // The language menu and the mobile menu are <details>, so they open
-        // without JavaScript. This adds what a menu is expected to do: one
-        // open at a time, closing on Escape or on a click elsewhere.
         var menus = Array.prototype.slice.call(document.querySelectorAll('details[data-menu]'));
         menus.forEach(function (menu) {
           menu.addEventListener('toggle', function () {
@@ -451,7 +432,6 @@ const attribution = [
             if (summary && hadFocus) summary.focus();
           });
         });
-        // The mobile menu has no place on a wide screen.
         var mobile = document.querySelector('[data-mobile-menu]');
         window.matchMedia('(min-width: 48rem)').addEventListener('change', function (event) {
           if (event.matches && mobile) mobile.open = false;

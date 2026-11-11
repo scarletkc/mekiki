@@ -1,10 +1,3 @@
-/**
- * Snapshot files written by `pnpm sync` and read by the site build
- * (docs/SPEC.md §4.3). The build never touches the network: it only reads
- * these files, and a missing or broken file simply means "no data".
- *
- * Must not import `astro:*` modules (the Node scripts use this too).
- */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'astro/zod';
@@ -14,7 +7,6 @@ export const SNAPSHOT_DIR = 'data/snapshots';
 export const SOURCE_IDS = ['modelsdev', 'aa', 'arena', 'livebench'] as const;
 export type SourceId = (typeof SOURCE_IDS)[number];
 
-/** Static facts about each source, used for attribution and links. */
 export const SOURCE_INFO: Record<SourceId, { name: string; url: string; license: string | null }> =
   {
     modelsdev: { name: 'models.dev', url: 'https://models.dev/', license: 'MIT' },
@@ -29,26 +21,19 @@ const nullableNumber = z.number().nullable();
 function snapshotOf<S extends string, M extends z.ZodType>(source: S, model: M) {
   return z.object({
     source: z.literal(source),
-    /** When the data in this file was last fetched and found changed. */
     fetched_at: z.string(),
-    /** How many models the full source listed; used to spot a broken sync. */
     total: z.number().int().nonnegative().optional(),
-    /** Which release of the leaderboard the data is from, when the source has releases. */
     edition: z.string().optional(),
-    /** Best raw score of each metric across the source's full leaderboard. */
     frontier,
-    /** Tracked models only, keyed by the model's ID in that source. */
     models: z.record(z.string(), model),
   });
 }
 
 export const modelsdevModelSchema = z.object({
   name: z.string().nullable(),
-  /** USD per 1M tokens. */
   input: nullableNumber,
   output: nullableNumber,
   cache_read: nullableNumber,
-  /** Context window in tokens. */
   context: nullableNumber,
   release_date: z.string().nullable(),
   open_weights: z.boolean().nullable(),
@@ -58,28 +43,17 @@ export const modelsdevModelSchema = z.object({
 export const aaModelSchema = z.object({
   name: z.string().nullable(),
   aa_intelligence: nullableNumber,
-  /** Total USD spent running the full Intelligence Index on this model. */
   index_cost_usd: nullableNumber,
 });
 
-// One entry per model name. The same name can appear on several boards, and
-// a name may exist on one board only, so each rating is nullable.
 export const arenaModelSchema = z.object({
-  /** Rating on the text board. */
   arena_text: nullableNumber.default(null),
-  /** Rating on the WebDev board. */
   arena_webdev: nullableNumber.default(null),
-  /** IPS score on the agent board (Agent Arena). */
   arena_agent: nullableNumber.default(null),
-  /** Date of the leaderboard release these ratings come from. */
   published: z.string().nullable(),
 });
 
 export const livebenchModelSchema = z.object({
-  /**
-   * Score, 0–100: the weighted mean of the categories the AA Intelligence
-   * Index does not already test (`livebenchCategories` in scoring.config.ts).
-   */
   livebench: nullableNumber,
 });
 
@@ -112,7 +86,6 @@ export function snapshotPath(source: SourceId, root: string = process.cwd()): st
   return join(root, SNAPSHOT_DIR, `${source}.json`);
 }
 
-/** Read one snapshot. Returns null when the file is missing, unreadable or invalid. */
 export function readSnapshot<S extends SourceId>(
   source: S,
   root: string = process.cwd(),

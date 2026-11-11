@@ -1,15 +1,9 @@
-/**
- * Changelog entries as localised text, shared by the pages (which link the
- * model names) and the RSS feeds (which render them as HTML).
- */
 import type { Dictionary } from '../i18n';
 import type { Change, ModelRef, PriceFields, RatingKey } from './changelog';
 import { formatPrice, formatScore } from './format';
 
-/** Plain text, or a model to be linked. */
 export type Segment = string | ModelRef;
 
-/** Fill a template whose `{name}` placeholders may stand for models. */
 export function fillSegments(template: string, values: Record<string, Segment>): Segment[] {
   const segments: Segment[] = [];
   let last = 0;
@@ -21,7 +15,6 @@ export function fillSegments(template: string, values: Record<string, Segment>):
     last = match.index! + match[0].length;
   }
   segments.push(template.slice(last));
-  // Merge neighbouring strings and drop empty ones.
   return segments.reduce<Segment[]>((merged, segment) => {
     const previous = merged.at(-1);
     if (typeof segment === 'string' && typeof previous === 'string') {
@@ -51,7 +44,6 @@ function priceText(t: Dictionary, price: PriceFields | null): string {
 const cachePrice = (t: Dictionary, value: number | null) =>
   value === null ? t.empty.noData : formatPrice(value);
 
-/** One change as text segments, in the given dictionary's language. */
 export function describeChange(change: Change, t: Dictionary): Segment[] {
   const c = t.changelog;
   switch (change.kind) {
@@ -139,14 +131,12 @@ function fillText(template: string, values: Record<string, string>): string {
   return fillSegments(template, values).join('');
 }
 
-/** One change as plain text, model names unlinked. */
 export function changeText(change: Change, t: Dictionary): string {
   return describeChange(change, t)
     .map((segment) => (typeof segment === 'string' ? segment : segment.name))
     .join('');
 }
 
-/** "1 change" / "3 changes". */
 export function changeCount(n: number, t: Dictionary): string {
   return n === 1 ? t.changelog.countOne : t.changelog.countOther.replace('{n}', String(n));
 }

@@ -5,11 +5,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Palette: ink and seal. Quality ratings (intelligence, value) are drawn in
- * indigo ink; cost is drawn in vermilion, the colour of an appraiser's seal.
- * Everything else stays neutral so the two rating colours carry meaning.
- */
 @theme inline {
     --font-sans:
         'Instrument Sans Variable', ui-sans-serif, system-ui, 'PingFang SC', 'Hiragino Sans GB',
@@ -117,7 +112,6 @@
         color-scheme: dark;
     }
 
-    /* Traditional Chinese pages fall back to Traditional system fonts. */
     html:lang(zh-TW) {
         font-family:
             'Instrument Sans Variable', ui-sans-serif, system-ui, 'PingFang TC',
@@ -144,7 +138,6 @@
         background: color-mix(in oklch, var(--primary) 22%, transparent);
     }
 
-    /* The header menus draw their own trigger; other <details> keep the marker. */
     details[data-menu] > summary {
         list-style: none;
         cursor: pointer;
@@ -156,7 +149,6 @@
 }
 
 @layer components {
-    /* The sticky site header: translucent over the page where supported. */
     .site-header {
         background: var(--background);
     }
@@ -168,7 +160,6 @@
         }
     }
 
-    /* A dropdown panel; matches the Radix select menus. */
     .menu-panel {
         z-index: 50;
         background: var(--popover);
@@ -191,13 +182,11 @@
         }
     }
 
-    /* Figures that are compared down a column. */
     .num {
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
 
-    /* Running text on the method, API and detail pages. */
     .prose {
         max-width: 68ch;
     }
@@ -271,9 +260,7 @@
         color: var(--muted-foreground);
     }
 
-    /* Data tables on the static pages, in a bordered, scrollable frame. */
     .table-wrap {
-        /* Positioned, so screen-reader-only text inside stays clipped. */
         position: relative;
         overflow-x: auto;
         border: 1px solid var(--border);

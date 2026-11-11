@@ -215,6 +215,9 @@ importers:
       '@astrojs/check':
         specifier: ^0.9.12
         version: 0.9.12(prettier@3.9.10)(typescript@6.0.3)
+      '@astrojs/compiler-rs':
+        specifier: ^0.5.3
+        version: 0.5.3
       '@biomejs/biome':
         specifier: 2.6.6
         version: 2.6.6

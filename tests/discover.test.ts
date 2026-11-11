@@ -191,7 +191,6 @@ describe('discoverModels', () => {
   it('finds the maker under an alias and prefers the undated ID', () => {
     const kimi = result.models.find((model) => model.id === 'moonshotai/kimi-k3');
     expect(kimi?.sources.modelsdev).toBe('moonshotai/kimi-k3');
-    // LiveBench lists only a different variant, which is not the same key.
     expect(kimi?.sources.livebench).toBeNull();
   });
 

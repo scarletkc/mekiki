@@ -1,27 +1,3 @@
-/**
- * LiveBench 2.0, https://livebench.ai/. No key. The site is a static app
- * that loads one folder of data files per release:
- *   data/<release>/table.csv        one row per model, one column per suite
- *   data/<release>/categories.json  category → suite columns, plus
- *                                   `_overall_weights` (category → weight)
- * The release IDs (dates such as 20261106) are only listed in the site's
- * script, so fetching is three steps: the page, to find the script; the
- * script, to find the newest release; then the two files. Checked against
- * the live site on 2026-11-11 (release 20261106, 33 models).
- *
- * The table has no overall column. The site computes it as the weighted
- * mean of the categories a model has a score for, with weight 1 for a
- * category `_overall_weights` does not list. This adapter takes the same
- * mean over the categories the AA Intelligence Index does not already
- * test (`livebenchCategories` in src/lib/scoring.config.ts), and stops when
- * the site's categories or weights no longer match that list.
- *
- * Rows are bare model IDs. Each model runs at its highest effort setting,
- * and where it does not, the ID says so.
- *
- * The site states no licence for the scores (its code is Apache-2.0), so
- * they are republished with attribution only.
- */
 import { z } from 'astro/zod';
 import { livebenchCategories } from '../../src/lib/scoring.config';
 import type { LivebenchModel } from '../../src/lib/snapshots';
@@ -32,7 +8,6 @@ import { SourceDataError, type SourceAdapter, type Unmatched } from './types';
 const SITE = 'https://livebench.ai/';
 const WEIGHTS_KEY = '_overall_weights';
 
-/** Pure: the newest release ID in the site's script, which lists them as ["20261014","20261106"]. */
 export function latestRelease(script: string): string {
   const ids: string[] = [];
   for (const list of script.matchAll(/\[\s*"20\d{6}"(?:\s*,\s*"20\d{6}")*\s*\]/g)) {
@@ -51,7 +26,6 @@ const rawSchema = z.object({
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
-/** A cell's score; blank and "n/a" cells have none. */
 function score(cell: string | undefined): number | null {
   const text = cell?.trim() ?? '';
   if (text === '') return null;
@@ -61,10 +35,6 @@ function score(cell: string | undefined): number | null {
 
 const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
 
-/**
- * Pure: how the site's categories and weights differ from the kept and
- * dropped lists in the scoring config, one line per difference.
- */
 export function categoryChanges(
   siteWeights: Record<string, number>,
   expected: Record<string, number> = {
@@ -112,7 +82,6 @@ export const livebenchAdapter: SourceAdapter<'livebench'> = {
       throw new SourceDataError('The table does not start with a "model" column.');
     }
 
-    // Category → its weight in the site's overall score.
     const weights = z.record(z.string(), z.number()).safeParse(categories[WEIGHTS_KEY]);
     const siteWeights: Record<string, number> = {};
     for (const [name, suites] of Object.entries(categories)) {
@@ -126,7 +95,6 @@ export const livebenchAdapter: SourceAdapter<'livebench'> = {
       );
     }
 
-    // The kept categories → their columns in the table and their weight.
     const groups: { columns: number[]; weight: number }[] = [];
     for (const [name, weight] of Object.entries(livebenchCategories.kept)) {
       const suites = categories[name] as unknown[];

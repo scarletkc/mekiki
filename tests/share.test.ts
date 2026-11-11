@@ -32,7 +32,6 @@ describe('compare selection in the address', () => {
 });
 
 describe('logo file', () => {
-  // GitHub cannot render the generated favicon, so the README shows a copy.
   it('matches the mark in src/lib/logo.ts', () => {
     const file = readFileSync('docs/assets/logo.svg', 'utf8').replace(/\r\n/g, '\n');
     expect(file).toBe(logoSvg());

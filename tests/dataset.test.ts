@@ -11,8 +11,6 @@ import type { Snapshots } from '@/lib/snapshots';
 
 const NOW = new Date('2026-11-11T00:00:00Z');
 
-// A fixed copy of the config, so these expectations do not move when the
-// live weights and gaps in scoring.config.ts are tuned.
 const config: ScoringConfig = {
   ...scoringConfig,
   intelligence: {
@@ -55,7 +53,6 @@ const config: ScoringConfig = {
   },
 };
 
-/** A model as the list would carry it, written as YAML for brevity. */
 function entry(id: string, yaml: string): ModelEntry {
   return parseModelEntry(id, parseYaml(yaml));
 }
@@ -100,7 +97,6 @@ const snapshots: Snapshots = {
       },
     },
   },
-  // The same model is listed under different names on the two Arena boards.
   arena: {
     source: 'arena',
     fetched_at: '2026-11-10T12:00:00.000Z',
@@ -196,22 +192,18 @@ describe('buildDataset', () => {
 
   it('rates a fully mapped model from every leaderboard', () => {
     expect(first?.id).toBe('acme/flagship');
-    // 0.5 × 97.14 + 0.3 × 96.67 + 0.2 × 96.67 = 96.90
     expect(first?.rating.intelligence).toMatchObject({ score: 96.9, tier: 'top' });
     expect(first?.rating.intelligence.breakdown).toEqual({
       aa_intelligence: { raw: 68, normalized: 97.1, weight: 0.5, frontier: 70 },
       arena_text: { raw: 1490, normalized: 96.7, weight: 0.3, frontier: 1500 },
       arena_webdev: { raw: 1790, normalized: 96.7, weight: 0.2, frontier: 1800 },
     });
-    // (7 × 0.5 + 2 × 5 + 1 × 25) / 10 = 3.85
     expect(first?.rating.cost).toMatchObject({
       blended: 3.85,
       tier: 'high',
       index: 80.1,
       cache_read: 0.5,
     });
-    // The only model with a run cost is its own yardstick, so its measured
-    // price is its blended price.
     expect(first?.rating.value).toMatchObject({
       score: 51.5,
       tier: 'mid',
@@ -253,7 +245,6 @@ describe('buildDataset', () => {
   });
 
   it('counts what a model costs to run in its value, not in its cost rating', () => {
-    // Same price list, but the frugal model's run cost a tenth of the flagship's.
     const frugal = entry(
       'acme/frugal',
       'name: Frugal\nvendor: Acme\nsources:\n  modelsdev: acme/flagship\n  aa: frugal\n  arena_webdev: "Flagship (Max)"',
@@ -272,11 +263,9 @@ describe('buildDataset', () => {
     const costly = built.models.find((model) => model.id === 'acme/flagship')!;
     const cheap = built.models.find((model) => model.id === 'acme/frugal')!;
 
-    // Token use is run cost ÷ blended price; typical token use is the median of the two.
     expect(built.run_cost.models).toBe(2);
     expect(built.run_cost.typical_token_use).toBeCloseTo((123.4 + 12.34) / 2 / 3.85, 9);
     expect(cheap.rating.cost).toEqual(costly.rating.cost);
-    // Effective price = run cost ÷ typical token use: blended × 2 ÷ 11 and × 20 ÷ 11.
     expect(cheap.rating.value.effective_price).toBeCloseTo((3.85 * 2) / 11, 9);
     expect(costly.rating.value.effective_price).toBeCloseTo((3.85 * 20) / 11, 9);
     expect(cheap.rating.value).toMatchObject({ cost_basis: 'run_cost', cost_index: 50.2 });
@@ -336,7 +325,6 @@ describe('buildDataset', () => {
 
     const built = buildDataset([everywhere], withBoard, { now: NOW, config: withLivebench });
     const [model] = built.models;
-    // (97.14 + 96.67 + 96.67 + 0.5 × 90) ÷ 3.5 = 95.85
     expect(model?.rating.intelligence.score).toBe(95.9);
     expect(model?.rating.intelligence.breakdown).toMatchObject({
       aa_intelligence: { normalized: 97.1, weight: 0.2857 },
@@ -349,7 +337,6 @@ describe('buildDataset', () => {
     expect(built.sources.livebench.edition).toBe('2026-11-06');
     expect(built.sources.aa.edition).toBeNull();
 
-    // Off LiveBench, the other boards stand in: (97.14 + 96.67 + 96.67) ÷ 3.
     const [partial] = buildDataset([noLivebench], withBoard, {
       now: NOW,
       config: withLivebench,
@@ -359,7 +346,6 @@ describe('buildDataset', () => {
   });
 
   it('does not read a rating from the wrong board', () => {
-    // "Flagship (Max)" exists in the snapshot, but only with a WebDev rating.
     const wrongBoard = entry(
       'acme/flagship',
       'name: Flagship\nvendor: Acme\nsources:\n  arena_text: "Flagship (Max)"',
@@ -399,7 +385,6 @@ describe('buildDataset', () => {
       'name: Flagship\nvendor: Acme\noverrides:\n  price: { input: 1, output: 2 }',
     );
     const [model] = buildDataset([overridden], snapshots, { now: NOW, config }).models;
-    // The models.dev cache price still applies: (7 × 0.5 + 2 × 1 + 1 × 2) / 10 = 0.75
     expect(model?.rating.cost).toMatchObject({
       input: 1,
       output: 2,
@@ -503,7 +488,6 @@ describe('JSON API', () => {
           aa_intelligence: { raw: 68, normalized: 97.1, weight: 0.5 },
           arena_text: { raw: 1490, normalized: 96.7, weight: 0.3 },
           arena_webdev: { raw: 1790, normalized: 96.7, weight: 0.2 },
-          // Metrics the config in use here does not have are reported empty.
           arena_agent: { raw: null, normalized: null, weight: 0 },
           livebench: { raw: null, normalized: null, weight: 0 },
         },

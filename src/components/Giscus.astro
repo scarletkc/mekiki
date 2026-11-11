@@ -1,14 +1,9 @@
 ---
-// The discussion thread under a model page, a GitHub Discussions thread
-// embedded with giscus. Renders nothing while src/lib/giscus.config.ts is
-// incomplete. Nothing is fetched at build time: giscus loads in the browser.
 import { GISCUS_ORIGIN, GISCUS_THEMES, giscusAttributes } from '../lib/giscus';
 import { giscusConfig } from '../lib/giscus.config';
 
 interface Props {
-  /** What the thread is found by: the model ID. */
   term: string;
-  /** giscus language: the page's BCP 47 tag. */
   lang: string;
   heading: string;
   note: string;
@@ -19,17 +14,6 @@ const attributes = giscusAttributes(giscusConfig, { term, lang });
 const origin = GISCUS_ORIGIN;
 const themes = GISCUS_THEMES;
 
-// What the inline script does (comments inside it would read as text to Biome):
-//
-// 1. giscus reads its settings from its own <script> tag, so the script makes
-//    that tag, with the site theme it finds on <html>. The iframe giscus adds
-//    goes into .giscus.
-// 2. It follows the site theme: the toggle, or the system while the visitor has
-//    not chosen. The iframe takes messages once giscus has loaded in it, which
-//    giscus signals by sending one. A later load (giscus reloads the iframe on
-//    sign-out) brings back the first theme, so the next message gets the current
-//    one again. The first load event can come after the first message, so it
-//    must not stop the theme updates.
 ---
 
 {

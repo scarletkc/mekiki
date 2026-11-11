@@ -40,7 +40,6 @@ describe('giscus attributes', () => {
       return { lang, shared };
     });
     for (const other of rest) expect(other.shared).toEqual(first!.shared);
-    // giscus has these locales under the same tags the site uses.
     expect([first!.lang, ...rest.map((other) => other.lang)]).toEqual(['en', 'zh-CN', 'zh-TW']);
   });
 });

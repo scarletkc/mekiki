@@ -1,26 +1,7 @@
-/**
- * Model discovery: builds the list of models the site shows from the sources
- * themselves. `pnpm sync` writes the result to data/models.json; hand-written
- * corrections live in data/model-overrides.yaml (src/lib/model-list.ts).
- *
- * A model is listed when it has an Artificial Analysis Intelligence Index,
- * is on at least one Arena board, and has an official price on models.dev,
- * that is a price from the provider that makes the model. One row per model:
- * where a source lists a model once per reasoning level, the highest level
- * is used.
- *
- * Names are matched by exact normalised key, never by similarity. The key
- * drops anything in parentheses (reasoning level, build date, harness), any
- * dated build suffix (`-20261017`), and everything that is not a letter or
- * a digit: "GPT-6.1 Sol (Max)", `gpt-6-1-sol` and `gpt-6.1-sol` all become
- * `gpt-6-1-sol`. Artificial Analysis is keyed by its slug, because its names
- * carry extras ("DeepSeek V4 Pro 0813 (Max)").
- */
 import { z } from 'astro/zod';
 import type { GeneratedModel } from '../../src/lib/model-list';
 import type { ModelEntry } from '../../src/lib/model-schema';
 
-/** The mapping fields discovery fills, in the order they are reported. */
 export const DISCOVERED_FIELDS = [
   'modelsdev',
   'aa',
@@ -34,7 +15,6 @@ export type DiscoveredField = (typeof DISCOVERED_FIELDS)[number];
 export const ARENA_FIELDS = ['arena_text', 'arena_webdev', 'arena_agent'] as const;
 export type ArenaField = (typeof ARENA_FIELDS)[number];
 
-/** Exact normalised key of a model name or ID. */
 export function modelKey(name: string): string {
   return name
     .toLowerCase()
@@ -44,7 +24,6 @@ export function modelKey(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-/** Rank of a reasoning level; higher is more reasoning. */
 const EFFORT_RANK: Record<string, number> = {
   max: 7,
   xhigh: 6,
@@ -58,24 +37,17 @@ const EFFORT_RANK: Record<string, number> = {
   'non-thinking': 0,
   'non-reasoning': 0,
 };
-/** A name that names no level sits between medium and high. */
 const DEFAULT_EFFORT = 4;
-/** Build dates and versions, in the forms the boards use. */
 const BUILD =
   /^(\d{8}|\d{6}|\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{2}|\d{2}-\d{4}|\d{4}|\d{2}-\d{2}|\d{3})$/;
-/** Number formats a model was served in; the same model either way. */
 const PRECISION = /^(bf16|fp16|fp8|fp4|nvfp4|int8|int4)$/;
 
 export interface Variant {
-  /** Highest reasoning level named, or null when none is. */
   effort: number | null;
-  /** A build date or version (`20261017`, `2025-09-23`, `0919`, `02-24`, `001`), or null. */
   date: string | null;
-  /** Anything else in parentheses, such as a harness. */
   other: string[];
 }
 
-/** What the parentheses of a name say: reasoning level, build date, or something else. */
 export function variantOf(name: string): Variant {
   const variant: Variant = { effort: null, date: null, other: [] };
   for (const [, inside] of name.matchAll(/\(([^)]*)\)/g)) {
@@ -93,18 +65,10 @@ export function variantOf(name: string): Variant {
 
 export interface BoardEntry {
   name: string;
-  /** The model's maker as the board names it, when it does. */
   org: string | null;
   score: number;
 }
 
-/**
- * The entry to use among the entries of one model on one board: the highest
- * reasoning level, then the latest build, then the higher score. Entries
- * with something else in parentheses (a harness, say) are a different setup
- * and are only used when nothing else is listed; then the choice is left to
- * a human and null is returned.
- */
 export function pickVariant<T extends { name: string; score: number }>(entries: T[]): T | null {
   const plain = entries.filter((entry) => variantOf(entry.name).other.length === 0);
   if (plain.length === 0) return null;
@@ -119,7 +83,6 @@ export function pickVariant<T extends { name: string; score: number }>(entries: 
   })[0]!;
 }
 
-/** Artificial Analysis slug suffixes that name a reasoning level. */
 const AA_LEVEL = /-(max|xhigh|high|medium|low|minimal|non-reasoning|reasoning)$/;
 
 export interface AaEntry {
@@ -129,7 +92,6 @@ export interface AaEntry {
   index: number | null;
 }
 
-/** The slug without a reasoning-level suffix, and the rank of that suffix (8 for none). */
 export function aaBase(slug: string): { base: string; rank: number } {
   const match = AA_LEVEL.exec(slug);
   if (!match) return { base: slug, rank: 8 };
@@ -138,9 +100,7 @@ export function aaBase(slug: string): { base: string; rank: number } {
 
 export interface ModelsdevEntry {
   provider: string;
-  /** The provider's display name, such as "OpenAI". */
   providerName: string | null;
-  /** The model's ID inside the provider. */
   id: string;
   name: string | null;
   priced: boolean;
@@ -155,7 +115,6 @@ export interface DiscoveryInput {
 }
 
 export interface DiscoveredModel {
-  /** `<provider>/<model>` on models.dev, the same as the canonical ID. */
   id: string;
   name: string;
   vendor: string;
@@ -170,16 +129,12 @@ export interface Reject {
 
 export interface DiscoveryResult {
   models: DiscoveredModel[];
-  /** Keys that came close (AA and Arena) but were left out, and why. */
   rejects: Reject[];
-  /** Boards where a model's entries were all special setups, left to a human. */
   ambiguous: { field: ArenaField; names: string[] }[];
 }
 
-/** Lower-case letters and digits only, for comparing maker names with provider IDs. */
 const compact = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-/** Maker names that differ from their models.dev provider ID, compacted. */
 export const PROVIDER_ALIASES: Record<string, string> = {
   moonshot: 'moonshotai',
   moonshotai: 'moonshotai',
@@ -209,10 +164,8 @@ export function discoverModels(
   const alias = new Map(Object.entries(aliases).map(([maker, id]) => [compact(maker), id]));
   const providerOf = (maker: string) => alias.get(compact(maker)) ?? compact(maker);
 
-  // Every AA slug by key, with or without an index, to say why a name has no match.
   const aaAll = groupBy(input.aa, (entry) => modelKey(aaBase(entry.slug).base));
 
-  // Artificial Analysis: the base slug, or else the highest level listed.
   const aa = new Map<string, AaEntry>();
   for (const [key, entries] of groupBy(
     input.aa.filter((entry) => entry.index !== null),
@@ -222,7 +175,6 @@ export function discoverModels(
     aa.set(key, best);
   }
 
-  // Arena: per board, the entry picked among a model's levels.
   const arena = new Map<string, Partial<Record<ArenaField, BoardEntry>>>();
   for (const field of ARENA_FIELDS) {
     for (const [key, entries] of groupBy(input.arena[field], (entry) => modelKey(entry.name))) {
@@ -235,7 +187,6 @@ export function discoverModels(
     }
   }
 
-  // models.dev: only IDs directly under a provider (resellers nest the maker's ID).
   const modelsdev = groupBy(
     input.modelsdev.filter((entry) => !entry.id.includes('/')),
     (entry) => modelKey(entry.id),
@@ -251,7 +202,6 @@ export function discoverModels(
     const boards = arena.get(key);
     if (!boards || ARENA_FIELDS.every((field) => !boards[field])) continue;
 
-    // The maker, as Artificial Analysis and then Arena name it.
     const makers = [aaEntry.creator, ...ARENA_FIELDS.map((field) => boards[field]?.org ?? null)]
       .filter((maker): maker is string => maker !== null && maker.trim() !== '')
       .map(providerOf);
@@ -265,7 +215,6 @@ export function discoverModels(
       });
       continue;
     }
-    // Prefer the plain ID over dated builds of the same model.
     const offer = [...own].sort(
       (a, b) =>
         Number(variantOf(a.id).date !== null || /\d{8}/.test(a.id)) -
@@ -275,7 +224,6 @@ export function discoverModels(
     models.push({
       id: `${offer.provider}/${offer.id}`,
       name: offer.name ?? aaEntry.name ?? key,
-      // "MiniMax (minimax.io)" → "MiniMax".
       vendor: (offer.providerName ?? aaEntry.creator ?? offer.provider).replace(
         /\s*\([^)]*\)$/,
         '',
@@ -292,8 +240,6 @@ export function discoverModels(
     });
   }
 
-  // On an Arena board with an official price, but with no AA entry under the
-  // same name: either AA has no index for it, or the names differ.
   for (const [key, boards] of arena) {
     if (aa.has(key)) continue;
     const makers = ARENA_FIELDS.map((field) => boards[field]?.org ?? null)
@@ -309,7 +255,6 @@ export function discoverModels(
       rejects.push({ key, reason: `on AA (${slugs}) without an Intelligence Index` });
       continue;
     }
-    // AA slugs that share the first two parts of the key, to spot a different spelling.
     const stem = key.split('-').slice(0, 2).join('-');
     const near = [...aaAll.keys()].filter((other) => other.startsWith(stem)).slice(0, 4);
     rejects.push({
@@ -323,7 +268,6 @@ export function discoverModels(
   return { models, rejects, ambiguous };
 }
 
-/** The discovered models as written to data/models.json: empty mappings left out. */
 export function generatedList(result: DiscoveryResult): GeneratedModel[] {
   return result.models.map((model) => ({
     id: model.id,
@@ -334,9 +278,6 @@ export function generatedList(result: DiscoveryResult): GeneratedModel[] {
     ),
   }));
 }
-
-// ---------------------------------------------------------------------------
-// Reading the raw payloads the adapters fetched.
 
 const aaItem = z.object({
   slug: z.string().min(1),
@@ -434,10 +375,6 @@ export function modelsdevEntries(raw: unknown): ModelsdevEntry[] {
   return entries;
 }
 
-// ---------------------------------------------------------------------------
-// Reporting.
-
-/** How the discovered list differs from a previous list: added, dropped, and changed fields. */
 export function compareWithList(found: DiscoveredModel[], files: ModelEntry[]) {
   const byId = new Map(found.map((model) => [model.id, model]));
   const fileIds = new Set(files.map((entry) => entry.id));
@@ -464,10 +401,6 @@ export function compareWithList(found: DiscoveredModel[], files: ModelEntry[]) {
   return { added, dropped, changed };
 }
 
-/**
- * The discovery report printed by `pnpm sync`, one line per finding, against
- * the previous generated list (overrides not applied).
- */
 export function discoveryReport(result: DiscoveryResult, previous: ModelEntry[]): string[] {
   const { added, dropped, changed } = compareWithList(result.models, previous);
   const lines: string[] = [];

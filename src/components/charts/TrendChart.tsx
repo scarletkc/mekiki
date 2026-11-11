@@ -16,35 +16,21 @@ import { cn } from '@/lib/utils';
 import type { ModelRow } from '../ModelTable';
 import { ChartTooltip, formatMetric, metricLabel, useWidth, type ChartStrings } from './shared';
 
-/** The recorded history the trend chart draws, built in HomeView. */
 export interface TrendData {
-  /** First recorded day. */
   start: string;
-  /** Today; every line runs up to it. */
   end: string;
-  /** Distinct days on record, today included. */
   days: number;
-  /** Each model's points, oldest first, keyed by model ID. */
   series: Record<string, TrendPoint[]>;
 }
 
 const PAD = { top: 10, right: 52, bottom: 22, left: 36 };
 const HEIGHT = 300;
 
-/** A point's figure for a metric. Prices go on a log axis, which has no place for zero (free). */
 function figureOf(point: TrendPoint | undefined, metric: ChartMetric): number | null {
   const value = point?.[metric] ?? null;
   return metric === 'cost' && value !== null && value <= 0 ? null : value;
 }
 
-/**
- * Every shown model's figure over time, as step lines: a figure holds until
- * the next recorded change. All lines are drawn quietly and one is picked
- * out in the accent colour (the one pointed at, or chosen in the legend,
- * or else the first in the table's order), so the chart stays readable
- * however many models are shown. A crosshair snaps to the recorded days
- * and lists every model's figure on that day.
- */
 export function TrendChart({
   models,
   metric,
@@ -147,7 +133,6 @@ export function TrendChart({
         .sort((a, b) => b.value - a.value)
     : [];
 
-  /** Snap the crosshair to the nearest recorded day and pick out the nearest line. */
   const track = (event: PointerEvent<SVGRectElement>) => {
     if (!layout) return;
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -197,7 +182,6 @@ export function TrendChart({
       <figcaption className="mb-2 text-sm font-medium">
         {fmt(chart.trendCaption, { metric: label })}
       </figcaption>
-      {/* A slider over the recorded days: the arrow keys move the crosshair. */}
       <div
         ref={ref}
         className="focus-visible:outline-ring relative rounded-sm outline-offset-4 focus-visible:outline-2"
@@ -323,7 +307,6 @@ export function TrendChart({
               onPointerMove={track}
               onPointerDown={track}
               onPointerLeave={(event) => {
-                // On touch the readout stays after the finger lifts.
                 if (event.pointerType === 'touch') return;
                 setCursor(null);
                 setHovered(null);

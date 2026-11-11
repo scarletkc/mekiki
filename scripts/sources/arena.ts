@@ -1,33 +1,3 @@
-/**
- * Arena (formerly LMArena) leaderboards, from the Hugging Face dataset
- * `lmarena-ai/leaderboard-dataset` (CC BY 4.0). No key needed. Three boards
- * are used: `text`, `webdev` and `agent`, each from its `latest` split.
- *
- * A split is read as its auto-converted Parquet file (one small download)
- * rather than through the Datasets Server's JSON endpoints: when this was
- * written, /filter intermittently answered 500 ("the dataset index is
- * loading") or timed out, and /rows would need 100+ requests.
- *
- * Columns of the text and WebDev boards (checked against the live files on
- * 2026-11-11): model_name, organization, license, rating, rating_lower,
- * rating_upper, variance, vote_count, rank, category,
- * leaderboard_publish_date. Both rate with Bradley-Terry on the Elo scale.
- *
- * The agent board (Agent Arena) scores real agent sessions instead of votes:
- * each session goes to a randomly chosen model, and `score` is an IPS
- * estimate of the model's effect on the session's outcome signals, about
- * −0.25 to 0.2 with 0 near the middle (arena.ai/blog/agent-arena-methodology).
- * Its columns: model_name, organization, license, score, score_ci_lower,
- * score_ci_upper, observation_count, session_count, rank, category,
- * leaderboard_publish_date, cost_per_task_p50, output_tokens_per_task_p50.
- *
- * There is one row per model per category; only `overall` is used.
- *
- * The same model appears once per reasoning level ("Claude Opus 5 (High)",
- * "Claude Opus 5 (Max)"), and the levels listed differ between boards, so
- * each board has its own mapping field and a mapping must name the exact
- * entry.
- */
 import { parquetReadObjects } from 'hyparquet';
 import { z } from 'astro/zod';
 import type { ArenaModel } from '../../src/lib/snapshots';
@@ -35,10 +5,6 @@ import { suggest } from '../lib/candidates';
 import { getBytes } from '../lib/http';
 import { SourceDataError, type SourceAdapter, type Unmatched } from './types';
 
-/**
- * The boards in use: metric key (also the `sources.<key>` mapping field) →
- * dataset config, the column holding the score, and the decimals kept.
- */
 export const ARENA_BOARDS = {
   arena_text: { config: 'text', column: 'rating', decimals: 2 },
   arena_webdev: { config: 'webdev', column: 'rating', decimals: 2 },
@@ -47,7 +13,6 @@ export const ARENA_BOARDS = {
 export type ArenaBoard = keyof typeof ARENA_BOARDS;
 const BOARDS = Object.keys(ARENA_BOARDS) as ArenaBoard[];
 
-/** The board whose size is checked to tell an outage from real data. */
 const MAIN_BOARD: ArenaBoard = 'arena_text';
 const CATEGORY = 'overall';
 
@@ -73,7 +38,6 @@ interface Rating {
   published: string | null;
 }
 
-/** The `overall` ratings of one board, by model name. */
 function readBoard(board: ArenaBoard, rows: unknown, warnings: string[]): Map<string, Rating> {
   if (!Array.isArray(rows)) throw new SourceDataError(`${board}: expected a list of rows.`);
   const ratings = new Map<string, Rating>();
@@ -117,7 +81,6 @@ export const arenaAdapter: SourceAdapter<'arena'> = {
       const file = await getBytes(arenaParquetUrl(config));
       raw[board] = await parquetReadObjects({
         file,
-        // `organization` is not used here; model discovery reads it (scripts/lib/discover.ts).
         columns: ['model_name', 'organization', column, 'category', 'leaderboard_publish_date'],
       });
     }

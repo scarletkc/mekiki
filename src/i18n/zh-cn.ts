@@ -1,4 +1,3 @@
-/** 简体中文. Shape is checked against the English dictionary. */
 import type { Dictionary } from './en';
 
 export const zhCN: Dictionary = {

@@ -1,10 +1,3 @@
-/**
- * Shapes of the public JSON API (docs/SPEC.md §6), derived from the same
- * dataset the pages use.
- *
- * Contract: fields are only ever added. A breaking change bumps
- * API_VERSION. Missing values are `null`; fields are never omitted.
- */
 import { useTranslations, tierLabels } from '../i18n';
 import type { ValueCostBasis } from './scoring';
 import {
@@ -22,9 +15,7 @@ export const API_VERSION = 1;
 
 interface TierFields<T extends string> {
   tier: T | null;
-  /** English label of the tier. */
   label: string | null;
-  /** The label in every UI language, keyed by BCP 47 tag. */
   labels: Record<string, string> | null;
 }
 
@@ -46,13 +37,9 @@ export interface ApiModel {
   };
   value: TierFields<ValueTier> & {
     score: number | null;
-    /** `run_cost` when the price comes from a measured run cost, `list_price` otherwise. */
     cost_basis: ValueCostBasis | null;
-    /** USD Artificial Analysis spent running its Intelligence Index on the model. */
     run_cost: number | null;
-    /** The price the score is computed from, USD per 1M tokens. */
     effective_price: number | null;
-    /** 0–100 index of `effective_price`. */
     cost_index: number | null;
   };
   url: string;
@@ -72,11 +59,8 @@ export interface ApiFull {
   models: ApiModel[];
 }
 
-// `label` is English by contract (docs/SPEC.md §6), whatever the site's default
-// locale is. `labels` carries every language.
 const defaultLabels = useTranslations('en').tier;
 
-/** Trim floating-point noise from a price without changing its value. */
 function tidy(value: number | null): number | null {
   return value === null ? null : Number(value.toFixed(6));
 }
@@ -151,10 +135,6 @@ export function toApiFull(dataset: Dataset): ApiFull {
 export interface ApiHistory {
   version: number;
   generated_at: string;
-  /**
-   * One entry per recorded day, oldest first. A day is only recorded when
-   * something changed, so each entry holds until the next one.
-   */
   entries: HistoryEntry[];
 }
 
@@ -162,7 +142,6 @@ export function toApiHistory(dataset: Dataset, entries: HistoryEntry[]): ApiHist
   return { version: API_VERSION, generated_at: dataset.generated_at, entries };
 }
 
-/** A JSON response for a static endpoint. */
 export function jsonResponse(body: unknown): Response {
   return new Response(`${JSON.stringify(body, null, 2)}\n`, {
     headers: { 'Content-Type': 'application/json; charset=utf-8' },

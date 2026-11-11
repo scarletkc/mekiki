@@ -1,11 +1,4 @@
 ---
-/**
- * Shares the current page by its language-neutral address (`/m/...`
- * instead of `/en/m/...`), so whoever opens the link gets their own
- * language. The query string is kept, which carries the compare selection.
- *
- * Touch devices get the system share sheet; elsewhere the link is copied.
- */
 import Share from '@lucide/astro/icons/share';
 import { buttonVariants } from '@/components/ui/button';
 import { useTranslations, type Locale } from '../i18n';
@@ -63,7 +56,6 @@ const t = useTranslations(locale);
           await navigator.share({ title: document.title, url });
           return;
         } catch (error) {
-          // Closing the share sheet is not a failure.
           if (error instanceof DOMException && error.name === 'AbortError') return;
         }
       }
@@ -77,8 +69,6 @@ const t = useTranslations(locale);
       await navigator.clipboard.writeText(text);
       return true;
     } catch {
-      // The Clipboard API can be blocked (embedded views, permissions
-      // policy); the older selection-based copy often still works there.
       const field = document.createElement('textarea');
       field.value = text;
       field.setAttribute('readonly', '');
