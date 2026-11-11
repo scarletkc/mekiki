@@ -39,6 +39,9 @@ export const en = {
     openWeights: 'Open weights',
   },
   usage: {
+    toggle: 'OpenRouter rank',
+    column: 'OpenRouter',
+    notRanked: 'Not ranked',
     badge: 'OpenRouter #{rank}',
     badgeTitle: '#{rank} by tokens on OpenRouter: {tokens} tokens from {start} to {end}',
     title: 'Usage on OpenRouter',
@@ -49,7 +52,7 @@ export const en = {
     notFound: "Not found in OpenRouter's daily top 50 for this period.",
     note: "The rank is the model's place by total tokens processed through OpenRouter over the period. It is shown only for models in OpenRouter's daily top 50 on every day, since a model missing some days is undercounted. Shown for reference; not part of any rating.",
     homeNote:
-      'OpenRouter #N ranks models by the tokens processed through OpenRouter from {start} to {end}. Shown for reference; not part of any rating.',
+      "The OpenRouter column is each model's place by the tokens processed through OpenRouter from {start} to {end}, shown only for models in its daily top 50 on every day. Shown for reference; not part of any rating.",
     citation:
       'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}. Licensed under CC BY 4.0.',
   },
@@ -231,7 +234,8 @@ export const en = {
     useAa: 'Intelligence Index, cost to run the index',
     useArena: 'Text and WebDev ratings, Agent Arena scores',
     useLivebench: 'Score across the categories AA does not test',
-    useOpenrouter: 'Usage rank shown next to model names; not used in any rating',
+    useOpenrouter:
+      'Usage rank, in an optional column on the home page and on model pages; not used in any rating',
     licenseAa: 'Attribution per its terms',
     licenseNone: 'None stated; credited to the source',
     caveatsTitle: 'Caveats',

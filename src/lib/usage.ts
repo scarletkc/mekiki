@@ -36,6 +36,16 @@ export function usageBadge(
   };
 }
 
+export function usageCell(
+  model: ModelRecord,
+  period: UsagePeriod | null,
+  t: Dictionary,
+): { rank: number; title: string } | null {
+  const badge = usageBadge(model, period, t);
+  const rank = model.openrouter?.rank;
+  return badge && rank != null ? { rank, title: badge.title } : null;
+}
+
 export function usageCitation(period: UsagePeriod, t: Dictionary): string {
   return fmt(t.usage.citation, { asOf: formatDateTime(period.asOf) });
 }

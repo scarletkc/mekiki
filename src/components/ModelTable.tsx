@@ -9,6 +9,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import {
+  Activity,
   ArrowDown,
   ArrowDownWideNarrow,
   ArrowUp,
@@ -84,12 +85,12 @@ export interface ModelRow {
     measuredPrice: number | null;
   };
   openWeights: boolean | null;
-  usage: { label: string; title: string } | null;
+  usage: { rank: number; title: string } | null;
 }
 
 export type ModelTableStrings = Pick<
   Dictionary,
-  'table' | 'tier' | 'empty' | 'badge' | 'chart' | 'rating'
+  'table' | 'tier' | 'empty' | 'badge' | 'chart' | 'rating' | 'usage'
 > & {
   compare: Pick<Dictionary['compare'], 'select' | 'selected' | 'action' | 'clear' | 'limit'>;
 };
@@ -100,6 +101,7 @@ interface ModelTableProps {
   lang: string;
   compareHref: string;
   trend: TrendData;
+  usageNote: { text: string; citation: string; href: string } | null;
 }
 
 const features = tableFeatures({
@@ -119,6 +121,7 @@ const COLUMN_IDS = [
   'price',
 ] as const;
 
+const USAGE_COLUMN = 'usage';
 const DEFAULT_SORT: SortingState = [{ id: 'intelligence', desc: true }];
 
 const VIEWS = ['table', 'quadrant', 'line', 'bar'] as const;
@@ -133,10 +136,14 @@ const VIEW_ICONS: Record<View, LucideIcon> = {
 interface Display {
   view: View;
   metric: ChartMetric;
+  usage: boolean;
 }
-const DEFAULT_DISPLAY: Display = { view: 'table', metric: 'int' };
+const DEFAULT_DISPLAY: Display = { view: 'table', metric: 'int', usage: false };
 
-function readUrl(vendors: string[]): {
+function readUrl(
+  vendors: string[],
+  usageAvailable: boolean,
+): {
   filters: Filters;
   sorting: SortingState;
   display: Display;
@@ -146,9 +153,11 @@ function readUrl(vendors: string[]): {
     const value = params.get(key);
     return value !== null && allowed.includes(value) ? value : ALL;
   };
+  const usage = usageAvailable && params.get('usage') === '1';
+  const sortable: readonly string[] = usage ? [...COLUMN_IDS, USAGE_COLUMN] : COLUMN_IDS;
   const sort = params.get('sort');
   const sorting =
-    sort !== null && (COLUMN_IDS as readonly string[]).includes(sort)
+    sort !== null && sortable.includes(sort)
       ? [{ id: sort, desc: params.get('dir') !== 'asc' }]
       : DEFAULT_SORT;
   return {
@@ -169,6 +178,7 @@ function readUrl(vendors: string[]): {
       metric: (CHART_METRICS as readonly string[]).includes(params.get('metric') ?? '')
         ? (params.get('metric') as ChartMetric)
         : DEFAULT_DISPLAY.metric,
+      usage,
     },
   };
 }
@@ -177,6 +187,7 @@ function writeUrl(filters: Filters, sorting: SortingState, display: Display) {
   const params = new URLSearchParams();
   if (display.view !== DEFAULT_DISPLAY.view) params.set('view', display.view);
   if (display.metric !== DEFAULT_DISPLAY.metric) params.set('metric', display.metric);
+  if (display.usage) params.set('usage', '1');
   if (filters.q.trim()) params.set('q', filters.q.trim());
   for (const key of ['vendor', 'int', 'cost', 'val', 'open'] as const) {
     if (filters[key] !== ALL) params.set(key, filters[key]);
@@ -278,7 +289,7 @@ function ModelBadges({
   badge: ModelTableStrings['badge'];
   className?: string;
 }) {
-  if (!model.legacy && model.openWeights !== true && model.usage === null) return null;
+  if (!model.legacy && model.openWeights !== true) return null;
   return (
     <span className={cn('flex flex-wrap gap-1', className)}>
       {model.legacy && (
@@ -289,15 +300,6 @@ function ModelBadges({
       {model.openWeights === true && (
         <Badge variant="outline" className="text-muted-foreground font-normal">
           {badge.openWeights}
-        </Badge>
-      )}
-      {model.usage && (
-        <Badge
-          variant="outline"
-          className="text-muted-foreground num font-normal"
-          title={model.usage.title}
-        >
-          {model.usage.label}
         </Badge>
       )}
     </span>
@@ -419,8 +421,24 @@ function ViewSwitch({
   );
 }
 
-export function ModelTable({ models, strings, lang, compareHref, trend }: ModelTableProps) {
-  const { table: t, tier, empty, badge, compare, chart } = strings;
+function UsageRank({ model, strings }: { model: ModelRow; strings: ModelTableStrings['usage'] }) {
+  if (!model.usage) return <span className="text-muted-foreground">{strings.notRanked}</span>;
+  return (
+    <span className="num" title={model.usage.title}>
+      #{model.usage.rank}
+    </span>
+  );
+}
+
+export function ModelTable({
+  models,
+  strings,
+  lang,
+  compareHref,
+  trend,
+  usageNote,
+}: ModelTableProps) {
+  const { table: t, tier, empty, badge, compare, chart, usage: u } = strings;
 
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORT);
@@ -434,12 +452,12 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
   );
 
   useEffect(() => {
-    const fromUrl = readUrl(vendors);
+    const fromUrl = readUrl(vendors, usageNote !== null);
     setFilters(fromUrl.filters);
     setSorting(fromUrl.sorting);
     setDisplay(fromUrl.display);
     setUrlRead(true);
-  }, [vendors]);
+  }, [vendors, usageNote]);
 
   useEffect(() => {
     if (urlRead) writeUrl(filters, sorting, display);
@@ -492,14 +510,14 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
               <span className="flex h-[1.5em] items-center">
                 <PickBox id={model.id} name={model.name} strings={compare} />
               </span>
-              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 lg:flex-nowrap">
                 <a
                   href={model.href}
-                  className="font-medium underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current lg:whitespace-nowrap"
+                  className="font-medium underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current"
                 >
                   {model.name}
                 </a>
-                <ModelBadges model={model} badge={badge} />
+                <ModelBadges model={model} badge={badge} className="lg:flex-nowrap" />
               </span>
             </span>
           );
@@ -543,8 +561,20 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
         ...figure,
         cell: ({ row }) => <Price model={row.original} empty={empty} />,
       }),
+      ...(display.usage
+        ? [
+            helper.accessor((row) => row.usage?.rank ?? undefined, {
+              id: USAGE_COLUMN,
+              header: u.column,
+              sortFn: sortFn_basic,
+              sortUndefined: 'last' as const,
+              sortDescFirst: false,
+              cell: ({ row }) => <UsageRank model={row.original} strings={u} />,
+            }),
+          ]
+        : []),
     ]);
-  }, [t, tier, empty, badge, compare, lang]);
+  }, [t, tier, empty, badge, compare, lang, display.usage, u]);
 
   const table = useTable({
     features,
@@ -575,7 +605,14 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
     keys.map((key) => ({ value: key, label: labels[key] }));
 
   const sort = sorting[0] ?? DEFAULT_SORT[0]!;
-  const sortOptions = COLUMN_IDS.map((id) => ({ value: id, label: t.columns[id] }));
+  const sortOptions = [
+    ...COLUMN_IDS.map((id) => ({ value: id, label: t.columns[id] })),
+    ...(display.usage ? [{ value: USAGE_COLUMN, label: u.column }] : []),
+  ];
+  const setUsage = (on: boolean) => {
+    setDisplay((current) => ({ ...current, usage: on }));
+    if (!on && sort.id === USAGE_COLUMN) setSorting(DEFAULT_SORT);
+  };
   const SortIcon = sort.desc ? ArrowDownWideNarrow : ArrowUpNarrowWide;
 
   return (
@@ -661,6 +698,18 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
           <p className="text-muted-foreground num text-sm" aria-live="polite">
             {fmt(t.count, { shown: rows.length, total: filtered.total })}
           </p>
+          {usageNote && display.view === 'table' && (
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn('h-9 sm:h-7', display.usage && 'bg-muted text-foreground')}
+              aria-pressed={display.usage}
+              onClick={() => setUsage(!display.usage)}
+            >
+              <Activity aria-hidden="true" />
+              {u.toggle}
+            </Button>
+          )}
         </div>
         {(display.view === 'line' || display.view === 'bar') && (
           <FilterSelect
@@ -682,7 +731,9 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
             label={t.sort}
             value={sort.id}
             onChange={(id) =>
-              setSorting([{ id, desc: id !== 'model' && id !== 'vendor' }] satisfies SortingState)
+              setSorting([
+                { id, desc: id !== 'model' && id !== 'vendor' && id !== USAGE_COLUMN },
+              ] satisfies SortingState)
             }
             options={sortOptions}
           />
@@ -772,6 +823,14 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
                       <MeasuredPrice price={model.value.measuredPrice} strings={t} />
                     </dd>
                   </div>
+                  {display.usage && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <dt>{u.column}</dt>
+                      <dd className="text-foreground">
+                        <UsageRank model={model} strings={u} />
+                      </dd>
+                    </div>
+                  )}
                 </dl>
               </li>
             );
@@ -837,7 +896,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
                       className={cn(
                         'px-3 py-2.5 align-middle',
                         index === 0 &&
-                          'bg-card sticky left-0 z-10 max-w-[13rem] min-w-[10rem] pl-4 whitespace-normal transition-colors group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))] lg:max-w-none',
+                          'bg-card sticky left-0 z-10 max-w-[13rem] min-w-[10rem] pl-4 whitespace-normal transition-colors group-hover:bg-[color-mix(in_oklch,var(--muted)_50%,var(--card))] lg:max-w-none lg:whitespace-nowrap',
                       )}
                     >
                       <table.FlexRender cell={cell} />
@@ -848,7 +907,7 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
               {rows.length === 0 && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell
-                    colSpan={COLUMN_IDS.length}
+                    colSpan={COLUMN_IDS.length + (display.usage ? 1 : 0)}
                     className="text-muted-foreground px-4 py-10 text-center"
                   >
                     {t.noResults}
@@ -900,6 +959,14 @@ export function ModelTable({ models, strings, lang, compareHref, trend }: ModelT
           </Button>
         )}
       </div>
+      {usageNote && display.usage && display.view === 'table' && (
+        <p className="text-muted-foreground mt-3 max-w-[68ch] text-xs leading-relaxed">
+          {usageNote.text}{' '}
+          <a className="hover:text-foreground underline underline-offset-4" href={usageNote.href}>
+            {usageNote.citation}
+          </a>
+        </p>
+      )}
     </div>
   );
 }

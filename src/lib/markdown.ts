@@ -110,7 +110,7 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
     const rating = ratingText(model, t);
     const name = link(model.name, markdownUrl(locale, `/m/${model.id}`));
     return [
-      [name, ...badges(model, t, period).map((badge) => `(${badge})`)].join(' '),
+      [name, ...badges(model, t, null).map((badge) => `(${badge})`)].join(' '),
       model.vendor,
       rating.intelligence,
       rating.cost,
@@ -123,6 +123,9 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
         : cost.free
           ? t.empty.free
           : `${formatPrice(cost.input)} / ${formatPrice(cost.output)}`,
+      ...(ranked
+        ? [model.openrouter?.rank == null ? t.usage.notRanked : `#${model.openrouter.rank}`]
+        : []),
     ];
   });
   return compose([
@@ -139,6 +142,7 @@ export function homeMarkdown(dataset: Dataset, locale: Locale): string {
         columns.measured,
         columns.value,
         columns.price,
+        ...(ranked ? [t.usage.column] : []),
       ],
       rows,
     ),

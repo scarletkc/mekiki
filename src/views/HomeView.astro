@@ -7,7 +7,7 @@ import { trendSeries } from '../lib/charts';
 import { utcDate } from '../lib/history';
 import { getDataset, getHistory } from '../lib/site-data';
 import { SOURCE_INFO } from '../lib/snapshots';
-import { usageBadge, usageCitation, usagePeriod } from '../lib/usage';
+import { usageCell, usageCitation, usagePeriod } from '../lib/usage';
 
 interface Props {
   locale: Locale;
@@ -17,6 +17,14 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 const dataset = await getDataset();
 const period = usagePeriod(dataset);
+const usageNote =
+  period && dataset.models.some((model) => model.openrouter?.rank != null)
+    ? {
+        text: fmt(t.usage.homeNote, { start: period.start, end: period.end }),
+        citation: usageCitation(period, t),
+        href: SOURCE_INFO.openrouter.url,
+      }
+    : null;
 
 const rows: ModelRow[] = dataset.models.map((model) => ({
   id: model.id,
@@ -42,7 +50,7 @@ const rows: ModelRow[] = dataset.models.map((model) => ({
       model.rating.value.cost_basis === 'run_cost' ? model.rating.value.effective_price : null,
   },
   openWeights: model.facts.open_weights,
-  usage: usageBadge(model, period, t),
+  usage: usageCell(model, period, t),
 }));
 
 const { entries } = getHistory();
@@ -72,6 +80,7 @@ const strings = {
   tier: t.tier,
   empty: t.empty,
   badge: t.badge,
+  usage: t.usage,
   compare: {
     select: t.compare.select,
     selected: t.compare.selected,
@@ -94,15 +103,6 @@ const strings = {
     lang={LOCALE_INFO[locale].tag}
     compareHref={localePath(locale, '/compare')}
     trend={trend}
+    usageNote={usageNote}
   />
-  {
-    period && dataset.models.some((model) => model.openrouter?.rank != null) && (
-      <p class="text-muted-foreground mt-4 max-w-[68ch] text-xs leading-relaxed">
-        {fmt(t.usage.homeNote, { start: period.start, end: period.end })}{' '}
-        <a class="underline underline-offset-4 hover:text-foreground" href={SOURCE_INFO.openrouter.url}>
-          {usageCitation(period, t)}
-        </a>
-      </p>
-    )
-  }
 </Base>

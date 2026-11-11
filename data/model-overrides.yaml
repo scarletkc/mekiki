@@ -39,6 +39,10 @@ models:
   deepseek/deepseek-v4-pro:
     sources:
       openrouter: deepseek/deepseek-v4-pro-20260813
+  # OpenRouter serves this model only as its free Contributor tier.
+  meta/muse-spark-1.3:
+    sources:
+      openrouter: meta/muse-spark-1.3-contributor-20260902
   # Superseded by Kimi K3.1 Pro, which the version rule cannot tell from the
   # name ("Pro" makes it another family).
   moonshotai/kimi-k3:

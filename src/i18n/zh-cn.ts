@@ -41,6 +41,9 @@ export const zhCN: Dictionary = {
     openWeights: '开源权重',
   },
   usage: {
+    toggle: 'OpenRouter 排名',
+    column: 'OpenRouter',
+    notRanked: '未上榜',
     badge: 'OpenRouter #{rank}',
     badgeTitle: 'OpenRouter 用量第 {rank} 名：{start} 至 {end} 共 {tokens} tokens',
     title: 'OpenRouter 用量',
@@ -51,7 +54,7 @@ export const zhCN: Dictionary = {
     notFound: '这段时间没有在 OpenRouter 每日前 50 中找到这个模型。',
     note: '排名是统计期内通过 OpenRouter 处理的 token 总数的名次。只有每天都在每日前 50 的模型才显示名次，缺了几天的模型总数会偏低。仅供参考，不参与任何评分。',
     homeNote:
-      'OpenRouter #N 是按 {start} 至 {end} 通过 OpenRouter 处理的 token 数排出的名次。仅供参考，不参与任何评分。',
+      'OpenRouter 列是 {start} 至 {end} 通过 OpenRouter 处理的 token 总数的名次，只有每天都在每日前 50 的模型才有名次。仅供参考，不参与任何评分。',
     citation:
       'Source: OpenRouter (openrouter.ai/rankings), as of {asOf}. Licensed under CC BY 4.0.',
   },
@@ -229,7 +232,7 @@ export const zhCN: Dictionary = {
     useAa: '智能指数、评测总花费',
     useArena: '文本榜、WebDev 榜和 Agent 榜的分数',
     useLivebench: 'AA 没有测的那几个分类的得分',
-    useOpenrouter: '模型名旁的用量排名，不参与任何评分',
+    useOpenrouter: '用量排名，显示在首页的可选列和模型页中，不参与任何评分',
     licenseAa: '按其条款署名',
     licenseNone: '未声明许可，注明来源',
     caveatsTitle: '注意',
