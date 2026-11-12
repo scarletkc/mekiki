@@ -11,6 +11,7 @@ import {
   modelsdevEntries,
   pickVariant,
   variantOf,
+  type BoardEntry,
   type DiscoveryInput,
 } from '../scripts/lib/discover';
 
@@ -83,6 +84,19 @@ describe('aaBase', () => {
     expect(aaBase('gpt-6-1-sol')).toEqual({ base: 'gpt-6-1-sol', rank: 8 });
     expect(aaBase('gpt-6-1-sol-low')).toEqual({ base: 'gpt-6-1-sol', rank: 2 });
     expect(aaBase('gpt-6-1-sol-non-reasoning').base).toBe('gpt-6-1-sol');
+  });
+
+  it('strips the suffix when the name puts the level in parentheses', () => {
+    expect(aaBase('grok-4-6-xhigh', 'Grok 4.6 (Xhigh)')).toEqual({ base: 'grok-4-6', rank: 6 });
+    expect(aaBase('kimi-k3-low', 'Kimi K3 (Low)')).toEqual({ base: 'kimi-k3', rank: 2 });
+    expect(aaBase('glm-5-non-reasoning', 'GLM-5 (Non-reasoning)').base).toBe('glm-5');
+  });
+
+  it('keeps a suffix that is part of the model name', () => {
+    expect(aaBase('qwen3-8-max', 'Qwen3.8 Max (0902)')).toEqual({ base: 'qwen3-8-max', rank: 8 });
+    expect(aaBase('qwen3-8-max', 'Qwen3.8 Max 0902').base).toBe('qwen3-8-max');
+    expect(aaBase('qwen3-8-max', 'Qwen3.8 Max (Max)').base).toBe('qwen3-8-max');
+    expect(aaBase('phi-4-reasoning', 'Phi-4 Reasoning').base).toBe('phi-4-reasoning');
   });
 });
 
@@ -230,6 +244,104 @@ describe('discoverModels', () => {
       { key: 'other-2-max', reason: "not on AA's list under this name (close: other-2-flash)" },
       { key: 'scored-1', reason: 'on AA (scored-1) without an Intelligence Index' },
     ]);
+  });
+
+  describe('a model whose name ends in a reasoning level', () => {
+    const qwen = (id: string) => ({
+      provider: 'alibaba',
+      providerName: 'Alibaba',
+      id,
+      name: id,
+      priced: true,
+      release: null,
+    });
+    const boards = (text: BoardEntry[]) => ({
+      arena_text: text,
+      arena_webdev: [],
+      arena_agent: [],
+    });
+    const max0902 = {
+      slug: 'qwen3-8-max',
+      name: 'Qwen3.8 Max (0902)',
+      creator: 'Alibaba',
+      index: 34,
+    };
+
+    it('matches the AA slug on its own', () => {
+      const result = discoverModels({
+        aa: [max0902],
+        arena: boards([{ name: 'Qwen3.8-Max (0902)', org: 'alibaba', score: 1400 }]),
+        livebench: [],
+        modelsdev: [qwen('qwen3.8-max')],
+      });
+      expect(result.models.map((model) => [model.id, model.sources.aa])).toEqual([
+        ['alibaba/qwen3.8-max', 'qwen3-8-max'],
+      ]);
+      expect(result.rejects).toEqual([]);
+    });
+
+    it('keeps another build of it apart', () => {
+      const result = discoverModels({
+        aa: [
+          { slug: 'qwen3-8-max-0803', name: 'Qwen3.8 Max (0803)', creator: 'Alibaba', index: null },
+          max0902,
+        ],
+        arena: boards([
+          { name: 'Qwen3.8-Max (0902)', org: 'alibaba', score: 1400 },
+          { name: 'Qwen3.8 Max 0803', org: 'alibaba', score: 1390 },
+        ]),
+        livebench: [],
+        modelsdev: [qwen('qwen3.8-max'), qwen('qwen3.8-max-0803')],
+      });
+      expect(result.models.map((model) => [model.id, model.sources.aa])).toEqual([
+        ['alibaba/qwen3.8-max', 'qwen3-8-max'],
+      ]);
+      expect(result.rejects).toEqual([
+        {
+          key: 'qwen3-8-max-0803',
+          reason: 'on AA (qwen3-8-max-0803) without an Intelligence Index',
+        },
+      ]);
+    });
+
+    it('still reads real reasoning levels as one model', () => {
+      const result = discoverModels({
+        aa: [
+          { slug: 'grok-4-6-xhigh', name: 'Grok 4.6 (Xhigh)', creator: 'xAI', index: 43 },
+          {
+            slug: 'claude-sonnet-5-low',
+            name: 'Claude Sonnet 5 (Low)',
+            creator: 'Anthropic',
+            index: 30,
+          },
+          {
+            slug: 'claude-sonnet-5',
+            name: 'Claude Sonnet 5 (Max)',
+            creator: 'Anthropic',
+            index: 50,
+          },
+          {
+            slug: 'claude-sonnet-5-xhigh',
+            name: 'Claude Sonnet 5 (xHigh)',
+            creator: 'Anthropic',
+            index: 48,
+          },
+        ],
+        arena: boards([
+          { name: 'Grok 4.6 (xHigh)', org: 'xai', score: 1400 },
+          { name: 'Claude Sonnet 5 (Max)', org: 'anthropic', score: 1450 },
+        ]),
+        livebench: [],
+        modelsdev: [
+          { ...qwen('grok-4.6'), provider: 'xai', providerName: 'xAI' },
+          { ...qwen('claude-sonnet-5'), provider: 'anthropic', providerName: 'Anthropic' },
+        ],
+      });
+      expect(result.models.map((model) => [model.id, model.sources.aa])).toEqual([
+        ['anthropic/claude-sonnet-5', 'claude-sonnet-5'],
+        ['xai/grok-4.6', 'grok-4-6-xhigh'],
+      ]);
+    });
   });
 });
 
