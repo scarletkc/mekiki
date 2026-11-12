@@ -58,6 +58,7 @@ export interface Dataset {
   generated_at: string;
   sources: Record<SourceId, SourceStatus>;
   frontier: Record<MetricKey, number | null>;
+  floor: Record<MetricKey, number | null>;
   run_cost: {
     typical_token_use: number | null;
     models: number;
@@ -112,6 +113,17 @@ export function frontierOf(
   return frontier;
 }
 
+export function floorOf(
+  snapshots: Snapshots,
+  config: ScoringConfig = scoringConfig,
+): Record<string, number | null> {
+  const floor: Record<string, number | null> = {};
+  for (const [key, metric] of Object.entries(config.intelligence.metrics)) {
+    floor[key] = asNumber(snapshots[metric.source]?.floor?.[key]);
+  }
+  return floor;
+}
+
 export function compareByIntelligence(a: ModelRecord, b: ModelRecord): number {
   const left = a.rating.intelligence.score;
   const right = b.rating.intelligence.score;
@@ -131,6 +143,7 @@ export function buildDataset(
   const now = options.now ?? new Date();
   const config = options.config ?? scoringConfig;
   const frontier = frontierOf(snapshots, config);
+  const floor = floorOf(snapshots, config);
 
   const prepared = entries.map((entry) => {
     const { data } = entry;
@@ -188,7 +201,7 @@ export function buildDataset(
         ? runCost / typicalTokenUse
         : null;
 
-    const rating = rateModel({ metrics, frontier, price, measuredPrice }, config);
+    const rating = rateModel({ metrics, frontier, floor, price, measuredPrice }, config);
 
     return {
       id: entry.id,
@@ -241,12 +254,17 @@ export function buildDataset(
   }
 
   const liveFrontier = {} as Record<MetricKey, number | null>;
-  for (const key of METRIC_KEYS) liveFrontier[key] = frontier[key] ?? null;
+  const liveFloor = {} as Record<MetricKey, number | null>;
+  for (const key of METRIC_KEYS) {
+    liveFrontier[key] = frontier[key] ?? null;
+    liveFloor[key] = floor[key] ?? null;
+  }
 
   return {
     generated_at: now.toISOString(),
     sources,
     frontier: liveFrontier,
+    floor: liveFloor,
     run_cost: { typical_token_use: typicalTokenUse, models: tokenUses.length },
     models,
   };

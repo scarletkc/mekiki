@@ -210,7 +210,9 @@ export const zhTW: Dictionary = {
       '名單裡有同一廠商、同名但版本號更高的模型時，舊版本會標為舊模型，在首頁預設收合，例如有了 Claude Opus 5.5，Claude Opus 5 就是舊模型。',
     intelligenceTitle: '智慧',
     intelligenceBody:
-      '每個榜單指標先正規化到 0–100，100 代表該指標目前的榜首。AA 智慧指數從 0 起算。其餘指標只取榜首往下固定的一段，範圍見下表：Elo 分和 Agent 榜的分數都沒有有意義的零點，LiveBench 的分數又擠得太近，從 0 算拉不開差距。',
+      '每個榜單指標先正規化到 0–100，100 代表該指標目前的榜首。AA 智慧指數從 0 起算。其餘指標只取榜首往下的一段，範圍見下表：Elo 分和 Agent 榜的分數都沒有有意義的零點，LiveBench 的分數又擠得太近，從 0 算拉不開差距。',
+    intelligenceShareBody:
+      '{metrics}的範圍在每次同步時重新測量，讓榜上 {share} 的模型留在零點以上。',
     benchmarkBody:
       '分數是模型已有指標的加權平均。模型缺某個榜時依其餘榜單計算，一個榜單都沒上的模型不評級。每個榜單只算一次：AA 智慧指數已經包含的榜單（如 Terminal-Bench、FrontierCode）不採用，和它部分重疊的榜單只計不重疊的部分。',
     livebenchBody:

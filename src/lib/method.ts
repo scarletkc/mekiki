@@ -11,6 +11,7 @@ import {
   changelogConfig,
   livebenchKeptShare,
   scoringConfig,
+  type FloorRule,
 } from './scoring.config';
 import { SOURCE_IDS, SOURCE_INFO } from './snapshots';
 import { usageCitation, usagePeriod } from './usage';
@@ -20,6 +21,16 @@ export function methodContent(dataset: Dataset, locale: Locale) {
   const m = t.method;
   const { intelligence, cost, value } = scoringConfig;
 
+  const gapFormat = new Intl.NumberFormat(LOCALE_INFO[locale].tag, {
+    maximumSignificantDigits: 2,
+  });
+  const floorLabel = (rule: FloorRule, top: number | null, zero: number | null) => {
+    if (rule.type === 'absolute') return fmt(m.floorAbsolute, { value: rule.value });
+    if (rule.type === 'below_frontier') return fmt(m.floorBelowFrontier, { gap: rule.gap });
+    if (top === null || zero === null) return '—';
+    return fmt(m.floorBelowFrontier, { gap: gapFormat.format(top - zero) });
+  };
+
   const shares = computeBenchmark({}, {}).breakdown;
   const metrics = METRIC_KEYS.map((key) => {
     const { source, floor } = intelligence.metrics[key];
@@ -27,14 +38,30 @@ export function methodContent(dataset: Dataset, locale: Locale) {
       label: t.metric[key],
       source: SOURCE_INFO[source].name,
       weight: formatPercent(shares[key]?.weight ?? 0),
-      floor:
-        floor.type === 'absolute'
-          ? fmt(m.floorAbsolute, { value: floor.value })
-          : fmt(m.floorBelowFrontier, { gap: floor.gap }),
+      floor: floorLabel(floor, dataset.frontier[key], dataset.floor[key]),
     };
   });
 
   const list = new Intl.ListFormat(LOCALE_INFO[locale].tag, { type: 'conjunction' });
+  const measuredRanges = new Map<number, string[]>();
+  for (const key of METRIC_KEYS) {
+    const { floor } = intelligence.metrics[key];
+    if (floor.type !== 'board_share') continue;
+    measuredRanges.set(floor.above, [...(measuredRanges.get(floor.above) ?? []), t.metric[key]]);
+  }
+  const chinese = locale.startsWith('zh');
+  const spaced = (text: string) =>
+    chinese
+      ? text.replace(/(\p{Script=Han})(?=[A-Za-z0-9])|([A-Za-z0-9])(?=\p{Script=Han})/gu, '$1$2 ')
+      : text;
+  const intelligenceBody = [
+    m.intelligenceBody,
+    ...[...measuredRanges].map(([above, labels]) =>
+      spaced(
+        fmt(m.intelligenceShareBody, { metrics: list.format(labels), share: formatPercent(above) }),
+      ),
+    ),
+  ].join(chinese ? '' : ' ');
   const livebenchNote = fmt(m.livebenchBody, {
     kept: list.format(Object.keys(livebenchCategories.kept)),
     dropped: list.format(Object.keys(livebenchCategories.dropped)),
@@ -135,6 +162,7 @@ export function methodContent(dataset: Dataset, locale: Locale) {
   };
 
   return {
+    intelligenceBody,
     metrics,
     livebenchNote,
     tierRows,

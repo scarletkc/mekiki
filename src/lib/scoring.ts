@@ -16,6 +16,7 @@ export interface Price {
 export interface RatingInput {
   metrics: Record<string, number | null | undefined>;
   frontier: Record<string, number | null | undefined>;
+  floor?: Record<string, number | null | undefined>;
   price: Price | null;
   measuredPrice?: number | null;
 }
@@ -65,17 +66,52 @@ function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-export function normalizeMetric(raw: number, frontier: number, floor: FloorRule): number | null {
-  const floorValue = floor.type === 'absolute' ? floor.value : frontier - floor.gap;
-  const span = frontier - floorValue;
+export function boardShareFloor(scores: readonly number[], above: number): number | null {
+  const sorted = scores.filter(isNumber).sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const position = Math.round(clamp(1 - above, 0, 1) * (sorted.length - 1) * 1e9) / 1e9;
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+}
+
+export function measuredFloor(
+  key: string,
+  scores: readonly number[],
+  config: ScoringConfig = scoringConfig,
+): number | null {
+  const rule = config.intelligence.metrics[key]?.floor;
+  return rule?.type === 'board_share' ? boardShareFloor(scores, rule.above) : null;
+}
+
+export function floorValue(
+  floor: FloorRule,
+  frontier: number,
+  measured?: number | null,
+): number | null {
+  if (floor.type === 'absolute') return floor.value;
+  if (floor.type === 'below_frontier') return frontier - floor.gap;
+  return isNumber(measured) ? measured : null;
+}
+
+export function normalizeMetric(
+  raw: number,
+  frontier: number,
+  floor: FloorRule,
+  measured?: number | null,
+): number | null {
+  const zero = floorValue(floor, frontier, measured);
+  if (zero === null) return null;
+  const span = frontier - zero;
   if (!(span > 0)) return null;
-  return clamp((100 * (raw - floorValue)) / span, 0, 100);
+  return clamp((100 * (raw - zero)) / span, 0, 100);
 }
 
 export function computeBenchmark(
   metrics: RatingInput['metrics'],
   frontier: RatingInput['frontier'],
   config: ScoringConfig = scoringConfig,
+  floor: RatingInput['floor'] = {},
 ): { score: number | null; breakdown: Record<string, MetricBreakdown> } {
   const breakdown: Record<string, MetricBreakdown> = {};
   const entries = Object.entries(config.intelligence.metrics);
@@ -84,12 +120,12 @@ export function computeBenchmark(
 
   let weighted = 0;
   let totalWeight = 0;
-  for (const [key, { weight, floor }] of entries) {
+  for (const [key, { weight, floor: rule }] of entries) {
     const raw = metrics[key];
     const top = frontier[key];
     let normalized: number | null = null;
     if (isNumber(raw) && isNumber(top)) {
-      normalized = normalizeMetric(raw, top, floor);
+      normalized = normalizeMetric(raw, top, rule, floor[key]);
     }
     if (normalized !== null && weight > 0) {
       weighted += weight * normalized;
@@ -197,7 +233,7 @@ export function valueTier(score: number, config: ScoringConfig = scoringConfig):
 }
 
 export function rateModel(input: RatingInput, config: ScoringConfig = scoringConfig): Rating {
-  const benchmark = computeBenchmark(input.metrics, input.frontier, config);
+  const benchmark = computeBenchmark(input.metrics, input.frontier, config, input.floor);
 
   const price =
     input.price && isNumber(input.price.input) && isNumber(input.price.output) ? input.price : null;

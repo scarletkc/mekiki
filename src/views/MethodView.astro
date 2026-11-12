@@ -14,6 +14,7 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 const m = t.method;
 const {
+  intelligenceBody,
   metrics,
   livebenchNote,
   tierRows,
@@ -39,7 +40,7 @@ const {
     <p>{m.legacyBody}</p>
 
     <h2 id="intelligence">{m.intelligenceTitle}</h2>
-    <p>{m.intelligenceBody}</p>
+    <p>{intelligenceBody}</p>
     <pre><code>{formulas.normalize}</code></pre>
     <p>{m.benchmarkBody}</p>
     <div class="table-wrap">

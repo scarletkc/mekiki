@@ -210,7 +210,9 @@ export const zhCN: Dictionary = {
       '名单里有同一厂商、同名但版本号更高的模型时，旧版本会标为旧模型，在首页默认折叠，比如有了 Claude Opus 5.5，Claude Opus 5 就是旧模型。',
     intelligenceTitle: '智能',
     intelligenceBody:
-      '每个榜单指标先归一化到 0–100，100 表示该指标当前的榜首。AA 智能指数从 0 起算。其余指标只取榜首往下固定的一段，范围见下表：Elo 分和 Agent 榜的分数都没有有意义的零点，LiveBench 的分数又挤得太近，从 0 算拉不开差距。',
+      '每个榜单指标先归一化到 0–100，100 表示该指标当前的榜首。AA 智能指数从 0 起算。其余指标只取榜首往下的一段，范围见下表：Elo 分和 Agent 榜的分数都没有有意义的零点，LiveBench 的分数又挤得太近，从 0 算拉不开差距。',
+    intelligenceShareBody:
+      '{metrics}的范围在每次同步时重新测量，让榜上 {share} 的模型留在零点以上。',
     benchmarkBody:
       '分数是模型已有指标的加权平均。模型缺某个榜时按其余榜单计算，一个榜单都没上的模型不评级。每个榜单只算一次：AA 智能指数已经包含的榜单（如 Terminal-Bench、FrontierCode）不采用，和它部分重叠的榜单只计不重叠的部分。',
     livebenchBody:
