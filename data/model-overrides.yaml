@@ -22,18 +22,18 @@ vendors:
 
 models:
   # Not discovered: discovery reads the "-max" in AA's slug as a reasoning level.
-  # AA's undated `qwen3-8-max` is the 0902 build; 0803 is `qwen3-8-max-0803`,
-  # with no Intelligence Index. The undated "Qwen3.8-Max" on the text and Agent
-  # boards and on LiveBench is not shown to be 0902, so those stay empty.
+  # "Qwen3.8 Max" is Alibaba's alias for the latest build (0902), so the undated
+  # names on every source are this model; only the superseded 0803 build carries
+  # a date. OpenRouter lists it only under its dated permaslug.
   alibaba/qwen3.8-max:
-    name: Qwen3.8 Max 0902
+    name: Qwen3.8 Max
     vendor: Alibaba
     sources:
       aa: qwen3-8-max
-      arena_text: null
-      arena_webdev: 'Qwen3.8-Max (0902)'
-      arena_agent: null
-      livebench: null
+      arena_text: Qwen3.8-Max
+      arena_webdev: Qwen3.8-Max
+      arena_agent: Qwen3.8-Max
+      livebench: qwen3.8-max
       openrouter: qwen/qwen3.8-max-20260902
   # Not discovered: DeepSeek's API sells V4.1 Flash 1017 as `deepseek-flash`, so
   # its official price does not match the boards' "DeepSeek-V4.1-Flash" by name.
