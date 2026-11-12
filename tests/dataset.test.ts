@@ -333,6 +333,43 @@ describe('buildDataset', () => {
     });
   });
 
+  it('scores a board_share metric against the zero point in the snapshot', () => {
+    const measured: ScoringConfig = {
+      ...config,
+      intelligence: {
+        ...config.intelligence,
+        metrics: {
+          ...config.intelligence.metrics,
+          arena_text: {
+            source: 'arena',
+            mapping: 'arena_text',
+            weight: 0.3,
+            floor: { type: 'board_share', above: 0.7 },
+          },
+        },
+      },
+    };
+    const flagship = entry(
+      'acme/flagship',
+      ['name: Flagship', 'vendor: Acme', 'sources:', '  arena_text: Flagship (High)'].join('\n'),
+    );
+    const withFloor = {
+      ...snapshots,
+      arena: { ...snapshots.arena, floor: { arena_text: 1460 } },
+    } as Snapshots;
+
+    const built = buildDataset([flagship], withFloor, { now: NOW, config: measured });
+    expect(built.floor.arena_text).toBe(1460);
+    expect(built.models[0]?.rating.intelligence.breakdown.arena_text).toMatchObject({
+      raw: 1490,
+      normalized: 75,
+    });
+
+    const unmeasured = buildDataset([flagship], snapshots, { now: NOW, config: measured });
+    expect(unmeasured.floor.arena_text).toBeNull();
+    expect(unmeasured.models[0]?.rating.intelligence.breakdown.arena_text?.normalized).toBeNull();
+  });
+
   it('reads LiveBench next to the other boards at its own weight', () => {
     const zero = { type: 'absolute', value: 0 } as const;
     const gap = { type: 'below_frontier', gap: 300 } as const;

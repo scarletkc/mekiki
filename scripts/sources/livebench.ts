@@ -1,4 +1,5 @@
 import { z } from 'astro/zod';
+import { measuredFloor } from '../../src/lib/scoring';
 import { livebenchCategories } from '../../src/lib/scoring.config';
 import type { LivebenchModel } from '../../src/lib/snapshots';
 import { suggest } from '../lib/candidates';
@@ -156,12 +157,14 @@ export const livebenchAdapter: SourceAdapter<'livebench'> = {
       }
     }
 
+    const measured = measuredFloor('livebench', [...overall.values()]);
     return {
       snapshot: {
         source: 'livebench',
         total: overall.size,
         edition: `${release.slice(0, 4)}-${release.slice(4, 6)}-${release.slice(6)}`,
         frontier: { livebench: Math.max(...overall.values()) },
+        ...(measured === null ? {} : { floor: { livebench: round2(measured) } }),
         models,
       },
       unmatched,

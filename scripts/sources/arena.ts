@@ -1,5 +1,6 @@
 import { parquetReadObjects } from 'hyparquet';
 import { z } from 'astro/zod';
+import { measuredFloor } from '../../src/lib/scoring';
 import type { ArenaModel } from '../../src/lib/snapshots';
 import { suggest } from '../lib/candidates';
 import { getBytes } from '../lib/http';
@@ -94,6 +95,7 @@ export const arenaAdapter: SourceAdapter<'arena'> = {
 
     const warnings: string[] = [];
     const frontier: Record<string, number | null> = {};
+    const floor: Record<string, number | null> = {};
     const models: Record<string, ArenaModel> = {};
     const unmatched: Unmatched[] = [];
     let total = 0;
@@ -107,6 +109,11 @@ export const arenaAdapter: SourceAdapter<'arena'> = {
       let top = -Infinity;
       for (const { rating } of ratings.values()) top = Math.max(top, rating);
       frontier[board] = round(top, decimals);
+      const measured = measuredFloor(
+        board,
+        [...ratings.values()].map(({ rating }) => rating),
+      );
+      if (measured !== null) floor[board] = round(measured, decimals);
 
       const pool = [...ratings.keys()].map((id) => ({ id }));
       for (const model of tracked) {
@@ -135,6 +142,16 @@ export const arenaAdapter: SourceAdapter<'arena'> = {
       }
     }
 
-    return { snapshot: { source: 'arena', total, frontier, models }, unmatched, warnings };
+    return {
+      snapshot: {
+        source: 'arena',
+        total,
+        frontier,
+        ...(Object.keys(floor).length > 0 ? { floor } : {}),
+        models,
+      },
+      unmatched,
+      warnings,
+    };
   },
 };

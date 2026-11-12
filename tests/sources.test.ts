@@ -141,7 +141,7 @@ describe('Arena adapter', () => {
     ],
   };
 
-  it('reads each board through its own mapping and takes the frontier from the full board', () => {
+  it('reads each board through its own mapping and measures the frontier and zero point on the full board', () => {
     const { snapshot, unmatched } = arenaAdapter.transform(raw, [
       tracked('anthropic/claude-opus-5-5', 'Claude Opus 5.5', {
         arena_text: 'Claude Opus 5.5 (High)',
@@ -160,6 +160,7 @@ describe('Arena adapter', () => {
       arena_webdev: 1817.7,
       arena_agent: 0.1996,
     });
+    expect(snapshot.floor).toEqual({ arena_agent: 0.1123 });
     expect(snapshot.models).toEqual({
       'Claude Opus 5.5 (High)': {
         arena_text: 1513,

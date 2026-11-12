@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   blendedPrice,
+  boardShareFloor,
   cacheHitPercent,
   cacheReadPrice,
   computeBenchmark,
@@ -9,6 +10,7 @@ import {
   costTier,
   effectivePrice,
   intelligenceTier,
+  measuredFloor,
   normalizeMetric,
   rateModel,
   valueTier,
@@ -233,6 +235,53 @@ describe('normalizeMetric', () => {
   it('returns null for a degenerate scale', () => {
     expect(normalizeMetric(10, 0, { type: 'absolute', value: 0 })).toBeNull();
     expect(normalizeMetric(10, 5, { type: 'absolute', value: 5 })).toBeNull();
+  });
+
+  it('scales board_share metrics from the zero point measured on the board', () => {
+    const floor = { type: 'board_share', above: 0.7 } as const;
+    expect(normalizeMetric(1400, 1500, floor, 1300)).toBe(50);
+    expect(normalizeMetric(1200, 1500, floor, 1300)).toBe(0);
+    expect(normalizeMetric(1400, 1500, floor)).toBeNull();
+    expect(normalizeMetric(1400, 1500, floor, null)).toBeNull();
+  });
+});
+
+describe('boardShareFloor', () => {
+  it('takes the score that leaves the given share of the board above it', () => {
+    expect(boardShareFloor([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], 0.7)).toBe(30);
+    expect(boardShareFloor([0.2, -0.1, 0.1, 0], 0.5)).toBeCloseTo(0.05);
+  });
+
+  it('interpolates between neighbouring scores', () => {
+    expect(boardShareFloor([10, 0], 0.7)).toBeCloseTo(3);
+  });
+
+  it('returns null for an empty board', () => {
+    expect(boardShareFloor([], 0.7)).toBeNull();
+  });
+});
+
+describe('measuredFloor', () => {
+  it('measures only metrics whose zero point is a share of the board', () => {
+    const measured: ScoringConfig = {
+      ...referenceConfig,
+      intelligence: {
+        ...referenceConfig.intelligence,
+        metrics: {
+          ...referenceConfig.intelligence.metrics,
+          arena_text: {
+            source: 'arena',
+            mapping: 'arena_text',
+            weight: 0.3,
+            floor: { type: 'board_share', above: 0.5 },
+          },
+        },
+      },
+    };
+    expect(measuredFloor('arena_text', [1300, 1500, 1400], measured)).toBe(1400);
+    expect(measuredFloor('arena_text', [1300, 1500, 1400], referenceConfig)).toBeNull();
+    expect(measuredFloor('aa_intelligence', [10, 20], measured)).toBeNull();
+    expect(measuredFloor('unknown', [10, 20], measured)).toBeNull();
   });
 });
 

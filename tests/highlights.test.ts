@@ -155,6 +155,13 @@ function makeDataset(models: ModelRecord[], withOpenrouter = true): Dataset {
       arena_agent: 0.2,
       livebench: 85,
     },
+    floor: {
+      aa_intelligence: null,
+      arena_text: null,
+      arena_webdev: null,
+      arena_agent: -0.05,
+      livebench: null,
+    },
     run_cost: { typical_token_use: 2500, models: models.length },
     models,
   };

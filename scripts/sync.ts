@@ -78,11 +78,13 @@ function serialize<T extends { models: Record<string, unknown> }>(snapshot: T): 
 function comparable(snapshot: {
   edition?: string;
   frontier: unknown;
+  floor?: unknown;
   models: Record<string, unknown>;
 }): string {
   return serialize({
     edition: snapshot.edition,
     frontier: snapshot.frontier,
+    floor: snapshot.floor,
     models: snapshot.models,
   });
 }
@@ -150,6 +152,7 @@ function writeSource<S extends SourceId>(
           edition: snapshot.edition,
           as_of: snapshot.as_of,
           frontier: snapshot.frontier,
+          floor: snapshot.floor,
           models: snapshot.models,
         }),
       );

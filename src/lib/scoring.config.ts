@@ -4,7 +4,8 @@ export type MappingField = 'aa' | 'arena_text' | 'arena_webdev' | 'arena_agent' 
 
 export type FloorRule =
   | { type: 'absolute'; value: number }
-  | { type: 'below_frontier'; gap: number };
+  | { type: 'below_frontier'; gap: number }
+  | { type: 'board_share'; above: number };
 
 export interface MetricConfig {
   source: BenchmarkSource;
@@ -80,7 +81,7 @@ const metrics = {
     source: 'arena',
     mapping: 'arena_agent',
     weight: 1,
-    floor: { type: 'below_frontier', gap: 0.25 },
+    floor: { type: 'board_share', above: 0.7 },
     url: 'https://arena.ai/leaderboard/agent',
   },
   livebench: {

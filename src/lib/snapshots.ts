@@ -33,6 +33,7 @@ function snapshotOf<S extends string, M extends z.ZodType>(source: S, model: M) 
     edition: z.string().optional(),
     as_of: z.string().optional(),
     frontier,
+    floor: frontier.optional(),
     models: z.record(z.string(), model),
   });
 }

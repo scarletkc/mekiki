@@ -254,7 +254,7 @@ export function methodMarkdown(dataset: Dataset, locale: Locale): string {
     m.modelsBody,
     m.legacyBody,
     `## ${m.intelligenceTitle}`,
-    m.intelligenceBody,
+    content.intelligenceBody,
     code(content.formulas.normalize),
     m.benchmarkBody,
     table(

@@ -106,6 +106,10 @@ their weight and zero point, the blended-price weights (cache read, input, outpu
 the cost index bounds, how far value trusts the measured run cost (`runCostWeight`), the
 value exponents and the tier thresholds. The formulas are on the [Method page](https://mekiki.fog.moe/method).
 
+A zero point of type `board_share` is not a number in the config: `pnpm sync` measures it on
+the full leaderboard and stores it in that source's snapshot as `floor`, so after changing
+`above` run `pnpm sync --only=<source>` before `pnpm report`.
+
 1. Edit `src/lib/scoring.config.ts`.
 2. Run `pnpm report` to see the scores and how the models spread across the tiers.
 3. Run `pnpm test`. The fixtures use their own reference config, so tuning the live
