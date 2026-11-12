@@ -1,7 +1,7 @@
 {
   "source": "aa",
-  "fetched_at": "2026-11-11T13:57:27.429Z",
-  "total": 734,
+  "fetched_at": "2026-11-12T10:38:06.363Z",
+  "total": 735,
   "frontier": {
     "aa_intelligence": 64.6
   },
@@ -165,6 +165,11 @@
       "name": "Muse Spark 1.3 (Max)",
       "aa_intelligence": 36.6,
       "index_cost_usd": 1905.84
+    },
+    "qwen3-8-max": {
+      "name": "Qwen3.8 Max (0902)",
+      "aa_intelligence": 33.7,
+      "index_cost_usd": 6353.83
     }
   }
 }
