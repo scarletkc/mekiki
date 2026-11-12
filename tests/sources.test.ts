@@ -160,7 +160,11 @@ describe('Arena adapter', () => {
       arena_webdev: 1817.7,
       arena_agent: 0.1996,
     });
-    expect(snapshot.floor).toEqual({ arena_agent: 0.1123 });
+    expect(snapshot.floor).toEqual({
+      arena_text: 1505.9,
+      arena_webdev: 1735.59,
+      arena_agent: 0.1123,
+    });
     expect(snapshot.models).toEqual({
       'Claude Opus 5.5 (High)': {
         arena_text: 1513,
@@ -351,6 +355,7 @@ describe('LiveBench adapter', () => {
     expect(snapshot.total).toBe(3);
     expect(snapshot.edition).toBe('2026-11-06');
     expect(snapshot.frontier).toEqual({ livebench: 79.09 });
+    expect(snapshot.floor).toEqual({ livebench: 57.09 });
     expect(snapshot.models).toEqual({ 'gpt-6.1-sol': { livebench: 61.82 } });
     expect(unmatched).toEqual([]);
     expect(warnings).toEqual([]);

@@ -49,12 +49,19 @@ export function methodContent(dataset: Dataset, locale: Locale) {
     if (floor.type !== 'board_share') continue;
     measuredRanges.set(floor.above, [...(measuredRanges.get(floor.above) ?? []), t.metric[key]]);
   }
+  const chinese = locale.startsWith('zh');
+  const spaced = (text: string) =>
+    chinese
+      ? text.replace(/(\p{Script=Han})(?=[A-Za-z0-9])|([A-Za-z0-9])(?=\p{Script=Han})/gu, '$1$2 ')
+      : text;
   const intelligenceBody = [
     m.intelligenceBody,
     ...[...measuredRanges].map(([above, labels]) =>
-      fmt(m.intelligenceShareBody, { metrics: list.format(labels), share: formatPercent(above) }),
+      spaced(
+        fmt(m.intelligenceShareBody, { metrics: list.format(labels), share: formatPercent(above) }),
+      ),
     ),
-  ].join(locale.startsWith('zh') ? '' : ' ');
+  ].join(chinese ? '' : ' ');
   const livebenchNote = fmt(m.livebenchBody, {
     kept: list.format(Object.keys(livebenchCategories.kept)),
     dropped: list.format(Object.keys(livebenchCategories.dropped)),

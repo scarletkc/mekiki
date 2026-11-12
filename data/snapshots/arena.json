@@ -1,6 +1,6 @@
 {
   "source": "arena",
-  "fetched_at": "2026-11-12T07:57:28.529Z",
+  "fetched_at": "2026-11-12T08:18:52.040Z",
   "total": 421,
   "frontier": {
     "arena_text": 1538.28,
@@ -8,6 +8,8 @@
     "arena_agent": 0.3035
   },
   "floor": {
+    "arena_text": 1260.91,
+    "arena_webdev": 1394.25,
     "arena_agent": -0.0456
   },
   "models": {

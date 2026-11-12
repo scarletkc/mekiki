@@ -211,7 +211,7 @@ export const en = {
     intelligenceBody:
       'Each leaderboard metric is first normalised to 0–100, where 100 is the current leader on that metric. The AA Intelligence Index starts at 0. The other metrics only use a range below the leader, listed in the table: Elo ratings and Agent Arena scores have no meaningful zero, and LiveBench scores sit too close together to tell models apart from 0.',
     intelligenceShareBody:
-      'The range for {metrics} is measured again at every sync, so that {share} of the leaderboard stays above its zero point.',
+      'The range for {metrics} is measured again at every sync, so that {share} of each leaderboard stays above its zero point.',
     benchmarkBody:
       'The score is the weighted mean of the metrics a model has. A model missing from a leaderboard is scored on the rest, and a model on none of them is not rated. Each leaderboard counts once: one the AA Intelligence Index already contains, such as Terminal-Bench or FrontierCode, is not used, and one that overlaps with it in part counts only for the part that does not.',
     livebenchBody:

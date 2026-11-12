@@ -315,6 +315,7 @@ describe('computeBenchmark', () => {
     const { score, breakdown } = computeBenchmark(
       { made_up: 99, arena_text: 1350 },
       { made_up: 100, arena_text: 1500 },
+      referenceConfig,
     );
     expect(score).toBe(50);
     expect(breakdown.made_up).toBeUndefined();

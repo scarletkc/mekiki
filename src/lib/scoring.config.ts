@@ -67,14 +67,14 @@ const metrics = {
     source: 'arena',
     mapping: 'arena_text',
     weight: 1,
-    floor: { type: 'below_frontier', gap: 300 },
+    floor: { type: 'board_share', above: 0.7 },
     url: 'https://arena.ai/leaderboard/text',
   },
   arena_webdev: {
     source: 'arena',
     mapping: 'arena_webdev',
     weight: 1,
-    floor: { type: 'below_frontier', gap: 450 },
+    floor: { type: 'board_share', above: 0.7 },
     url: 'https://arena.ai/leaderboard/webdev',
   },
   arena_agent: {
@@ -88,7 +88,7 @@ const metrics = {
     source: 'livebench',
     mapping: 'livebench',
     weight: livebenchKeptShare,
-    floor: { type: 'below_frontier', gap: 17 },
+    floor: { type: 'board_share', above: 0.7 },
     url: 'https://livebench.ai/',
   },
 } satisfies Record<string, MetricConfig>;
