@@ -21,14 +21,15 @@ vendors:
   xAI: SpaceXSI
 
 models:
-  # Not discovered: AA lists Qwen3.8 Max only by build (0803, 0902), and only 0902
-  # has an Intelligence Index. The undated "Qwen3.8-Max" on the text and Agent
+  # Not discovered: discovery reads the "-max" in AA's slug as a reasoning level.
+  # AA's undated `qwen3-8-max` is the 0902 build; 0803 is `qwen3-8-max-0803`,
+  # with no Intelligence Index. The undated "Qwen3.8-Max" on the text and Agent
   # boards and on LiveBench is not shown to be 0902, so those stay empty.
   alibaba/qwen3.8-max:
     name: Qwen3.8 Max 0902
     vendor: Alibaba
     sources:
-      aa: qwen3-8-max-0902
+      aa: qwen3-8-max
       arena_text: null
       arena_webdev: 'Qwen3.8-Max (0902)'
       arena_agent: null
