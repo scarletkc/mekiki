@@ -92,9 +92,14 @@ export interface AaEntry {
   index: number | null;
 }
 
-export function aaBase(slug: string): { base: string; rank: number } {
+export function aaBase(slug: string, name: string | null = null): { base: string; rank: number } {
   const match = AA_LEVEL.exec(slug);
   if (!match) return { base: slug, rank: 8 };
+  if (name !== null) {
+    const named = modelKey(name);
+    const own = modelKey(slug);
+    if (named === own || named.startsWith(`${own}-`)) return { base: slug, rank: 8 };
+  }
   return { base: slug.slice(0, match.index), rank: EFFORT_RANK[match[1]!] ?? DEFAULT_EFFORT };
 }
 
@@ -164,15 +169,18 @@ export function discoverModels(
   const alias = new Map(Object.entries(aliases).map(([maker, id]) => [compact(maker), id]));
   const providerOf = (maker: string) => alias.get(compact(maker)) ?? compact(maker);
 
-  const aaAll = groupBy(input.aa, (entry) => modelKey(aaBase(entry.slug).base));
+  const aaKeyed = input.aa.map((entry) => {
+    const { base, rank } = aaBase(entry.slug, entry.name);
+    return { entry, key: modelKey(base), rank };
+  });
+  const aaAll = groupBy(aaKeyed, (item) => item.key);
 
   const aa = new Map<string, AaEntry>();
-  for (const [key, entries] of groupBy(
-    input.aa.filter((entry) => entry.index !== null),
-    (entry) => modelKey(aaBase(entry.slug).base),
+  for (const [key, items] of groupBy(
+    aaKeyed.filter((item) => item.entry.index !== null),
+    (item) => item.key,
   )) {
-    const best = [...entries].sort((a, b) => aaBase(b.slug).rank - aaBase(a.slug).rank)[0]!;
-    aa.set(key, best);
+    aa.set(key, [...items].sort((a, b) => b.rank - a.rank)[0]!.entry);
   }
 
   const arena = new Map<string, Partial<Record<ArenaField, BoardEntry>>>();
@@ -251,7 +259,7 @@ export function discoverModels(
     if (!priced) continue;
     const listed = aaAll.get(key);
     if (listed) {
-      const slugs = listed.map((entry) => entry.slug).join(', ');
+      const slugs = listed.map((item) => item.entry.slug).join(', ');
       rejects.push({ key, reason: `on AA (${slugs}) without an Intelligence Index` });
       continue;
     }

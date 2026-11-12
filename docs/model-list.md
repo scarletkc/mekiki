@@ -24,7 +24,9 @@ Every source spells a model differently ("GPT-6.1 Sol (Max)", `gpt-6-1-sol`,
 `gpt-6.1-sol`). Discovery matches them by an exact normalised key: it drops anything in
 parentheses (reasoning level, build date, harness), dated build suffixes, and everything
 that is not a letter or a digit. Nothing is matched by similarity. Artificial Analysis is
-matched on its slug.
+matched on its slug, less a reasoning-level suffix such as `-xhigh` or `-low`. A suffix
+that AA's model name spells outside parentheses, as in "Qwen3.8 Max (0902)", stays part
+of the name.
 
 Where a board lists a model only in a special setup, such as "(xHigh, Codex Harness)",
 that board is left empty for the model, and the sync reports it.
@@ -41,7 +43,7 @@ Model list: updated (31 models).
   Left out:
     gpt-oss-120b: no official price (maker openai; on models.dev at cerebras, …)
     gpt-5-6-sol: on AA (gpt-5-6-sol) without an Intelligence Index
-    qwen3-8-max: not on AA's list under this name (close: qwen3-8-27b)
+    step-5-preview: not on AA's list under this name (close: step-5)
   Left to a human (only special setups listed):
     arena_webdev: GPT-5.6 Sol (xHigh, Codex Harness)
 ```
