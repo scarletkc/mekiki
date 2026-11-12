@@ -21,6 +21,19 @@ vendors:
   xAI: SpaceXSI
 
 models:
+  # Not discovered: AA lists Qwen3.8 Max only by build (0803, 0902), and only 0902
+  # has an Intelligence Index. The undated "Qwen3.8-Max" on the text and Agent
+  # boards and on LiveBench is not shown to be 0902, so those stay empty.
+  alibaba/qwen3.8-max:
+    name: Qwen3.8 Max 0902
+    vendor: Alibaba
+    sources:
+      aa: qwen3-8-max-0902
+      arena_text: null
+      arena_webdev: 'Qwen3.8-Max (0902)'
+      arena_agent: null
+      livebench: null
+      openrouter: qwen/qwen3.8-max-20260902
   # Not discovered: DeepSeek's API sells V4.1 Flash 1017 as `deepseek-flash`, so
   # its official price does not match the boards' "DeepSeek-V4.1-Flash" by name.
   # 1017 and 0910 are different models: the text board has only 0910, so this
