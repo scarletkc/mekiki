@@ -21,6 +21,7 @@
         "modelsdev": "anthropic/claude-fable-5-2",
         "aa": "claude-fable-5-2",
         "arena_webdev": "Claude Fable 5.2 (xHigh)",
+        "arena_agent": "Claude Fable 5.2 (Max)",
         "livebench": "claude-fable-5.2"
       }
     },
