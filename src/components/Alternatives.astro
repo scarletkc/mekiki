@@ -46,7 +46,7 @@ const a = t.alternatives;
         {
           rows.map((row) => (
             <tr data-alt-ratio={row.ratio} data-kind={row.kind}>
-              <th scope="row">
+              <th scope="row" class="min-w-[9rem]">
                 {row.kind === 'current' ? (
                   row.model.name
                 ) : (
