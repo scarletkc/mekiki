@@ -1,152 +1,152 @@
 {
   "source": "openrouter",
-  "fetched_at": "2026-11-12T05:38:56.385Z",
-  "total": 61,
-  "edition": "2026-11-05/2026-11-11",
-  "as_of": "2026-11-12T05:38:56.160Z",
+  "fetched_at": "2026-11-13T04:55:36.462Z",
+  "total": 60,
+  "edition": "2026-11-06/2026-11-12",
+  "as_of": "2026-11-13T04:55:36.122Z",
   "frontier": {},
   "models": {
     "anthropic/claude-fable-5-2": {
       "permaslug": "anthropic/claude-fable-5.2-20261109",
-      "tokens": 303682292757,
-      "days": 2,
+      "tokens": 438347055938,
+      "days": 3,
       "rank": null
     },
     "anthropic/claude-haiku-5-5": {
       "permaslug": "anthropic/claude-haiku-5.5-20261007",
-      "tokens": 2781162167282,
+      "tokens": 2785054897757,
       "days": 7,
       "rank": 19
     },
     "anthropic/claude-opus-5-5": {
       "permaslug": "anthropic/claude-opus-5.5-20260921",
-      "tokens": 6648676245465,
+      "tokens": 6793820345378,
       "days": 7,
-      "rank": 7
+      "rank": 6
     },
     "anthropic/claude-sonnet-5-5": {
       "permaslug": "anthropic/claude-sonnet-5.5-20260928",
-      "tokens": 2390294824919,
+      "tokens": 2435754702714,
       "days": 7,
       "rank": 20
     },
     "deepseek/deepseek-flash": {
       "permaslug": "deepseek/deepseek-v4.1-flash-20261017",
-      "tokens": 53187237391573,
+      "tokens": 55788461567730,
       "days": 7,
       "rank": 1
     },
     "deepseek/deepseek-v4-pro": {
       "permaslug": "deepseek/deepseek-v4-pro-20260813",
-      "tokens": 788171094844,
+      "tokens": 779592463519,
       "days": 7,
       "rank": 35
     },
     "google/gemini-3.8-flash": {
       "permaslug": "google/gemini-3.8-flash-20260902",
-      "tokens": 1593829331119,
+      "tokens": 1605194677352,
       "days": 7,
-      "rank": 24
+      "rank": 25
     },
     "google/gemini-4-argon": {
       "permaslug": "google/gemini-4-argon-20261013",
-      "tokens": 1065141906633,
+      "tokens": 1006233688645,
       "days": 7,
       "rank": 32
     },
     "google/gemini-4-carbon": {
       "permaslug": "google/gemini-4-carbon-20261110",
-      "tokens": 94655267329,
-      "days": 1,
+      "tokens": 190407377674,
+      "days": 2,
       "rank": null
     },
     "meta/muse-spark-1.3": {
       "permaslug": "meta/muse-spark-1.3-contributor-20260902",
-      "tokens": 2943397470730,
+      "tokens": 2988890639555,
       "days": 7,
       "rank": 16
     },
     "minimax/MiniMax-M3": {
       "permaslug": "minimax/minimax-m3-20260531",
-      "tokens": 653911126949,
+      "tokens": 647802531856,
       "days": 7,
       "rank": 38
     },
     "minimax/MiniMax-M3.1-Flash": {
       "permaslug": "minimax/minimax-m3.1-flash-20261019",
-      "tokens": 3831488340154,
+      "tokens": 3602190855096,
       "days": 7,
       "rank": 12
     },
     "moonshotai/kimi-k3": {
       "permaslug": "moonshotai/kimi-k3-20260715",
-      "tokens": 1143843439234,
+      "tokens": 1132608236315,
       "days": 7,
-      "rank": 28
+      "rank": 29
     },
     "moonshotai/kimi-k3.1-pro": {
       "permaslug": "moonshotai/kimi-k3.1-pro-20261023",
-      "tokens": 4420397893449,
+      "tokens": 4375156940510,
       "days": 7,
-      "rank": 9
+      "rank": 8
     },
     "openai/gpt-5.6-luna": {
       "permaslug": "openai/gpt-5.6-luna-20260709",
-      "tokens": 1520606417235,
+      "tokens": 1647500491833,
       "days": 7,
-      "rank": 25
+      "rank": 24
     },
     "openai/gpt-6-astra": {
       "permaslug": "openai/gpt-6-astra-20260903",
-      "tokens": 123368031753,
-      "days": 2,
+      "tokens": 51503741747,
+      "days": 1,
       "rank": null
     },
     "openai/gpt-6-luna": {
       "permaslug": "openai/gpt-6-luna-20260922",
-      "tokens": 7156534555275,
+      "tokens": 7430025252793,
       "days": 7,
       "rank": 5
     },
     "openai/gpt-6.1-sol": {
       "permaslug": "openai/gpt-6.1-sol-20260929",
-      "tokens": 4143075163424,
+      "tokens": 4230788256912,
       "days": 7,
-      "rank": 10
+      "rank": 9
     },
     "openai/gpt-6.1-terra": {
       "permaslug": "openai/gpt-6.1-terra-20261026",
-      "tokens": 1218538050266,
+      "tokens": 1225040640817,
       "days": 7,
       "rank": 27
     },
     "xai/grok-4.7": {
       "permaslug": "x-ai/grok-4.7-20260916",
-      "tokens": 267783639243,
-      "days": 3,
+      "tokens": 394496289346,
+      "days": 4,
       "rank": null
     },
     "xiaomi/mimo-v2.6-flash": {
       "permaslug": "xiaomi/mimo-v2.6-flash-20260921",
-      "tokens": 3244552066896,
-      "days": 7,
-      "rank": 13
-    },
-    "xiaomi/mimo-v2.6-pro": {
-      "permaslug": "xiaomi/mimo-v2.6-pro-20260921",
-      "tokens": 1123400273983,
-      "days": 7,
-      "rank": 30
-    },
-    "zai/glm-5.3": {
-      "permaslug": "z-ai/glm-5.3-20260816",
-      "tokens": 3902307482678,
+      "tokens": 3618656075231,
       "days": 7,
       "rank": 11
     },
+    "xiaomi/mimo-v2.6-pro": {
+      "permaslug": "xiaomi/mimo-v2.6-pro-20260921",
+      "tokens": 1084917875763,
+      "days": 7,
+      "rank": 31
+    },
+    "zai/glm-5.3": {
+      "permaslug": "z-ai/glm-5.3-20260816",
+      "tokens": 3880491297670,
+      "days": 7,
+      "rank": 10
+    },
     "zai/glm-5.3-flash": {
       "permaslug": "z-ai/glm-5.3-flash-20260826",
-      "tokens": 11966634597082,
+      "tokens": 11970325450794,
       "days": 7,
       "rank": 4
     }

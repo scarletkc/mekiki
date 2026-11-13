@@ -1,7 +1,7 @@
 {
   "source": "aa",
-  "fetched_at": "2026-11-12T10:38:06.363Z",
-  "total": 735,
+  "fetched_at": "2026-11-13T04:55:36.451Z",
+  "total": 739,
   "frontier": {
     "aa_intelligence": 64.6
   },
@@ -64,12 +64,12 @@
     "gemini-4-argon": {
       "name": "Gemini 4 Argon (High)",
       "aa_intelligence": 50.4,
-      "index_cost_usd": 7620.22
+      "index_cost_usd": 3810.11
     },
     "gemini-4-carbon": {
       "name": "Gemini 4 Carbon (High)",
       "aa_intelligence": 60,
-      "index_cost_usd": 8239.69
+      "index_cost_usd": 5333.27
     },
     "glm-5-3": {
       "name": "GLM-5.3 (Max)",
