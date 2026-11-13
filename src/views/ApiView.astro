@@ -12,7 +12,7 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 const a = t.api;
-const { sample, samplePath, endpoints, fields } = apiDoc(await getDataset(), t);
+const { sample, samplePath, endpoints, fields, badges } = apiDoc(await getDataset(), t);
 ---
 
 <Base locale={locale} path="/api" title={a.title}>
@@ -66,6 +66,19 @@ const { sample, samplePath, endpoints, fields } = apiDoc(await getDataset(), t);
     <ul>
       {fields.map((field) => <li>{field}</li>)}
     </ul>
+
+    {
+      badges.length > 0 && (
+        <>
+          <h2 id="badges">{a.badgesTitle}</h2>
+          <p>{a.badgesBody}</p>
+          <p class="flex flex-wrap gap-1.5">
+            {badges.map((badge) => <img src={badge.src} alt={badge.alt} height="20" />)}
+          </p>
+          <pre><code>{badges.map((badge) => badge.markdown).join('\n')}</code></pre>
+        </>
+      )
+    }
 
     <h2 id="versioning">{a.versionTitle}</h2>
     <p>{fmt(a.versionBody, { version: API_VERSION })}</p>

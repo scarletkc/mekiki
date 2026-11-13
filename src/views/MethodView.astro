@@ -25,6 +25,7 @@ const {
   valueBody,
   tiersCharts,
   changesBody,
+  alternativesBody,
   usage,
   sources,
 } = methodContent(await getDataset(), locale);
@@ -112,6 +113,10 @@ const {
 
     <h2 id="changes">{m.changesTitle}</h2>
     <p>{changesBody}</p>
+    <p>{m.standingBody}</p>
+
+    <h2 id="alternatives">{m.alternativesTitle}</h2>
+    <p>{alternativesBody}</p>
 
     <h2 id="usage">{m.usageTitle}</h2>
     <p>{usage.body}</p>

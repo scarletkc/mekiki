@@ -118,6 +118,24 @@ export function supersededIds(models: { id: string; name: string; vendor: string
   return superseded;
 }
 
+export function newestVersion<T extends { id: string; name: string; vendor: string }>(
+  model: T,
+  models: readonly T[],
+): T | null {
+  const own = versionOf(model.name);
+  if (own.version === null) return null;
+  let newest: { model: T; version: number[] } | null = null;
+  for (const other of models) {
+    if (other.id === model.id || other.vendor !== model.vendor) continue;
+    const { family, version } = versionOf(other.name);
+    if (family !== own.family || version === null) continue;
+    if (compareVersions(version, newest?.version ?? own.version) > 0) {
+      newest = { model: other, version };
+    }
+  }
+  return newest?.model ?? null;
+}
+
 export function mergeModelList(
   generated: GeneratedModel[],
   overrides: ModelOverrides = EMPTY_OVERRIDES,

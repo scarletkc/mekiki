@@ -190,6 +190,31 @@ export const en = {
     noChanges: 'No changes since {date}.',
     allChanges: 'All changes',
     discussion: 'Discussion',
+    badges: 'README badges',
+  },
+  standing: {
+    title: 'Ranking',
+    rank: { intelligence: 'Intelligence rank', value: 'Value rank' },
+    place: '#{rank} of {total}',
+    leader: 'Intelligence leader',
+    newer: 'Newer version',
+    led: { intelligence: 'Led intelligence', value: 'Led value' },
+    since: 'Since {from}',
+    range: '{from} – {to}',
+    ledFor: '{period} · {days}',
+    ledThen: '{period} · {days}, then {model}',
+    dayOne: '1 day',
+    dayOther: '{n} days',
+  },
+  alternatives: {
+    title: 'Alternatives',
+    caption: 'Other models next to this one',
+    spend: 'Monthly spend, USD',
+    current: 'This model',
+    value: 'Cheaper and better value',
+    top: 'Top intelligence, lowest price',
+    monthly: 'Same use, per month',
+    yearly: '{amount} / year',
   },
   metric: {
     aa_intelligence: 'AA Intelligence Index',
@@ -242,6 +267,11 @@ export const en = {
     changesTitle: 'Changes and history',
     changesBody:
       'Ratings are recorded once a day, after the data sync, and a recorded figure holds until the next recorded change: that is how the history and trend charts draw it. The Changes page lists only changes that matter: tiers, prices, new leaders, models added or removed, and scores that moved {delta} points or more since they were last listed.',
+    standingBody:
+      'The leader of a rating is the listed model with the highest score on a recorded day, and its days in the lead run to the day another model was recorded ahead of it. Ranks on a model page leave legacy models out, so a legacy model has none.',
+    alternativesTitle: 'Alternatives',
+    alternativesBody:
+      'A model page suggests up to two other models to use instead, never a legacy one. The first has the highest value score among the models at most {delta} intelligence points lower and at least {saving} cheaper. The second, shown for a model below the Top intelligence tier, is the cheapest model in that tier. Prices are the ones value is computed from. The monthly figures assume the same use, so the bill changes in proportion to that price; another workload costs differently.',
     usageTitle: 'OpenRouter usage',
     usageBody:
       "Model pages, and an optional column on the home page, show how much each model was used through OpenRouter. The figures come from OpenRouter's rankings dataset, for the 7 whole UTC days before each sync. Tokens are summed per model, and the rank is the model's place by that total among every model in the dataset. A rank is shown only for models in OpenRouter's daily top 50 on every one of those days, since a model missing some days is undercounted. Each model is matched to exactly one OpenRouter build. Usage is shown for reference and is not part of any rating.",
@@ -297,6 +327,9 @@ export const en = {
       'history.json has one entry per recorded day: its date and, for every model listed that day, the name, status, scores, tiers and prices. A day is only recorded when something changed, so each entry holds until the next one.',
     fieldUsage:
       'openrouter is the usage on OpenRouter over the period in sources.openrouter.edition: permaslug is the build matched, tokens the total, days how many days it was in the daily top 50, and rank its place by tokens (null unless it was there every day). It is null when the model was not found, and it is not part of any rating.',
+    badgesTitle: 'Badges',
+    badgesBody:
+      'Every model has a static SVG badge for each rating at /badge/<rating>/<provider>/<model>.svg, where <rating> is intelligence, cost or value. The badges are rebuilt with the data. In Markdown, linked to the model page:',
     versionTitle: 'Versioning',
     versionBody:
       'Fields are only ever added. A breaking change bumps version. The current version is {version}.',
@@ -355,6 +388,10 @@ export const en = {
     priceTier: 'cost {from} → {to}',
     listSeparator: ', ',
     rating: { intelligence: 'intelligence', cost: 'cost', value: 'value' },
+    leadersTitle: 'Leaders',
+    leadersCaption: 'Models that have led a rating, newest first',
+    leaderPeriod: 'Period',
+    leaderDays: 'Days',
   },
   footer: {
     sources: 'Data from ',

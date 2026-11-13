@@ -191,6 +191,31 @@ export const zhCN: Dictionary = {
     noChanges: '{date} 以来没有变化。',
     allChanges: '全部变化',
     discussion: '讨论',
+    badges: 'README 徽章',
+  },
+  standing: {
+    title: '排名',
+    rank: { intelligence: '智能排名', value: '性价比排名' },
+    place: '第 {rank} / {total} 名',
+    leader: '智能榜首',
+    newer: '新版本',
+    led: { intelligence: '居智能榜首', value: '居性价比榜首' },
+    since: '{from} 至今',
+    range: '{from} – {to}',
+    ledFor: '{period} · {days}',
+    ledThen: '{period} · {days}，之后是 {model}',
+    dayOne: '1 天',
+    dayOther: '{n} 天',
+  },
+  alternatives: {
+    title: '替代选择',
+    caption: '与这个模型并列比较的其他模型',
+    spend: '每月花费（美元）',
+    current: '本模型',
+    value: '更便宜，性价比更高',
+    top: '智能最高档里价格最低',
+    monthly: '同样用量的月花费',
+    yearly: '每年 {amount}',
   },
   metric: {
     aa_intelligence: 'AA 智能指数',
@@ -243,6 +268,11 @@ export const zhCN: Dictionary = {
     changesTitle: '变化与历史',
     changesBody:
       '评级在每天同步数据后记录一次，记录下的数值在下一次有变化的记录之前保持不变，历史图和折线图都按此绘制。更新日志只列出有意义的变化：档位、价格、榜首易主、增删模型，以及与上次列出时相比变动 {delta} 分以上的分数。',
+    standingBody:
+      '某项评级的榜首，是当天记录里该项分数最高的模型；居榜首的天数算到另一个模型被记录为榜首的那天。模型页上的排名不计旧模型，旧模型自己也没有排名。',
+    alternativesTitle: '替代选择',
+    alternativesBody:
+      '模型页最多给出两个可以换用的模型，旧模型不在候选之列。第一个是智能分至多低 {delta} 分、价格至少便宜 {saving} 的模型里性价比最高的。第二个只在该模型未到智能“最高”档时给出，是该档里价格最低的模型。价格用的是计入性价比的价格。月花费按用量不变估算，即账单随这个价格等比变化；换一种任务，花费会不一样。',
     usageTitle: 'OpenRouter 用量',
     usageBody:
       '模型页和首页的可选列会显示每个模型通过 OpenRouter 的用量。数据来自 OpenRouter 的排行数据集，取每次同步前 7 个完整的 UTC 日。每个模型的 token 数按这 7 天加总，名次是这个总数在数据集全部模型中的位置。只有 7 天都在 OpenRouter 每日前 50 的模型才显示名次，缺了几天的模型总数会偏低。每个模型只精确匹配一个 OpenRouter 版本。用量仅供参考，不参与任何评分。',
@@ -292,6 +322,9 @@ export const zhCN: Dictionary = {
       'history.json 每个记录日一项：日期，以及当天收录的每个模型的名称、状态、分数、档位和价格。只有发生变化的日子才会记录，所以每一项一直有效到下一项。',
     fieldUsage:
       'openrouter 是 sources.openrouter.edition 这段时间在 OpenRouter 上的用量：permaslug 是匹配到的版本，tokens 是总数，days 是进入每日前 50 的天数，rank 是按 token 数的名次（不是每天都在前 50 时为 null）。没有找到这个模型时整个字段为 null。它不参与任何评分。',
+    badgesTitle: '徽章',
+    badgesBody:
+      '每个模型的每项评级都有一个静态 SVG 徽章，地址是 /badge/<rating>/<provider>/<model>.svg，<rating> 为 intelligence、cost 或 value。徽章随数据一起更新。Markdown 写法（链接到模型页）：',
     versionTitle: '版本',
     versionBody: '字段只加不改。有破坏性变更时，version 加一。当前是 version {version}。',
     attributionTitle: '署名',
@@ -349,6 +382,10 @@ export const zhCN: Dictionary = {
     priceTier: '成本 {from} → {to}',
     listSeparator: '，',
     rating: { intelligence: '智能', cost: '成本', value: '性价比' },
+    leadersTitle: '历任榜首',
+    leadersCaption: '各评级的历任榜首，由新到旧',
+    leaderPeriod: '时段',
+    leaderDays: '天数',
   },
   footer: {
     sources: '数据来源：',

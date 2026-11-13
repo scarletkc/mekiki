@@ -40,8 +40,10 @@ official prices, and refresh every day.
   or as a trend over the recorded history. Every chart carries the site's address and
   exports as a PNG.
 - **Model pages**: how the intelligence score is built, leaderboard by leaderboard; price,
-  context window, release date and modalities; usage on OpenRouter; links to the source
-  data; and a discussion thread. The thread is a GitHub Discussions thread in a
+  context window, release date and modalities; the model's rank and its distance from the
+  leader; up to two alternatives, priced at the monthly spend you type in; usage on
+  OpenRouter; links to the source data; and a discussion thread. The page exports as a
+  PNG card. The thread is a GitHub Discussions thread in a
   third-party iframe from [giscus](https://giscus.app); posting needs a GitHub account.
 - **Compare**: up to four models side by side, with the best figure in each row in bold.
 - **Share**: a link that opens in the reader's own language, with a preview image for
@@ -49,12 +51,14 @@ official prices, and refresh every day.
 - **Method page**: every formula, weight and threshold, generated from the same config the
   scores are computed with.
 - **JSON API**: the full dataset, a model list, one file per model, and the history.
+- **README badges**: a static SVG badge for each rating of each model, such as
+  `/badge/value/<provider>/<model>.svg`.
 - **Readable by AI agents**: [`/llms.txt`](https://mekiki.fog.moe/llms.txt) indexes the
   site, and every page but Compare has a Markdown version, such as
   [`/en/method.md`](https://mekiki.fog.moe/en/method.md).
 - **Daily updates**: prices and leaderboard scores are fetched again every day.
-- **Changelog and RSS**: what changed in the ratings, day by day, with a feed per
-  language. Each model page charts its intelligence and value over time.
+- **Changelog and RSS**: what changed in the ratings, day by day, and which models have
+  led each rating, with a feed per language. Each model page charts its intelligence and value over time.
 - **Languages**: English, Simplified Chinese and Traditional Chinese, in dark or light,
   on a desktop or a phone.
 

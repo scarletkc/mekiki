@@ -5,18 +5,24 @@ import Braces from '@lucide/astro/icons/braces';
 import Columns2 from '@lucide/astro/icons/columns-2';
 import ExternalLink from '@lucide/astro/icons/external-link';
 import ShareButton from '../components/ShareButton.astro';
+import Alternatives from '../components/Alternatives.astro';
 import ChangeText from '../components/ChangeText.astro';
 import Giscus from '../components/Giscus.astro';
 import HistoryChart from '../components/HistoryChart.astro';
+import ModelCard from '../components/ModelCard.astro';
+import Segments from '../components/Segments.astro';
 import { TierMeter } from '../components/TierMeter';
 import { badgeVariants } from '../components/ui/badge';
 import { buttonVariants } from '../components/ui/button';
 import { fmt, LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
+import { alternativeRows, buildAlternatives } from '../lib/alternatives';
+import { BADGE_RATINGS, badgeMarkdown, badgePath, badgeText } from '../lib/badge';
 import { changesFor, modelSeries } from '../lib/changelog';
-import type { ModelRecord } from '../lib/dataset';
+import { SITE_URL, type ModelRecord } from '../lib/dataset';
 import { compareQuery } from '../lib/compare';
 import { formatPercent, formatPrice, formatScore } from '../lib/format';
+import { modelStanding, standingRows } from '../lib/leaders';
 import { modelDetail } from '../lib/model-detail';
 import { scoringConfig } from '../lib/scoring.config';
 import { modelImagePath, modelShareText } from '../lib/share';
@@ -55,6 +61,19 @@ const series = modelSeries(entries, model.id, {
 const historyStart = series[0]?.date ?? today;
 const modelChanges = changesFor(changelog, model.id).slice(0, 12);
 const linkable = new Set(dataset.models.map((item) => item.id));
+const standing = standingRows(modelStanding(model, dataset, entries, today), t);
+const ranks = standing
+  .filter((row) => row.key.startsWith('rank-'))
+  .map((row) => ({ label: row.label, value: row.value.join('') }));
+const alternatives = buildAlternatives(model, dataset);
+const badges = BADGE_RATINGS.map((rating) => {
+  const { label, message } = badgeText(model, rating);
+  return {
+    src: badgePath(rating, model.id),
+    alt: `${label}: ${message}`,
+    markdown: badgeMarkdown(rating, model.id, SITE_URL),
+  };
+});
 const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
   const tiers = scoringConfig[kind].tiers;
   return (['top', 'high', 'mid', 'low'] as const).map((key) => ({
@@ -102,6 +121,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         {t.compare.action}
       </a>
       <ShareButton locale={locale} />
+      <ModelCard t={t} model={model} metrics={metrics} ranks={ranks} date={today} />
     </div>
   </header>
 
@@ -269,6 +289,8 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         </p>
       </section>
 
+      {alternatives && <Alternatives locale={locale} rows={alternativeRows(model, alternatives, t)} />}
+
       <Giscus
         term={model.id}
         lang={LOCALE_INFO[locale].tag}
@@ -313,6 +335,24 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
       }
 
       {
+        standing.length > 0 && (
+          <section aria-labelledby="standing">
+            <h2 id="standing" class="mt-8 mb-3 text-lg font-semibold tracking-tight">
+              {t.standing.title}
+            </h2>
+            <dl class="bg-card grid grid-cols-[auto_1fr] rounded-xl border px-4 py-1 [&>dd]:border-b [&>dd]:py-2 [&>dd]:text-end [&>dt]:border-b [&>dt]:py-2 [&>dt]:pr-4 [&>dt]:text-muted-foreground [&>:nth-last-child(-n+2)]:border-b-0">
+              {standing.map((row) => (
+                <>
+                  <dt>{row.label}</dt>
+                  <dd class="tabular-nums"><Segments locale={locale} segments={row.value} linkable={linkable} /></dd>
+                </>
+              ))}
+            </dl>
+          </section>
+        )
+      }
+
+      {
         usage && (
           <section aria-labelledby="usage">
             <h2 id="usage" class="mt-8 mb-3 text-lg font-semibold tracking-tight">
@@ -350,6 +390,13 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           ))
         }
       </ul>
+      <details class="mt-4">
+        <summary class="text-muted-foreground hover:text-foreground cursor-pointer text-xs">{t.detail.badges}</summary>
+        <p class="mt-2 flex flex-wrap gap-1.5">
+          {badges.map((badge) => <img src={badge.src} alt={badge.alt} height="20" loading="lazy" />)}
+        </p>
+        <pre class="bg-card mt-2 overflow-x-auto rounded-xl border px-3 py-2 font-mono text-xs leading-relaxed"><code>{badges.map((badge) => badge.markdown).join('\n')}</code></pre>
+      </details>
     </aside>
   </div>
 </Base>

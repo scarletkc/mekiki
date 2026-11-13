@@ -103,7 +103,7 @@ describe('Markdown pages', () => {
     const pages = [
       homeMarkdown(dataset, locale),
       methodMarkdown(dataset, locale),
-      changelogMarkdown(history.changelog, dataset, locale),
+      changelogMarkdown(history, dataset, locale),
       ...dataset.models.map((model) => modelMarkdown(model, dataset, history, locale)),
     ];
     for (const page of pages) {
@@ -127,11 +127,30 @@ describe('Markdown pages', () => {
     expect(text).toContain(`](${SITE_URL}/api/models/${model.id}.json)`);
   });
 
+  it.each(LOCALES)('rank a model and name its alternatives in %s', (locale) => {
+    const t = useTranslations(locale);
+    const ranked = dataset.models.filter(
+      (model) => model.status === 'active' && model.rating.intelligence.score !== null,
+    );
+    const lowest = ranked.sort(
+      (a, b) => (a.rating.intelligence.score ?? 0) - (b.rating.intelligence.score ?? 0),
+    )[0]!;
+    const text = modelMarkdown(lowest, dataset, history, locale);
+    expect(text).toContain(`\n## ${t.standing.title}\n`);
+    expect(text).toContain(`\n- ${t.standing.rank.intelligence}: `);
+    expect(text).toContain(`\n- ${t.standing.leader}: [`);
+    expect(text).toContain(`\n## ${t.alternatives.title}\n`);
+    expect(text).toContain(`(${t.alternatives.current}) |`);
+    expect(text).toContain(`(${t.alternatives.top}) |`);
+  });
+
   it('document every API endpoint', () => {
     const text = apiMarkdown(dataset, 'en');
     for (const path of ['/api.json', '/api/models.json', '/api/history.json']) {
       expect(text).toContain(`](${SITE_URL}${path})`);
     }
+    expect(text).toMatch(new RegExp(`\\]\\(${SITE_URL}/badge/value/[^)]+\\.svg\\)`));
+    expect(text).toContain('[![mekiki intelligence](');
   });
 });
 
@@ -150,11 +169,15 @@ describe('Markdown pages with a recorded history', () => {
   const recorded = { entries, changelog: buildChangelog(entries) };
 
   it.each(LOCALES)('list the changes of each day in %s', (locale) => {
-    const text = changelogMarkdown(recorded.changelog, dataset, locale);
+    const t = useTranslations(locale);
+    const text = changelogMarkdown(recorded, dataset, locale);
     expect(recorded.changelog.days.length).toBeGreaterThan(0);
     expect(text).toContain('\n## 2026-11-05 (');
     expect(text).toContain(`](${SITE_URL}/${locale}/m/${first}.md)`);
     expect(text).toContain(`](${SITE_URL}/${locale}/m/${third}.md)`);
+    expect(text).toContain(`\n## ${t.changelog.leadersTitle}\n`);
+    expect(text).toContain(`| ${t.rating.intelligence} | [`);
+    expect(text.indexOf(t.changelog.leadersTitle)).toBeLessThan(text.indexOf('## 2026-11-05'));
     expect(text).not.toMatch(/\b(null|undefined|NaN)\b/);
   });
 

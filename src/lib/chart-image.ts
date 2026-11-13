@@ -74,6 +74,33 @@ export async function exportClonedChart(
   });
 }
 
+export function bindExportButton(button: HTMLButtonElement, run: () => Promise<void>): void {
+  const status = button.nextElementSibling as HTMLElement | null;
+  let timer: number | undefined;
+
+  const show = (state: 'idle' | 'done' | 'failed') => {
+    const result = state === 'idle' ? '' : (button.dataset[state] ?? '');
+    button.dataset.state = state;
+    button.title = result || (button.dataset.label ?? '');
+    if (status) status.textContent = result;
+  };
+
+  button.addEventListener('click', async () => {
+    window.clearTimeout(timer);
+    button.disabled = true;
+    let state: 'done' | 'failed';
+    try {
+      await run();
+      state = 'done';
+    } catch {
+      state = 'failed';
+    }
+    button.disabled = false;
+    show(state);
+    timer = window.setTimeout(() => show('idle'), 2000);
+  });
+}
+
 export async function exportChartImage(node: HTMLElement, filename: string): Promise<void> {
   const url = URL.createObjectURL(await chartImage(node));
   const link = document.createElement('a');

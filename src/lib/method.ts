@@ -7,6 +7,7 @@ import {
   INTELLIGENCE_TIERS,
   METRIC_KEYS,
   VALUE_TIERS,
+  alternativesConfig,
   livebenchCategories,
   changelogConfig,
   livebenchKeptShare,
@@ -129,6 +130,10 @@ export function methodContent(dataset: Dataset, locale: Locale) {
     price: formatPrice(cost.tiers.mid),
   });
   const changesBody = fmt(m.changesBody, { delta: changelogConfig.scoreDelta });
+  const alternativesBody = fmt(m.alternativesBody, {
+    delta: alternativesConfig.intelligenceDelta,
+    saving: formatPercent(alternativesConfig.minSaving),
+  });
   const valueBody = fmt(m.valueBody, {
     a: value.intelligenceExponent,
     b: value.affordabilityExponent,
@@ -173,6 +178,7 @@ export function methodContent(dataset: Dataset, locale: Locale) {
     valueBody,
     tiersCharts,
     changesBody,
+    alternativesBody,
     usage,
     sources,
   };

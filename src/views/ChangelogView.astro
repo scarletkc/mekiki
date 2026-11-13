@@ -1,10 +1,12 @@
 ---
 import Rss from '@lucide/astro/icons/rss';
 import ChangeText from '../components/ChangeText.astro';
-import { fmt, useTranslations, type Locale } from '../i18n';
+import { fmt, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
 import { changeCount } from '../lib/change-text';
 import { feedPath } from '../lib/feed';
+import { utcDate } from '../lib/history';
+import { periodText, recentLeaders } from '../lib/leaders';
 import { getDataset, getHistory } from '../lib/site-data';
 
 interface Props {
@@ -15,7 +17,8 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 const c = t.changelog;
 const dataset = await getDataset();
-const { changelog } = getHistory();
+const { entries, changelog } = getHistory();
+const leaders = recentLeaders(entries, utcDate(new Date(dataset.generated_at)));
 const linkable = new Set(dataset.models.map((model) => model.id));
 ---
 
@@ -40,6 +43,40 @@ const linkable = new Set(dataset.models.map((model) => model.id));
         <p class="text-muted-foreground mt-6">{c.empty}</p>
       ) : (
         <>
+          {leaders.length > 0 && (
+            <section aria-labelledby="leaders" class="mt-6">
+              <h2 id="leaders" class="mb-2 text-base font-semibold">{c.leadersTitle}</h2>
+              <div class="table-wrap my-0">
+                <table class="data-table">
+                  <caption>{c.leadersCaption}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">{t.method.tierRating}</th>
+                      <th scope="col">{t.table.columns.model}</th>
+                      <th scope="col">{c.leaderPeriod}</th>
+                      <th scope="col" class="num">{c.leaderDays}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaders.map((period) => (
+                      <tr>
+                        <th scope="row">{t.rating[period.rating]}</th>
+                        <td>
+                          {linkable.has(period.model.id) ? (
+                            <a href={localePath(locale, `/m/${period.model.id}`)} class="text-primary underline">{period.model.name}</a>
+                          ) : (
+                            period.model.name
+                          )}
+                        </td>
+                        <td class="whitespace-nowrap tabular-nums">{periodText(period, t)}</td>
+                        <td class="num">{period.days}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
           {changelog.days.length === 0 && <p class="text-muted-foreground mt-6">{c.none}</p>}
           <ol class="mt-6 space-y-6">
             {changelog.days.map((day) => (

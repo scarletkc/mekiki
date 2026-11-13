@@ -132,3 +132,17 @@ export const highlightConfig = {
 };
 
 export type HighlightConfig = typeof highlightConfig;
+
+export const leadersConfig = {
+  periodsShown: 5,
+};
+
+export type LeadersConfig = typeof leadersConfig;
+
+export const alternativesConfig = {
+  intelligenceDelta: 3,
+  minSaving: 0.1,
+  monthlySpend: 100,
+};
+
+export type AlternativesConfig = typeof alternativesConfig;
