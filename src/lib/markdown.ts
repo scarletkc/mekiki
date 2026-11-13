@@ -1,6 +1,7 @@
 import { fmt, useTranslations, type Dictionary, type Locale } from '../i18n';
 import { API_VERSION, apiDoc, toApiModel } from './api';
 import { alternativeRows, buildAlternatives } from './alternatives';
+import { BADGE_RATINGS, badgeMarkdown, badgePath, badgeText } from './badge';
 import { changeCount, describeChange, type Segment } from './change-text';
 import { changesFor, modelSeries, type Change, type Changelog } from './changelog';
 import { latestSync, SITE_URL, type Dataset, type ModelRecord } from './dataset';
@@ -269,6 +270,15 @@ export function modelMarkdown(
     alternatives && about,
     `## ${d.links}`,
     detail.links.map((item) => `- ${link(item.label, absoluteUrl(item.href))}`).join('\n'),
+    `### ${d.badges}`,
+    BADGE_RATINGS.map((rating) => {
+      const { label, message } = badgeText(model, rating);
+      return `![${label}: ${message}](${absoluteUrl(badgePath(rating, model.id))})`;
+    }).join(' '),
+    code(
+      BADGE_RATINGS.map((rating) => badgeMarkdown(rating, model.id, SITE_URL)).join('\n'),
+      'markdown',
+    ),
     siteLinks(locale, t),
   ]);
 }

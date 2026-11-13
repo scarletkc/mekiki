@@ -125,6 +125,10 @@ describe('Markdown pages', () => {
       expect(text).toContain(`\n- ${label}: `);
     }
     expect(text).toContain(`](${SITE_URL}/api/models/${model.id}.json)`);
+    expect(text).toContain(`\n### ${t.detail.badges}\n`);
+    for (const rating of ['intelligence', 'cost', 'value']) {
+      expect(text).toContain(`](${SITE_URL}/badge/${rating}/${model.id}.svg)`);
+    }
   });
 
   it.each(LOCALES)('rank a model and name its alternatives in %s', (locale) => {
