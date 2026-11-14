@@ -447,11 +447,13 @@ test('a model page exports its card, and its badges are SVG images', async ({ pa
     expect(badge.headers()['content-type'], rating).toContain('image/svg+xml');
     expect(await badge.text(), rating).toContain(`<title>mekiki ${rating}: `);
   }
-  expect(
-    await badges.evaluateAll((images) =>
-      images.every((image) => (image as HTMLImageElement).naturalWidth > 0),
-    ),
-  ).toBe(true);
+  await expect
+    .poll(() =>
+      badges.evaluateAll((images) =>
+        images.every((image) => (image as HTMLImageElement).naturalWidth > 0),
+      ),
+    )
+    .toBe(true);
   expect(problems).toEqual([]);
 });
 

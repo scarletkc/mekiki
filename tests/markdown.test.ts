@@ -156,6 +156,14 @@ describe('Markdown pages', () => {
     expect(text).toMatch(new RegExp(`\\]\\(${SITE_URL}/badge/value/[^)]+\\.svg\\)`));
     expect(text).toContain('[![mekiki intelligence](');
   });
+
+  it.each(LOCALES)('keep the placeholders of the badge path visible in %s', (locale) => {
+    const prose = apiMarkdown(dataset, locale)
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`[^`\n]*`/g, '');
+    expect(prose).toContain('/badge/\\<rating>/\\<provider>/\\<model>.svg');
+    expect(prose).not.toMatch(/(?<!\\)<[a-z]/i);
+  });
 });
 
 describe('Markdown pages with a recorded history', () => {

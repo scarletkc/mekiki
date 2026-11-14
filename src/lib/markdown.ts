@@ -36,6 +36,8 @@ export function markdownUrl(locale: Locale, path: string): string {
 
 export const link = (text: string, href: string) => `[${text.replace(/[[\]]/g, '\\$&')}](${href})`;
 
+const literal = (text: string) => text.replace(/</g, '\\<');
+
 const cell = (text: string) => text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
 
 export function table(head: string[], rows: string[][], numeric: number[] = []): string {
@@ -371,7 +373,7 @@ export function apiMarkdown(dataset: Dataset, locale: Locale): string {
     `## ${a.fieldsTitle}`,
     fields.map((field) => `- ${field}`).join('\n'),
     badges.length > 0 && `## ${a.badgesTitle}`,
-    badges.length > 0 && a.badgesBody,
+    badges.length > 0 && literal(a.badgesBody),
     badges.length > 0 &&
       badges.map((badge) => `![${badge.alt}](${absoluteUrl(badge.src)})`).join(' '),
     badges.length > 0 && code(badges.map((badge) => badge.markdown).join('\n'), 'markdown'),
