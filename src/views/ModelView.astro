@@ -199,6 +199,8 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         </div>
       </section>
 
+      {alternatives && <Alternatives locale={locale} rows={alternativeRows(model, alternatives, t)} />}
+
       <section aria-labelledby="history" class="mt-10">
         <h2 id="history" class="mb-3 text-lg font-semibold tracking-tight">{t.detail.history}</h2>
         {
@@ -279,8 +281,6 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           </a>
         </p>
       </section>
-
-      {alternatives && <Alternatives locale={locale} rows={alternativeRows(model, alternatives, t)} />}
 
       <Giscus
         term={model.id}

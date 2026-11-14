@@ -236,6 +236,20 @@ export function modelMarkdown(
       (usage.notFound ??
         usage.rows.map((row) => `- ${row.label}: ${row.value ?? none}`).join('\n')),
     usage && `${usage.citation} ${link(t.usage.about, markdownUrl(locale, '/method'))}`,
+    alternatives && `## ${a.title}`,
+    alternatives && `${a.spend}: ${alternativesConfig.monthlySpend}`,
+    alternatives &&
+      table(
+        [t.table.columns.model, t.rating.intelligence, d.effectivePrice, a.monthly],
+        alternativeRows(model, alternatives, t).map((row) => [
+          `${row.kind === 'current' ? row.model.name : link(row.model.name, markdownUrl(locale, `/m/${row.model.id}`))} (${row.label})`,
+          [row.intelligence, row.intelligenceChange].filter(Boolean).join(' '),
+          [row.price, row.priceChange].filter(Boolean).join(' '),
+          [row.monthly, row.yearly].filter(Boolean).join(', '),
+        ]),
+        [1, 2, 3],
+      ),
+    alternatives && about,
     `## ${d.history}`,
     series.length < 2
       ? fmt(d.historyStart, { date: historyStart })
@@ -253,20 +267,6 @@ export function modelMarkdown(
       : changes
           .map(({ date, change }) => `- ${date}: ${changeMarkdown(change, locale, t, linkable)}`)
           .join('\n'),
-    alternatives && `## ${a.title}`,
-    alternatives && `${a.spend}: ${alternativesConfig.monthlySpend}`,
-    alternatives &&
-      table(
-        [t.table.columns.model, t.rating.intelligence, d.effectivePrice, a.monthly],
-        alternativeRows(model, alternatives, t).map((row) => [
-          `${row.kind === 'current' ? row.model.name : link(row.model.name, markdownUrl(locale, `/m/${row.model.id}`))} (${row.label})`,
-          [row.intelligence, row.intelligenceChange].filter(Boolean).join(' '),
-          [row.price, row.priceChange].filter(Boolean).join(' '),
-          [row.monthly, row.yearly].filter(Boolean).join(', '),
-        ]),
-        [1, 2, 3],
-      ),
-    alternatives && about,
     `## ${d.links}`,
     detail.links.map((item) => `- ${link(item.label, absoluteUrl(item.href))}`).join('\n'),
     siteLinks(locale, t),
