@@ -5,18 +5,23 @@ import Braces from '@lucide/astro/icons/braces';
 import Columns2 from '@lucide/astro/icons/columns-2';
 import ExternalLink from '@lucide/astro/icons/external-link';
 import ShareButton from '../components/ShareButton.astro';
+import Alternatives from '../components/Alternatives.astro';
 import ChangeText from '../components/ChangeText.astro';
 import Giscus from '../components/Giscus.astro';
 import HistoryChart from '../components/HistoryChart.astro';
+import ModelCard from '../components/ModelCard.astro';
+import Segments from '../components/Segments.astro';
 import { TierMeter } from '../components/TierMeter';
 import { badgeVariants } from '../components/ui/badge';
 import { buttonVariants } from '../components/ui/button';
 import { fmt, LOCALE_INFO, localePath, useTranslations, type Locale } from '../i18n';
 import Base from '../layouts/Base.astro';
+import { alternativeRows, buildAlternatives } from '../lib/alternatives';
 import { changesFor, modelSeries } from '../lib/changelog';
 import type { ModelRecord } from '../lib/dataset';
 import { compareQuery } from '../lib/compare';
 import { formatPercent, formatPrice, formatScore } from '../lib/format';
+import { modelStanding, standingRows } from '../lib/leaders';
 import { modelDetail } from '../lib/model-detail';
 import { scoringConfig } from '../lib/scoring.config';
 import { modelImagePath, modelShareText } from '../lib/share';
@@ -55,6 +60,11 @@ const series = modelSeries(entries, model.id, {
 const historyStart = series[0]?.date ?? today;
 const modelChanges = changesFor(changelog, model.id).slice(0, 12);
 const linkable = new Set(dataset.models.map((item) => item.id));
+const standing = standingRows(modelStanding(model, dataset, entries, today), t);
+const ranks = standing
+  .filter((row) => row.key.startsWith('rank-'))
+  .map((row) => ({ label: row.label, value: row.value.join('') }));
+const alternatives = buildAlternatives(model, dataset);
 const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
   const tiers = scoringConfig[kind].tiers;
   return (['top', 'high', 'mid', 'low'] as const).map((key) => ({
@@ -102,6 +112,7 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
         {t.compare.action}
       </a>
       <ShareButton locale={locale} />
+      <ModelCard t={t} model={model} metrics={metrics} ranks={ranks} date={today} />
     </div>
   </header>
 
@@ -187,6 +198,8 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
           </table>
         </div>
       </section>
+
+      {alternatives && <Alternatives locale={locale} rows={alternativeRows(model, alternatives, t)} />}
 
       <section aria-labelledby="history" class="mt-10">
         <h2 id="history" class="mb-3 text-lg font-semibold tracking-tight">{t.detail.history}</h2>
@@ -310,6 +323,24 @@ const thresholds = <K extends 'intelligence' | 'value'>(kind: K) => {
             )}
           </section>
         ))
+      }
+
+      {
+        standing.length > 0 && (
+          <section aria-labelledby="standing">
+            <h2 id="standing" class="mt-8 mb-3 text-lg font-semibold tracking-tight">
+              {t.standing.title}
+            </h2>
+            <dl class="bg-card grid grid-cols-[auto_1fr] rounded-xl border px-4 py-1 [&>dd]:border-b [&>dd]:py-2 [&>dd]:text-end [&>dt]:border-b [&>dt]:py-2 [&>dt]:pr-4 [&>dt]:text-muted-foreground [&>:nth-last-child(-n+2)]:border-b-0">
+              {standing.map((row) => (
+                <>
+                  <dt>{row.label}</dt>
+                  <dd class="tabular-nums"><Segments locale={locale} segments={row.value} linkable={linkable} /></dd>
+                </>
+              ))}
+            </dl>
+          </section>
+        )
       }
 
       {

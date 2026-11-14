@@ -7,6 +7,4 @@ import { getDataset, getHistory } from '../../lib/site-data';
 export const getStaticPaths = localeStaticPaths;
 
 export const GET: APIRoute = async ({ props }) =>
-  markdownResponse(
-    changelogMarkdown(getHistory().changelog, await getDataset(), props.locale as Locale),
-  );
+  markdownResponse(changelogMarkdown(getHistory(), await getDataset(), props.locale as Locale));

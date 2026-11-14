@@ -192,6 +192,30 @@ export const zhTW: Dictionary = {
     allChanges: '全部變化',
     discussion: '討論',
   },
+  standing: {
+    title: '排名',
+    rank: { intelligence: '智慧排名', value: '性價比排名' },
+    place: '第 {rank} / {total} 名',
+    leader: '智慧榜首',
+    newer: '新版本',
+    led: { intelligence: '居智慧榜首', value: '居性價比榜首' },
+    since: '{from} 至今',
+    range: '{from} – {to}',
+    ledFor: '{period} · {days}',
+    ledThen: '{period} · {days}，之後是 {model}',
+    dayOne: '1 天',
+    dayOther: '{n} 天',
+  },
+  alternatives: {
+    title: '替代選擇',
+    caption: '與這個模型並列比較的其他模型',
+    spend: '每月花費（美元）',
+    current: '本模型',
+    value: '更便宜，性價比更高',
+    top: '智慧最高級距裡價格最低',
+    monthly: '同樣用量的月花費',
+    yearly: '每年 {amount}',
+  },
   metric: {
     aa_intelligence: 'AA 智慧指數',
     livebench: 'LiveBench',
@@ -243,6 +267,11 @@ export const zhTW: Dictionary = {
     changesTitle: '變化與歷史',
     changesBody:
       '評級在每天同步資料後記錄一次，記錄下的數值在下一次有變化的紀錄之前維持不變，歷史圖和折線圖都依此繪製。更新紀錄只列出有意義的變化：級距、價格、榜首易主、增刪模型，以及和上次列出時相比變動 {delta} 分以上的分數。',
+    standingBody:
+      '某項評級的榜首，是當天紀錄裡該項分數最高的模型；居榜首的天數算到另一個模型被記錄為榜首的那天。模型頁上的排名不計舊模型，舊模型自己也沒有排名。',
+    alternativesTitle: '替代選擇',
+    alternativesBody:
+      '模型頁最多列出兩個可以改用的模型，舊模型不在候選之列。第一個是智慧分至多低 {delta} 分、價格至少便宜 {saving} 的模型裡性價比最高的。第二個只在該模型未達智慧「最高」級距時列出，是該級距裡價格最低的模型。價格用的是計入性價比的價格。月花費依用量不變估算，也就是帳單隨這個價格等比變化；換一種任務，花費會不一樣。',
     usageTitle: 'OpenRouter 用量',
     usageBody:
       '模型頁和首頁的選用欄位會顯示每個模型透過 OpenRouter 的用量。資料來自 OpenRouter 的排行資料集，取每次同步前 7 個完整的 UTC 日。每個模型的 token 數按這 7 天加總，名次是這個總數在資料集全部模型中的位置。只有 7 天都在 OpenRouter 每日前 50 的模型才顯示名次，缺了幾天的模型總數會偏低。每個模型只精確比對一個 OpenRouter 版本。用量僅供參考，不列入任何評分。',
@@ -349,6 +378,10 @@ export const zhTW: Dictionary = {
     priceTier: '成本 {from} → {to}',
     listSeparator: '，',
     rating: { intelligence: '智慧', cost: '成本', value: '性價比' },
+    leadersTitle: '歷任榜首',
+    leadersCaption: '各評級的歷任榜首，由新到舊',
+    leaderPeriod: '時段',
+    leaderDays: '天數',
   },
   footer: {
     sources: '資料來源：',

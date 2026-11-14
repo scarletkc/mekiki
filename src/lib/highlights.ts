@@ -1,6 +1,6 @@
 import { fmt, type Dictionary } from '../i18n';
 import type { Dataset, ModelRecord } from './dataset';
-import { formatCount, formatPrice, formatScore } from './format';
+import { formatBill, formatMultiple, formatPrice, formatScore } from './format';
 import {
   highlightConfig,
   scoringConfig,
@@ -31,19 +31,11 @@ export interface HighlightOptions {
   thresholds?: HighlightConfig;
 }
 
-function formatBill(amount: number): string {
-  return amount >= 100 ? `$${formatCount(amount)}` : formatPrice(amount);
-}
-
-function formatMultiple(ratio: number): string {
-  return ratio >= 10 ? String(Math.round(ratio)) : ratio.toFixed(1);
-}
-
 function modelRef(model: ModelRecord) {
   return { id: model.id, name: model.name, vendor: model.vendor };
 }
 
-function modelPrice(model: ModelRecord): number | null {
+export function modelPrice(model: ModelRecord): number | null {
   return model.rating.value.effective_price ?? model.rating.cost.blended;
 }
 

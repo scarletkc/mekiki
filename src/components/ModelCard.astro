@@ -1,0 +1,167 @@
+---
+import Check from '@lucide/astro/icons/check';
+import ImageDown from '@lucide/astro/icons/image-down';
+import X from '@lucide/astro/icons/x';
+import { buttonVariants } from '@/components/ui/button';
+import type { Dictionary } from '../i18n';
+import type { ModelRecord } from '../lib/dataset';
+import { formatPrice, formatScore } from '../lib/format';
+import { ChartWatermark } from './charts/shared';
+import { TierMeter } from './TierMeter';
+
+interface Props {
+  t: Dictionary;
+  model: ModelRecord;
+  metrics: { key: string; label: string; normalized: number | null; missing: string }[];
+  ranks: { label: string; value: string }[];
+  date: string;
+}
+
+const { t, model, metrics, ranks, date } = Astro.props;
+const { intelligence, cost, value } = model.rating;
+
+const tags = [
+  model.vendor,
+  model.status === 'legacy' ? t.badge.legacy : null,
+  model.facts.open_weights === true ? t.badge.openWeights : null,
+].filter((tag) => tag !== null);
+
+const ratings = [
+  {
+    kind: 'intelligence' as const,
+    title: t.rating.intelligence,
+    tier: intelligence.tier,
+    label: intelligence.tier ? t.tier.intelligence[intelligence.tier] : t.empty.unrated,
+    figure: intelligence.score === null ? null : formatScore(intelligence.score),
+  },
+  {
+    kind: 'cost' as const,
+    title: t.rating.cost,
+    tier: cost.tier,
+    label: cost.tier ? t.tier.cost[cost.tier] : t.empty.noPrice,
+    figure: cost.free ? t.empty.free : cost.blended === null ? null : formatPrice(cost.blended),
+  },
+  {
+    kind: 'value' as const,
+    title: t.rating.value,
+    tier: value.tier,
+    label: value.tier ? t.tier.value[value.tier] : t.empty.unrated,
+    figure: value.score === null ? null : formatScore(value.score),
+  },
+];
+
+const measured =
+  value.cost_basis === 'run_cost' && value.effective_price !== null
+    ? formatPrice(value.effective_price)
+    : null;
+const facts = [
+  {
+    label: t.detail.blended,
+    value: cost.free ? t.empty.free : cost.blended === null ? null : formatPrice(cost.blended),
+    empty: t.empty.noPrice,
+  },
+  { label: t.table.columns.measured, value: measured, empty: t.table.notMeasured },
+  ...ranks.map((rank) => ({ ...rank, empty: '' })),
+];
+---
+
+<span class="inline-flex">
+  <button
+    type="button"
+    data-card-export
+    data-name={model.id}
+    data-state="idle"
+    data-label={t.chart.export}
+    data-done={t.chart.exported}
+    data-failed={t.chart.exportFailed}
+    aria-label={t.chart.export}
+    title={t.chart.export}
+    class={buttonVariants({
+      variant: 'outline',
+      size: 'icon-sm',
+      className: 'group/export size-9 sm:size-8',
+    })}
+  >
+    <ImageDown class="group-data-[state=done]/export:hidden group-data-[state=failed]/export:hidden" />
+    <Check class="hidden group-data-[state=done]/export:block" />
+    <X class="text-destructive hidden group-data-[state=failed]/export:block" />
+  </button>
+  <span class="sr-only" aria-live="polite"></span>
+</span>
+
+<template data-model-card>
+  <figure class="bg-card text-card-foreground rounded-xl border px-6 pt-5 pb-4">
+    <figcaption>
+      <p class="text-muted-foreground text-sm">{tags.join(' · ')}</p>
+      <p class="mt-0.5 text-2xl font-semibold tracking-tight break-words">{model.name}</p>
+    </figcaption>
+    <dl class="mt-4 grid grid-cols-3 gap-3">
+      {
+        ratings.map((rating) => (
+          <div class="rounded-xl border px-3.5 py-3">
+            <dt class="text-muted-foreground text-xs">{rating.title}</dt>
+            <dd class="mt-1.5 text-sm">
+              <TierMeter kind={rating.kind} tier={rating.tier} label={rating.label} figure={rating.figure} />
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+    <dl class="mt-4 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 text-sm">
+      {
+        metrics.map((metric) => (
+          <>
+            <dt class="text-muted-foreground">{metric.label}</dt>
+            <dd aria-hidden="true" class="bg-pip h-1.5 overflow-hidden rounded-full">
+              {metric.normalized !== null && (
+                <span class="bg-quality block h-full" style={`width: ${metric.normalized}%`} />
+              )}
+            </dd>
+            <dd class={metric.normalized === null ? 'text-muted-foreground text-end' : 'num text-end'}>
+              {metric.normalized === null ? metric.missing : formatScore(metric.normalized)}
+            </dd>
+          </>
+        ))
+      }
+    </dl>
+    <dl class="mt-4 grid grid-cols-2 gap-x-8 gap-y-1.5 border-t pt-3 text-sm">
+      {
+        facts.map((fact) => (
+          <div class="flex justify-between gap-3">
+            <dt class="text-muted-foreground">{fact.label}</dt>
+            <dd class={fact.value === null ? 'text-muted-foreground' : 'num'}>{fact.value ?? fact.empty}</dd>
+          </div>
+        ))
+      }
+    </dl>
+    <div class="mt-3 flex items-center justify-between gap-3">
+      <span class="text-muted-foreground num text-xs">{date}</span>
+      <ChartWatermark />
+    </div>
+  </figure>
+</template>
+
+<script>
+  import {
+    bindExportButton,
+    chartImageName,
+    EXPORT_WIDTH,
+    exportChartImage,
+    settle,
+    withOffscreenHost,
+  } from '../lib/chart-image';
+
+  const template = document.querySelector<HTMLTemplateElement>('template[data-model-card]');
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-card-export]')) {
+    bindExportButton(button, () =>
+      withOffscreenHost(EXPORT_WIDTH.card, async (host) => {
+        if (!template) throw new Error('The card is missing');
+        host.append(template.content.cloneNode(true));
+        await settle();
+        const card = host.querySelector('figure');
+        if (!card) throw new Error('The card did not render');
+        await exportChartImage(card, chartImageName([button.dataset.name ?? '']));
+      }),
+    );
+  }
+</script>

@@ -1,14 +1,17 @@
 import { fmt, useTranslations, type Dictionary, type Locale } from '../i18n';
 import { API_VERSION, apiDoc, toApiModel } from './api';
-import { changeCount, describeChange } from './change-text';
+import { alternativeRows, buildAlternatives } from './alternatives';
+import { changeCount, describeChange, type Segment } from './change-text';
 import { changesFor, modelSeries, type Change, type Changelog } from './changelog';
 import { latestSync, SITE_URL, type Dataset, type ModelRecord } from './dataset';
 import { feedPath } from './feed';
 import { formatDateTime, formatPercent, formatPrice, formatScore } from './format';
 import { buildHighlights } from './highlights';
 import { utcDate, type HistoryEntry } from './history';
+import { modelStanding, periodText, recentLeaders, standingRows } from './leaders';
 import { methodContent } from './method';
 import { modelDetail } from './model-detail';
+import { alternativesConfig } from './scoring.config';
 import { usageCitation, usageDetail, usagePeriod } from './usage';
 
 export const LLMS_PATH = '/llms.txt';
@@ -82,13 +85,8 @@ function syncedLine(dataset: Dataset, t: Dictionary): string {
   return `${t.footer.synced}${synced ? formatDateTime(synced) : t.footer.never}`;
 }
 
-function changeMarkdown(
-  change: Change,
-  locale: Locale,
-  t: Dictionary,
-  linkable: Set<string>,
-): string {
-  return describeChange(change, t)
+function segmentsMarkdown(segments: Segment[], locale: Locale, linkable: Set<string>): string {
+  return segments
     .map((segment) =>
       typeof segment === 'string'
         ? segment
@@ -97,6 +95,15 @@ function changeMarkdown(
           : segment.name,
     )
     .join('');
+}
+
+function changeMarkdown(
+  change: Change,
+  locale: Locale,
+  t: Dictionary,
+  linkable: Set<string>,
+): string {
+  return segmentsMarkdown(describeChange(change, t), locale, linkable);
 }
 
 export function homeMarkdown(dataset: Dataset, locale: Locale): string {
@@ -187,6 +194,9 @@ export function modelMarkdown(
   const linkable = new Set(dataset.models.map((item) => item.id));
   const score = (figure: number | null) =>
     figure === null ? t.empty.unrated : formatScore(figure);
+  const standing = standingRows(modelStanding(model, dataset, history.entries, today), t);
+  const alternatives = buildAlternatives(model, dataset);
+  const a = t.alternatives;
 
   return compose([
     `# ${model.name}`,
@@ -215,11 +225,31 @@ export function modelMarkdown(
       ...group.notes,
       group.method !== null && about,
     ]),
+    standing.length > 0 && `## ${t.standing.title}`,
+    standing.length > 0 &&
+      standing
+        .map((row) => `- ${row.label}: ${segmentsMarkdown(row.value, locale, linkable)}`)
+        .join('\n'),
+    standing.length > 0 && about,
     usage && `## ${t.usage.title}`,
     usage &&
       (usage.notFound ??
         usage.rows.map((row) => `- ${row.label}: ${row.value ?? none}`).join('\n')),
     usage && `${usage.citation} ${link(t.usage.about, markdownUrl(locale, '/method'))}`,
+    alternatives && `## ${a.title}`,
+    alternatives && `${a.spend}: ${alternativesConfig.monthlySpend}`,
+    alternatives &&
+      table(
+        [t.table.columns.model, t.rating.intelligence, d.effectivePrice, a.monthly],
+        alternativeRows(model, alternatives, t).map((row) => [
+          `${row.kind === 'current' ? row.model.name : link(row.model.name, markdownUrl(locale, `/m/${row.model.id}`))} (${row.label})`,
+          [row.intelligence, row.intelligenceChange].filter(Boolean).join(' '),
+          [row.price, row.priceChange].filter(Boolean).join(' '),
+          [row.monthly, row.yearly].filter(Boolean).join(', '),
+        ]),
+        [1, 2, 3],
+      ),
+    alternatives && about,
     `## ${d.history}`,
     series.length < 2
       ? fmt(d.historyStart, { date: historyStart })
@@ -282,6 +312,9 @@ export function methodMarkdown(dataset: Dataset, locale: Locale): string {
     content.tiersCharts,
     `## ${m.changesTitle}`,
     content.changesBody,
+    m.standingBody,
+    `## ${m.alternativesTitle}`,
+    content.alternativesBody,
     `## ${m.usageTitle}`,
     content.usage.body,
     content.usage.citation,
@@ -335,16 +368,34 @@ export function apiMarkdown(dataset: Dataset, locale: Locale): string {
   ]);
 }
 
-export function changelogMarkdown(changelog: Changelog, dataset: Dataset, locale: Locale): string {
+export function changelogMarkdown(
+  history: { entries: HistoryEntry[]; changelog: Changelog },
+  dataset: Dataset,
+  locale: Locale,
+): string {
   const t = useTranslations(locale);
   const c = t.changelog;
+  const { changelog } = history;
   const linkable = new Set(dataset.models.map((model) => model.id));
+  const leaders = recentLeaders(history.entries, utcDate(new Date(dataset.generated_at)));
   return compose([
     `# ${c.title}`,
     c.intro,
     link(t.usage.about, markdownUrl(locale, '/method')),
     link(c.feed, absoluteUrl(feedPath(locale))),
     changelog.start === null && c.empty,
+    leaders.length > 0 && `## ${c.leadersTitle}`,
+    leaders.length > 0 &&
+      table(
+        [t.method.tierRating, t.table.columns.model, c.leaderPeriod, c.leaderDays],
+        leaders.map((period) => [
+          t.rating[period.rating],
+          segmentsMarkdown([period.model], locale, linkable),
+          periodText(period, t),
+          String(period.days),
+        ]),
+        [3],
+      ),
     changelog.start !== null && changelog.days.length === 0 && c.none,
     ...changelog.days.flatMap((day) => [
       `## ${day.date} (${changeCount(day.changes.length, t)})`,

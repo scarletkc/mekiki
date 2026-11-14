@@ -19,6 +19,40 @@ export function formatCount(value: number): string {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+export function formatBill(amount: number): string {
+  return amount >= 100 ? `$${formatCount(amount)}` : formatPrice(amount);
+}
+
+export function formatSignedBill(amount: number): string {
+  if (amount === 0) return formatBill(0);
+  return `${amount < 0 ? '−' : '+'}${formatBill(Math.abs(amount))}`;
+}
+
+export function formatSignedScore(value: number): string {
+  if (value === 0) return formatScore(0);
+  return `${value < 0 ? '−' : '+'}${formatScore(Math.abs(value))}`;
+}
+
+export function formatMultiple(ratio: number): string {
+  return ratio >= 10 ? String(Math.round(ratio)) : ratio.toFixed(1);
+}
+
+export function formatPriceChange(ratio: number): string {
+  if (ratio >= 2) return `${formatMultiple(ratio)}×`;
+  const percent = Math.round((ratio - 1) * 100);
+  if (percent === 0) return '0%';
+  return `${percent < 0 ? '−' : '+'}${Math.abs(percent)}%`;
+}
+
+const wholeDollars = (amount: number) => (Math.abs(amount) >= 10 ? Math.round(amount) : amount);
+
+export function switchCost(spend: number, ratio: number): { monthly: string; yearly: string } {
+  return {
+    monthly: formatBill(wholeDollars(spend * ratio)),
+    yearly: formatSignedBill(wholeDollars(spend * (ratio - 1) * 12)),
+  };
+}
+
 export function formatTokens(value: number): string {
   if (value >= 1e12) return `${trimZeros((value / 1e12).toFixed(2))}T`;
   if (value >= 1e9) return `${trimZeros((value / 1e9).toFixed(2))}B`;

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 import {
   mergeModelList,
+  newestVersion,
   overridesSchema,
   readModelList,
   serializeModelList,
@@ -45,6 +46,30 @@ describe('supersededIds', () => {
       model('a/flash', 'Gemini 3.8 Flash'),
     ]);
     expect([...ids].sort()).toEqual(['a/flash-lite', 'a/opus-4-10', 'a/opus-5']);
+  });
+});
+
+describe('newestVersion', () => {
+  const models = [
+    model('a/opus-5', 'Claude Opus 5'),
+    model('a/opus-5-5', 'Claude Opus 5.5'),
+    model('a/opus-4-10', 'Claude Opus 4.10'),
+    model('a/sonnet-6', 'Claude Sonnet 6'),
+    model('b/opus-6', 'Claude Opus 6', 'Other vendor'),
+    model('a/spark', 'Muse Spark'),
+  ];
+  const newest = (id: string) =>
+    newestVersion(models.find((item) => item.id === id)!, models)?.id ?? null;
+
+  it('finds the highest version of the same family and vendor', () => {
+    expect(newest('a/opus-4-10')).toBe('a/opus-5-5');
+    expect(newest('a/opus-5')).toBe('a/opus-5-5');
+  });
+
+  it('has none for the newest version, or for a name without a version', () => {
+    expect(newest('a/opus-5-5')).toBeNull();
+    expect(newest('a/sonnet-6')).toBeNull();
+    expect(newest('a/spark')).toBeNull();
   });
 });
 

@@ -185,38 +185,18 @@ const label =
 </figure>
 
 <script>
-  import { chartImageName, EXPORT_WIDTH, exportClonedChart } from '../lib/chart-image';
+  import {
+    bindExportButton,
+    chartImageName,
+    EXPORT_WIDTH,
+    exportClonedChart,
+  } from '../lib/chart-image';
 
   for (const button of document.querySelectorAll<HTMLButtonElement>('[data-chart-export]')) {
-    const status = button.nextElementSibling as HTMLElement | null;
-    let timer: number | undefined;
-
-    const show = (state: 'idle' | 'done' | 'failed') => {
-      const result = state === 'idle' ? '' : (button.dataset[state] ?? '');
-      button.dataset.state = state;
-      button.title = result || (button.dataset.label ?? '');
-      if (status) status.textContent = result;
-    };
-
-    button.addEventListener('click', async () => {
-      const figure = button.closest('figure');
-      if (!figure) return;
-      window.clearTimeout(timer);
-      button.disabled = true;
-      let state: 'done' | 'failed';
-      try {
-        await exportClonedChart(
-          figure,
-          EXPORT_WIDTH.card,
-          chartImageName([button.dataset.name ?? '']),
-        );
-        state = 'done';
-      } catch {
-        state = 'failed';
-      }
-      button.disabled = false;
-      show(state);
-      timer = window.setTimeout(() => show('idle'), 2000);
-    });
+    const figure = button.closest('figure');
+    if (!figure) continue;
+    bindExportButton(button, () =>
+      exportClonedChart(figure, EXPORT_WIDTH.card, chartImageName([button.dataset.name ?? ''])),
+    );
   }
 </script>

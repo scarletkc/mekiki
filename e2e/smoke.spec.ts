@@ -9,6 +9,10 @@ import { EXPORT_WIDTH } from '../src/lib/chart-image';
 import { en } from '../src/i18n/en';
 import { fmt } from '../src/i18n/fmt';
 import { BEST } from '../src/lib/filters';
+import { buildAlternatives } from '../src/lib/alternatives';
+import { switchCost } from '../src/lib/format';
+import { alternativesConfig } from '../src/lib/scoring.config';
+import { getDataset } from '../src/lib/site-data';
 
 const GISCUS = 'https://giscus.app';
 
@@ -379,6 +383,68 @@ test('on a phone, a long filter value is cut short before its arrow', async ({ p
   expect(values.filter((value) => value.text!.endsWith('All')).every((value) => !value.cut)).toBe(
     true,
   );
+  expect(problems).toEqual([]);
+});
+
+test('a model page ranks the model and prices its alternatives at the spend typed in', async ({
+  page,
+}) => {
+  const problems = trackProblems(page);
+  const dataset = await getDataset();
+  const model = dataset.models.find(
+    (item) => item.status === 'active' && buildAlternatives(item, dataset) !== null,
+  );
+  test.skip(!model, 'no model has an alternative');
+  const { options } = buildAlternatives(model!, dataset)!;
+
+  await page.goto(`/en/m/${model!.id}/`);
+  await expect(page.locator('#standing + dl dt').first()).toHaveText(en.standing.rank.intelligence);
+
+  const rows = page.locator('[data-alternatives] tbody tr');
+  await expect(rows).toHaveCount(options.length + 1);
+  await expect(rows.first()).toContainText(en.alternatives.current);
+  const first = rows.nth(1);
+  const { ratio } = options[0]!;
+  await expect(first.locator('[data-alt-monthly]')).toHaveText(
+    switchCost(alternativesConfig.monthlySpend, ratio).monthly,
+  );
+
+  await page.getByLabel(en.alternatives.spend).fill('2500');
+  const cost = switchCost(2500, ratio);
+  await expect(first.locator('[data-alt-monthly]')).toHaveText(cost.monthly);
+  await expect(first.locator('[data-alt-yearly]')).toHaveText(
+    fmt(en.alternatives.yearly, { amount: cost.yearly }),
+  );
+  await expect(rows.first().locator('[data-alt-monthly]')).toHaveText('$2,500');
+  expect(problems).toEqual([]);
+});
+
+test('a model page exports its card', async ({ page }) => {
+  const problems = trackProblems(page);
+  await page.goto('/');
+  await page.locator('table tbody a[href*="/m/"]').first().click();
+  await expect(page).toHaveURL(/\/m\//);
+
+  const pending = page.waitForEvent('download');
+  await page.locator('[data-card-export]').click();
+  const file = await pending;
+  expect(file.suggestedFilename()).toMatch(/^mekiki-.*\d{4}-\d{2}-\d{2}\.png$/);
+  const image = await readFile(await file.path());
+  expect(image.subarray(1, 4).toString()).toBe('PNG');
+  expect(Math.abs(image.readUInt32BE(16) - EXPORT_WIDTH.card * 2)).toBeLessThanOrEqual(2);
+  expect(image.readUInt32BE(20)).toBeGreaterThan(400);
+  await expect(page.locator('[data-card-export]')).toHaveAttribute('data-state', 'done');
+  await expect(page.locator('body > [inert]')).toHaveCount(0);
+  expect(problems).toEqual([]);
+});
+
+test('the changes page names the current leader of each rating', async ({ page }) => {
+  const problems = trackProblems(page);
+  await page.goto('/en/changelog/');
+  const leaders = page.locator('#leaders + .table-wrap tbody tr');
+  await expect(leaders.first()).toContainText(en.rating.intelligence);
+  await expect(leaders.first().locator('a[href*="/m/"]')).toBeVisible();
+  await expect(leaders.filter({ hasText: en.rating.value }).first()).toBeVisible();
   expect(problems).toEqual([]);
 });
 

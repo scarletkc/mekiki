@@ -1,0 +1,102 @@
+---
+import { Input } from '@/components/ui/input';
+import { localePath, useTranslations, type Locale } from '../i18n';
+import type { AlternativeRow } from '../lib/alternatives';
+import { alternativesConfig } from '../lib/scoring.config';
+
+interface Props {
+  locale: Locale;
+  rows: AlternativeRow[];
+}
+
+const { locale, rows } = Astro.props;
+const t = useTranslations(locale);
+const a = t.alternatives;
+---
+
+<section aria-labelledby="alternatives" class="mt-10" data-alternatives data-yearly={a.yearly}>
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+    <h2 id="alternatives" class="text-lg font-semibold tracking-tight">{a.title}</h2>
+    <label for="alternatives-spend" class="text-muted-foreground flex items-center gap-2 text-xs">
+      {a.spend}
+      <Input
+        id="alternatives-spend"
+        type="number"
+        inputMode="decimal"
+        min={0}
+        step="any"
+        defaultValue={alternativesConfig.monthlySpend}
+        data-alt-spend
+        className="text-foreground num h-9 w-24 text-end sm:h-8"
+      />
+    </label>
+  </div>
+  <div class="table-wrap my-0">
+    <table class="data-table">
+      <caption>{a.caption}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{t.table.columns.model}</th>
+          <th scope="col" class="num">{t.rating.intelligence}</th>
+          <th scope="col" class="num">{t.detail.effectivePrice}</th>
+          <th scope="col" class="num">{a.monthly}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          rows.map((row) => (
+            <tr data-alt-ratio={row.ratio} data-kind={row.kind}>
+              <th scope="row" class="min-w-[9rem]">
+                {row.kind === 'current' ? (
+                  row.model.name
+                ) : (
+                  <a href={localePath(locale, `/m/${row.model.id}`)} class="text-primary underline">{row.model.name}</a>
+                )}
+                <span class="text-muted-foreground block text-xs font-normal">{row.label}</span>
+              </th>
+              <td class="num">
+                {row.intelligence}
+                {row.intelligenceChange && <span class="text-muted-foreground block text-xs">{row.intelligenceChange}</span>}
+              </td>
+              <td class="num">
+                {row.price}
+                {row.priceChange && <span class="text-muted-foreground block text-xs">{row.priceChange}</span>}
+              </td>
+              <td class="num">
+                <span data-alt-monthly>{row.monthly}</span>
+                {row.yearly && <span data-alt-yearly class="text-muted-foreground block text-xs">{row.yearly}</span>}
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  import { fmt } from '../i18n/fmt';
+  import { switchCost } from '../lib/format';
+
+  for (const section of document.querySelectorAll<HTMLElement>('[data-alternatives]')) {
+    const input = section.querySelector<HTMLInputElement>('[data-alt-spend]');
+    if (!input) continue;
+    const fallback = Number(input.defaultValue);
+    const template = section.dataset.yearly ?? '';
+
+    const update = () => {
+      const typed = input.valueAsNumber;
+      const spend = Number.isFinite(typed) && typed >= 0 ? typed : fallback;
+      for (const row of section.querySelectorAll<HTMLElement>('[data-alt-ratio]')) {
+        const cost = switchCost(spend, Number(row.dataset.altRatio));
+        const monthly = row.querySelector('[data-alt-monthly]');
+        const yearly = row.querySelector('[data-alt-yearly]');
+        if (monthly) monthly.textContent = cost.monthly;
+        if (yearly) yearly.textContent = fmt(template, { amount: cost.yearly });
+      }
+    };
+
+    input.addEventListener('input', update);
+    update();
+  }
+</script>

@@ -118,7 +118,10 @@ the full leaderboard and stores it in that source's snapshot as `floor`, so afte
 The Method page is generated from the same file and cannot drift from it.
 
 The same file holds `changelogConfig.scoreDelta`: how far a score has to drift, without
-changing tier, before the changelog lists it.
+changing tier, before the changelog lists it; `leadersConfig.periodsShown`: how many
+leaders of each rating the Changes page lists; and `alternativesConfig`: how much less
+intelligent and how much cheaper an alternative on a model page may be, and the monthly
+spend the page starts from.
 
 To add a leaderboard, add a metric to `scoring.config.ts`, make its source's adapter in
 `scripts/sources/` write the metric to the snapshot, and give it a label in each
@@ -151,6 +154,8 @@ src/
   lib/compare.ts                         compare page selection (?m=<id>,<id>)
   lib/filters.ts                         home page filters and the counts around the list
   lib/history.ts, lib/changelog.ts       rating history and the changes derived from it
+  lib/leaders.ts                         who led each rating and for how long, and a model's rank
+  lib/alternatives.ts                    the models a model page suggests instead
   lib/feed.ts                            RSS feeds
   lib/jsonld.ts                          structured data (JSON-LD) in the head of every indexed page
   lib/giscus.config.ts, lib/giscus.ts    discussion threads on model pages (giscus)

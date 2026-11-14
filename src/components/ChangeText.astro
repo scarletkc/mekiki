@@ -1,7 +1,8 @@
 ---
-import { localePath, useTranslations, type Locale } from '../i18n';
+import { useTranslations, type Locale } from '../i18n';
 import { describeChange } from '../lib/change-text';
 import type { Change } from '../lib/changelog';
+import Segments from './Segments.astro';
 
 interface Props {
   locale: Locale;
@@ -13,14 +14,4 @@ const { locale, change, linkable } = Astro.props;
 const segments = describeChange(change, useTranslations(locale));
 ---
 
-{
-  segments.map((segment) =>
-    typeof segment === 'string' ? (
-      segment
-    ) : linkable.has(segment.id) ? (
-      <a href={localePath(locale, `/m/${segment.id}`)} class="text-primary underline">{segment.name}</a>
-    ) : (
-      <span class="font-medium">{segment.name}</span>
-    ),
-  )
-}
+<Segments locale={locale} segments={segments} linkable={linkable} />
