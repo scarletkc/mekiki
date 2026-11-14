@@ -51,8 +51,6 @@ official prices, and refresh every day.
 - **Method page**: every formula, weight and threshold, generated from the same config the
   scores are computed with.
 - **JSON API**: the full dataset, a model list, one file per model, and the history.
-- **README badges**: a static SVG badge for each rating of each model, such as
-  `/badge/value/<provider>/<model>.svg`.
 - **Readable by AI agents**: [`/llms.txt`](https://mekiki.fog.moe/llms.txt) indexes the
   site, and every page but Compare has a Markdown version, such as
   [`/en/method.md`](https://mekiki.fog.moe/en/method.md).

@@ -190,7 +190,6 @@ export const en = {
     noChanges: 'No changes since {date}.',
     allChanges: 'All changes',
     discussion: 'Discussion',
-    badges: 'README badges',
   },
   standing: {
     title: 'Ranking',
@@ -327,9 +326,6 @@ export const en = {
       'history.json has one entry per recorded day: its date and, for every model listed that day, the name, status, scores, tiers and prices. A day is only recorded when something changed, so each entry holds until the next one.',
     fieldUsage:
       'openrouter is the usage on OpenRouter over the period in sources.openrouter.edition: permaslug is the build matched, tokens the total, days how many days it was in the daily top 50, and rank its place by tokens (null unless it was there every day). It is null when the model was not found, and it is not part of any rating.',
-    badgesTitle: 'Badges',
-    badgesBody:
-      'Every model has a static SVG badge for each rating at /badge/<rating>/<provider>/<model>.svg, where <rating> is intelligence, cost or value. The badges are rebuilt with the data. In Markdown, linked to the model page:',
     versionTitle: 'Versioning',
     versionBody:
       'Fields are only ever added. A breaking change bumps version. The current version is {version}.',

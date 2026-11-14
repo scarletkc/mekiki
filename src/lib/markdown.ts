@@ -1,7 +1,6 @@
 import { fmt, useTranslations, type Dictionary, type Locale } from '../i18n';
 import { API_VERSION, apiDoc, toApiModel } from './api';
 import { alternativeRows, buildAlternatives } from './alternatives';
-import { BADGE_RATINGS, badgeMarkdown, badgePath, badgeText } from './badge';
 import { changeCount, describeChange, type Segment } from './change-text';
 import { changesFor, modelSeries, type Change, type Changelog } from './changelog';
 import { latestSync, SITE_URL, type Dataset, type ModelRecord } from './dataset';
@@ -35,8 +34,6 @@ export function markdownUrl(locale: Locale, path: string): string {
 }
 
 export const link = (text: string, href: string) => `[${text.replace(/[[\]]/g, '\\$&')}](${href})`;
-
-const literal = (text: string) => text.replace(/</g, '\\<');
 
 const cell = (text: string) => text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
 
@@ -272,15 +269,6 @@ export function modelMarkdown(
     alternatives && about,
     `## ${d.links}`,
     detail.links.map((item) => `- ${link(item.label, absoluteUrl(item.href))}`).join('\n'),
-    `### ${d.badges}`,
-    BADGE_RATINGS.map((rating) => {
-      const { label, message } = badgeText(model, rating);
-      return `![${label}: ${message}](${absoluteUrl(badgePath(rating, model.id))})`;
-    }).join(' '),
-    code(
-      BADGE_RATINGS.map((rating) => badgeMarkdown(rating, model.id, SITE_URL)).join('\n'),
-      'markdown',
-    ),
     siteLinks(locale, t),
   ]);
 }
@@ -352,7 +340,7 @@ export function methodMarkdown(dataset: Dataset, locale: Locale): string {
 export function apiMarkdown(dataset: Dataset, locale: Locale): string {
   const t = useTranslations(locale);
   const a = t.api;
-  const { sample, samplePath, endpoints, fields, badges } = apiDoc(dataset, t);
+  const { sample, samplePath, endpoints, fields } = apiDoc(dataset, t);
   return compose([
     `# ${a.title}`,
     a.intro,
@@ -372,11 +360,6 @@ export function apiMarkdown(dataset: Dataset, locale: Locale): string {
     sample && code(JSON.stringify(toApiModel(sample), null, 2), 'json'),
     `## ${a.fieldsTitle}`,
     fields.map((field) => `- ${field}`).join('\n'),
-    badges.length > 0 && `## ${a.badgesTitle}`,
-    badges.length > 0 && literal(a.badgesBody),
-    badges.length > 0 &&
-      badges.map((badge) => `![${badge.alt}](${absoluteUrl(badge.src)})`).join(' '),
-    badges.length > 0 && code(badges.map((badge) => badge.markdown).join('\n'), 'markdown'),
     `## ${a.versionTitle}`,
     fmt(a.versionBody, { version: API_VERSION }),
     `## ${a.attributionTitle}`,

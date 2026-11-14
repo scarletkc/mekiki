@@ -10,7 +10,6 @@ import { en } from '../src/i18n/en';
 import { fmt } from '../src/i18n/fmt';
 import { BEST } from '../src/lib/filters';
 import { buildAlternatives } from '../src/lib/alternatives';
-import { BADGE_RATINGS, badgePath } from '../src/lib/badge';
 import { switchCost } from '../src/lib/format';
 import { alternativesConfig } from '../src/lib/scoring.config';
 import { getDataset } from '../src/lib/site-data';
@@ -420,12 +419,11 @@ test('a model page ranks the model and prices its alternatives at the spend type
   expect(problems).toEqual([]);
 });
 
-test('a model page exports its card, and its badges are SVG images', async ({ page, request }) => {
+test('a model page exports its card', async ({ page }) => {
   const problems = trackProblems(page);
   await page.goto('/');
   await page.locator('table tbody a[href*="/m/"]').first().click();
   await expect(page).toHaveURL(/\/m\//);
-  const id = new URL(page.url()).pathname.replace(/^\/[^/]+\/m\/|\/$/g, '');
 
   const pending = page.waitForEvent('download');
   await page.locator('[data-card-export]').click();
@@ -437,23 +435,6 @@ test('a model page exports its card, and its badges are SVG images', async ({ pa
   expect(image.readUInt32BE(20)).toBeGreaterThan(400);
   await expect(page.locator('[data-card-export]')).toHaveAttribute('data-state', 'done');
   await expect(page.locator('body > [inert]')).toHaveCount(0);
-
-  await page.locator('aside details summary').click();
-  const badges = page.locator('aside details img');
-  await expect(badges).toHaveCount(BADGE_RATINGS.length);
-  for (const rating of BADGE_RATINGS) {
-    const badge = await request.get(badgePath(rating, id));
-    expect(badge.ok(), rating).toBe(true);
-    expect(badge.headers()['content-type'], rating).toContain('image/svg+xml');
-    expect(await badge.text(), rating).toContain(`<title>mekiki ${rating}: `);
-  }
-  await expect
-    .poll(() =>
-      badges.evaluateAll((images) =>
-        images.every((image) => (image as HTMLImageElement).naturalWidth > 0),
-      ),
-    )
-    .toBe(true);
   expect(problems).toEqual([]);
 });
 

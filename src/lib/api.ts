@@ -7,8 +7,7 @@ import {
   type MetricKey,
   type ValueTier,
 } from './scoring.config';
-import { BADGE_RATINGS, badgeMarkdown, badgePath, badgeText } from './badge';
-import { SITE_URL, type Dataset, type ModelRecord } from './dataset';
+import type { Dataset, ModelRecord } from './dataset';
 import type { HistoryEntry } from './history';
 import { SOURCE_IDS, type SourceId } from './snapshots';
 
@@ -162,16 +161,6 @@ export function apiDoc(dataset: Dataset, t: Dictionary) {
     },
     { path: '/api/history.json', href: '/api/history.json', content: a.endpointHistory },
   ];
-  const badges = sample
-    ? BADGE_RATINGS.map((rating) => {
-        const { label, message } = badgeText(sample, rating);
-        return {
-          src: badgePath(rating, sample.id),
-          alt: `${label}: ${message}`,
-          markdown: badgeMarkdown(rating, sample.id, SITE_URL),
-        };
-      })
-    : [];
   const fields = [
     a.fieldScores,
     a.fieldTier,
@@ -180,7 +169,7 @@ export function apiDoc(dataset: Dataset, t: Dictionary) {
     a.fieldUsage,
     a.fieldHistory,
   ];
-  return { sample, samplePath, endpoints, fields, badges };
+  return { sample, samplePath, endpoints, fields };
 }
 
 export interface ApiHistory {

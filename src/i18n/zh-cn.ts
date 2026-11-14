@@ -191,7 +191,6 @@ export const zhCN: Dictionary = {
     noChanges: '{date} 以来没有变化。',
     allChanges: '全部变化',
     discussion: '讨论',
-    badges: 'README 徽章',
   },
   standing: {
     title: '排名',
@@ -322,9 +321,6 @@ export const zhCN: Dictionary = {
       'history.json 每个记录日一项：日期，以及当天收录的每个模型的名称、状态、分数、档位和价格。只有发生变化的日子才会记录，所以每一项一直有效到下一项。',
     fieldUsage:
       'openrouter 是 sources.openrouter.edition 这段时间在 OpenRouter 上的用量：permaslug 是匹配到的版本，tokens 是总数，days 是进入每日前 50 的天数，rank 是按 token 数的名次（不是每天都在前 50 时为 null）。没有找到这个模型时整个字段为 null。它不参与任何评分。',
-    badgesTitle: '徽章',
-    badgesBody:
-      '每个模型的每项评级都有一个静态 SVG 徽章，地址是 /badge/<rating>/<provider>/<model>.svg，<rating> 为 intelligence、cost 或 value。徽章随数据一起更新。Markdown 写法（链接到模型页）：',
     versionTitle: '版本',
     versionBody: '字段只加不改。有破坏性变更时，version 加一。当前是 version {version}。',
     attributionTitle: '署名',

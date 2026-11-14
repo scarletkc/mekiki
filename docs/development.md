@@ -156,7 +156,6 @@ src/
   lib/history.ts, lib/changelog.ts       rating history and the changes derived from it
   lib/leaders.ts                         who led each rating and for how long, and a model's rank
   lib/alternatives.ts                    the models a model page suggests instead
-  lib/badge.ts                           README badges, written to /badge/ at build time
   lib/feed.ts                            RSS feeds
   lib/jsonld.ts                          structured data (JSON-LD) in the head of every indexed page
   lib/giscus.config.ts, lib/giscus.ts    discussion threads on model pages (giscus)

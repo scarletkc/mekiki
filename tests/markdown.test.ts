@@ -125,10 +125,6 @@ describe('Markdown pages', () => {
       expect(text).toContain(`\n- ${label}: `);
     }
     expect(text).toContain(`](${SITE_URL}/api/models/${model.id}.json)`);
-    expect(text).toContain(`\n### ${t.detail.badges}\n`);
-    for (const rating of ['intelligence', 'cost', 'value']) {
-      expect(text).toContain(`](${SITE_URL}/badge/${rating}/${model.id}.svg)`);
-    }
   });
 
   it.each(LOCALES)('rank a model and name its alternatives in %s', (locale) => {
@@ -153,16 +149,6 @@ describe('Markdown pages', () => {
     for (const path of ['/api.json', '/api/models.json', '/api/history.json']) {
       expect(text).toContain(`](${SITE_URL}${path})`);
     }
-    expect(text).toMatch(new RegExp(`\\]\\(${SITE_URL}/badge/value/[^)]+\\.svg\\)`));
-    expect(text).toContain('[![mekiki intelligence](');
-  });
-
-  it.each(LOCALES)('keep the placeholders of the badge path visible in %s', (locale) => {
-    const prose = apiMarkdown(dataset, locale)
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/`[^`\n]*`/g, '');
-    expect(prose).toContain('/badge/\\<rating>/\\<provider>/\\<model>.svg');
-    expect(prose).not.toMatch(/(?<!\\)<[a-z]/i);
   });
 });
 
