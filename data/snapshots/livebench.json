@@ -1,6 +1,6 @@
 {
   "source": "livebench",
-  "fetched_at": "2026-11-13T04:55:36.456Z",
+  "fetched_at": "2026-11-16T04:37:31.082Z",
   "total": 35,
   "edition": "2026-11-06",
   "frontier": {
@@ -36,6 +36,9 @@
     },
     "gemini-4-carbon": {
       "livebench": 85.44
+    },
+    "gemini-4-hydrogen": {
+      "livebench": 82.12
     },
     "glm-5.3-flash": {
       "livebench": 72.41

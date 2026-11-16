@@ -1,7 +1,7 @@
 {
   "source": "aa",
-  "fetched_at": "2026-11-13T04:55:36.451Z",
-  "total": 739,
+  "fetched_at": "2026-11-16T04:37:31.061Z",
+  "total": 742,
   "frontier": {
     "aa_intelligence": 64.6
   },
@@ -70,6 +70,11 @@
       "name": "Gemini 4 Carbon (High)",
       "aa_intelligence": 60,
       "index_cost_usd": 5333.27
+    },
+    "gemini-4-hydrogen": {
+      "name": "Gemini 4 Hydrogen (Xhigh)",
+      "aa_intelligence": 53.9,
+      "index_cost_usd": 4085.72
     },
     "glm-5-3": {
       "name": "GLM-5.3 (Max)",

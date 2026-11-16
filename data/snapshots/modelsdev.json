@@ -1,7 +1,7 @@
 {
   "source": "modelsdev",
-  "fetched_at": "2026-11-12T10:26:16.488Z",
-  "total": 8988,
+  "fetched_at": "2026-11-16T04:37:31.057Z",
+  "total": 9878,
   "frontier": {},
   "models": {
     "alibaba/qwen3.8-max": {
@@ -264,6 +264,27 @@
       "cache_read": 0.1,
       "context": 1048576,
       "release_date": "2026-11-10",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "google/gemini-4-hydrogen": {
+      "name": "Gemini 4 Hydrogen",
+      "input": 1.5,
+      "output": 7.5,
+      "cache_read": 0.075,
+      "context": 1048576,
+      "release_date": "2026-11-12",
       "open_weights": false,
       "modalities": {
         "input": [
