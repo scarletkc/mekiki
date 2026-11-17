@@ -1,13 +1,13 @@
 {
   "source": "livebench",
-  "fetched_at": "2026-11-16T04:37:31.082Z",
-  "total": 35,
+  "fetched_at": "2026-11-17T06:23:44.772Z",
+  "total": 36,
   "edition": "2026-11-06",
   "frontier": {
     "livebench": 87.15
   },
   "floor": {
-    "livebench": 68.51
+    "livebench": 69.28
   },
   "models": {
     "claude-fable-5.1": {
