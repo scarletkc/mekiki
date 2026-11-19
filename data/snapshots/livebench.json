@@ -1,6 +1,6 @@
 {
   "source": "livebench",
-  "fetched_at": "2026-11-18T05:48:44.321Z",
+  "fetched_at": "2026-11-19T05:47:24.541Z",
   "total": 38,
   "edition": "2026-11-06",
   "frontier": {
@@ -57,6 +57,12 @@
     },
     "gpt-6.1-terra": {
       "livebench": 84.14
+    },
+    "gpt-6.2-astra": {
+      "livebench": 88.07
+    },
+    "gpt-6.2-sol": {
+      "livebench": 85.45
     },
     "grok-4.6": {
       "livebench": 76.21

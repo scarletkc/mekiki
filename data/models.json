@@ -175,6 +175,18 @@
       }
     },
     {
+      "id": "google/gemini-4-neon",
+      "name": "Gemini 4 Neon",
+      "vendor": "Google",
+      "sources": {
+        "modelsdev": "google/gemini-4-neon",
+        "aa": "gemini-4-neon",
+        "arena_text": "Gemini 4 Neon (High)",
+        "arena_webdev": "Gemini 4 Neon (High)",
+        "arena_agent": "Gemini 4 Neon (High)"
+      }
+    },
+    {
       "id": "meta/muse-spark-1.3",
       "name": "Muse Spark 1.3",
       "vendor": "Meta",
@@ -333,6 +345,30 @@
         "arena_webdev": "GPT-6.1 Terra (Max)",
         "arena_agent": "GPT-6.1 Terra (Max)",
         "livebench": "gpt-6.1-terra"
+      }
+    },
+    {
+      "id": "openai/gpt-6.2-astra",
+      "name": "GPT-6.2 Astra",
+      "vendor": "OpenAI",
+      "sources": {
+        "modelsdev": "openai/gpt-6.2-astra",
+        "aa": "gpt-6-2-astra",
+        "arena_webdev": "GPT-6.2 Astra (Max)",
+        "arena_agent": "GPT-6.2 Astra (Max)",
+        "livebench": "gpt-6.2-astra"
+      }
+    },
+    {
+      "id": "openai/gpt-6.2-sol",
+      "name": "GPT-6.2 Sol",
+      "vendor": "OpenAI",
+      "sources": {
+        "modelsdev": "openai/gpt-6.2-sol",
+        "aa": "gpt-6-2-sol",
+        "arena_webdev": "GPT-6.2 Sol (Max)",
+        "arena_agent": "GPT-6.2 Sol (Max)",
+        "livebench": "gpt-6.2-sol"
       }
     },
     {

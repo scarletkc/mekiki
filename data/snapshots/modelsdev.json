@@ -1,7 +1,7 @@
 {
   "source": "modelsdev",
-  "fetched_at": "2026-11-16T04:37:31.057Z",
-  "total": 9878,
+  "fetched_at": "2026-11-19T05:47:24.515Z",
+  "total": 10004,
   "frontier": {},
   "models": {
     "alibaba/qwen3.8-max": {
@@ -299,6 +299,27 @@
         ]
       }
     },
+    "google/gemini-4-neon": {
+      "name": "Gemini 4 Neon",
+      "input": 3,
+      "output": 15,
+      "cache_read": 0.15,
+      "context": 1048576,
+      "release_date": "2026-11-18",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
     "meta/muse-spark-1.3": {
       "name": "Muse Spark 1.3",
       "input": 1.25,
@@ -536,6 +557,44 @@
       "cache_read": 0.05,
       "context": 1050000,
       "release_date": "2026-10-26",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-6.2-astra": {
+      "name": "GPT-6.2 Astra",
+      "input": 8,
+      "output": 40,
+      "cache_read": 0.4,
+      "context": 1050000,
+      "release_date": "2026-11-17",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "openai/gpt-6.2-sol": {
+      "name": "GPT-6.2 Sol",
+      "input": 2,
+      "output": 10,
+      "cache_read": 0.1,
+      "context": 1050000,
+      "release_date": "2026-11-17",
       "open_weights": false,
       "modalities": {
         "input": [
