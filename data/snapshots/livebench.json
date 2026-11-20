@@ -1,13 +1,13 @@
 {
   "source": "livebench",
-  "fetched_at": "2026-11-19T05:47:24.541Z",
-  "total": 38,
+  "fetched_at": "2026-11-20T05:36:40.560Z",
+  "total": 39,
   "edition": "2026-11-06",
   "frontier": {
-    "livebench": 88.07
+    "livebench": 88.59
   },
   "floor": {
-    "livebench": 70.69
+    "livebench": 71.06
   },
   "models": {
     "claude-fable-5.1": {
@@ -39,6 +39,9 @@
     },
     "gemini-4-hydrogen": {
       "livebench": 82.12
+    },
+    "gemini-4-neon": {
+      "livebench": 88.59
     },
     "glm-5.3-flash": {
       "livebench": 72.41

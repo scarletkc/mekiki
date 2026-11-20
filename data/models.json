@@ -33,6 +33,7 @@
       "sources": {
         "modelsdev": "anthropic/claude-fable-5-2",
         "aa": "claude-fable-5-2",
+        "arena_text": "Claude Fable 5.2 (Max)",
         "arena_webdev": "Claude Fable 5.2 (xHigh)",
         "arena_agent": "Claude Fable 5.2 (Max)",
         "livebench": "claude-fable-5.2"
@@ -183,7 +184,8 @@
         "aa": "gemini-4-neon",
         "arena_text": "Gemini 4 Neon (High)",
         "arena_webdev": "Gemini 4 Neon (High)",
-        "arena_agent": "Gemini 4 Neon (High)"
+        "arena_agent": "Gemini 4 Neon (High)",
+        "livebench": "gemini-4-neon"
       }
     },
     {
@@ -342,6 +344,7 @@
       "sources": {
         "modelsdev": "openai/gpt-6.1-terra",
         "aa": "gpt-6-1-terra",
+        "arena_text": "GPT-6.1 Terra (Max)",
         "arena_webdev": "GPT-6.1 Terra (Max)",
         "arena_agent": "GPT-6.1 Terra (Max)",
         "livebench": "gpt-6.1-terra"
@@ -354,6 +357,7 @@
       "sources": {
         "modelsdev": "openai/gpt-6.2-astra",
         "aa": "gpt-6-2-astra",
+        "arena_text": "GPT-6.2 Astra (Max)",
         "arena_webdev": "GPT-6.2 Astra (Max)",
         "arena_agent": "GPT-6.2 Astra (Max)",
         "livebench": "gpt-6.2-astra"
@@ -366,6 +370,7 @@
       "sources": {
         "modelsdev": "openai/gpt-6.2-sol",
         "aa": "gpt-6-2-sol",
+        "arena_text": "GPT-6.2 Sol (Max)",
         "arena_webdev": "GPT-6.2 Sol (Max)",
         "arena_agent": "GPT-6.2 Sol (Max)",
         "livebench": "gpt-6.2-sol"
