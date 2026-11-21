@@ -1,7 +1,7 @@
 {
   "source": "aa",
-  "fetched_at": "2026-11-19T05:47:24.519Z",
-  "total": 763,
+  "fetched_at": "2026-11-21T05:30:09.923Z",
+  "total": 764,
   "frontier": {
     "aa_intelligence": 64.6
   },
@@ -64,7 +64,7 @@
     "gemini-4-argon": {
       "name": "Gemini 4 Argon (High)",
       "aa_intelligence": 50.4,
-      "index_cost_usd": 3810.11
+      "index_cost_usd": 7620.22
     },
     "gemini-4-carbon": {
       "name": "Gemini 4 Carbon (High)",
