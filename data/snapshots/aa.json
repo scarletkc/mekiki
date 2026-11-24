@@ -1,7 +1,7 @@
 {
   "source": "aa",
-  "fetched_at": "2026-11-21T05:30:09.923Z",
-  "total": 764,
+  "fetched_at": "2026-11-24T08:15:13.114Z",
+  "total": 766,
   "frontier": {
     "aa_intelligence": 64.6
   },
@@ -45,11 +45,6 @@
       "name": "DeepSeek V4 Pro 0813 (Max)",
       "aa_intelligence": 23.1,
       "index_cost_usd": 1401.88
-    },
-    "gemini-3-1-flash-lite-preview": {
-      "name": "Gemini 3.1 Flash-Lite",
-      "aa_intelligence": 6.2,
-      "index_cost_usd": 224.32
     },
     "gemini-3-5-flash-lite": {
       "name": "Gemini 3.5 Flash-Lite",

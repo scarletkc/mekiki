@@ -1,7 +1,7 @@
 {
   "source": "modelsdev",
-  "fetched_at": "2026-11-19T05:47:24.515Z",
-  "total": 10004,
+  "fetched_at": "2026-11-24T08:15:13.108Z",
+  "total": 10185,
   "frontier": {},
   "models": {
     "alibaba/qwen3.8-max": {
@@ -167,27 +167,6 @@
       "modalities": {
         "input": [
           "text"
-        ],
-        "output": [
-          "text"
-        ]
-      }
-    },
-    "google/gemini-3.1-flash-lite-preview": {
-      "name": "Gemini 3.1 Flash Lite Preview",
-      "input": 0.25,
-      "output": 1.5,
-      "cache_read": 0.025,
-      "context": 1048576,
-      "release_date": "2026-03-03",
-      "open_weights": false,
-      "modalities": {
-        "input": [
-          "text",
-          "image",
-          "video",
-          "audio",
-          "pdf"
         ],
         "output": [
           "text"

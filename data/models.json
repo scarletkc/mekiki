@@ -102,17 +102,6 @@
       }
     },
     {
-      "id": "google/gemini-3.1-flash-lite-preview",
-      "name": "Gemini 3.1 Flash Lite Preview",
-      "vendor": "Google",
-      "sources": {
-        "modelsdev": "google/gemini-3.1-flash-lite-preview",
-        "aa": "gemini-3-1-flash-lite-preview",
-        "arena_text": "Gemini 3.1 Flash-Lite Preview",
-        "arena_webdev": "Gemini 3.1 Flash-Lite Preview"
-      }
-    },
-    {
       "id": "google/gemini-3.5-flash-lite",
       "name": "Gemini 3.5 Flash Lite",
       "vendor": "Google",
@@ -170,7 +159,7 @@
         "modelsdev": "google/gemini-4-hydrogen",
         "aa": "gemini-4-hydrogen",
         "arena_text": "Gemini 4 Hydrogen (High)",
-        "arena_webdev": "Gemini 4 Hydrogen (High)",
+        "arena_webdev": "Gemini 4 Hydrogen (xHigh)",
         "arena_agent": "Gemini 4 Hydrogen (High)",
         "livebench": "gemini-4-hydrogen"
       }
@@ -183,7 +172,7 @@
         "modelsdev": "google/gemini-4-neon",
         "aa": "gemini-4-neon",
         "arena_text": "Gemini 4 Neon (High)",
-        "arena_webdev": "Gemini 4 Neon (High)",
+        "arena_webdev": "Gemini 4 Neon (xHigh)",
         "arena_agent": "Gemini 4 Neon (High)",
         "livebench": "gemini-4-neon"
       }

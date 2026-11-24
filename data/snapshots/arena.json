@@ -1,21 +1,21 @@
 {
   "source": "arena",
-  "fetched_at": "2026-11-23T05:37:15.336Z",
+  "fetched_at": "2026-11-24T08:15:13.133Z",
   "total": 427,
   "frontier": {
     "arena_text": 1538.87,
-    "arena_webdev": 1822.13,
+    "arena_webdev": 1821.65,
     "arena_agent": 0.2744
   },
   "floor": {
     "arena_text": 1262.16,
-    "arena_webdev": 1397.98,
+    "arena_webdev": 1397.91,
     "arena_agent": -0.044
   },
   "models": {
     "Claude Fable 5.1 (Max)": {
       "arena_text": 1511.77,
-      "arena_webdev": 1742.1,
+      "arena_webdev": 1741.81,
       "arena_agent": 0.1315,
       "published": "2026-11-22"
     },
@@ -27,19 +27,19 @@
     },
     "Claude Fable 5.2 (xHigh)": {
       "arena_text": null,
-      "arena_webdev": 1822.13,
+      "arena_webdev": 1821.65,
       "arena_agent": null,
-      "published": "2026-11-22"
+      "published": "2026-11-23"
     },
     "Claude Haiku 5.5 (High)": {
       "arena_text": 1397.83,
-      "arena_webdev": 1595.12,
+      "arena_webdev": 1594.69,
       "arena_agent": -0.0042,
       "published": "2026-11-22"
     },
     "Claude Opus 5 (Max)": {
       "arena_text": 1506.18,
-      "arena_webdev": 1691.65,
+      "arena_webdev": 1691.58,
       "arena_agent": 0.0617,
       "published": "2026-11-22"
     },
@@ -51,9 +51,9 @@
     },
     "Claude Opus 5.5 (Max)": {
       "arena_text": null,
-      "arena_webdev": 1820.27,
+      "arena_webdev": 1820.35,
       "arena_agent": 0.1912,
-      "published": "2026-11-22"
+      "published": "2026-11-23"
     },
     "Claude Sonnet 5.5 (Max)": {
       "arena_text": null,
@@ -63,73 +63,79 @@
     },
     "Claude Sonnet 5.5 (xHigh)": {
       "arena_text": 1469.36,
-      "arena_webdev": 1772.36,
+      "arena_webdev": 1772.64,
       "arena_agent": null,
       "published": "2026-11-22"
     },
     "DeepSeek-V4-Pro (High, 20260813)": {
       "arena_text": 1444.56,
-      "arena_webdev": 1581.25,
+      "arena_webdev": 1581.39,
       "arena_agent": null,
       "published": "2026-11-22"
     },
     "DeepSeek-V4.1-Flash-20261017 (Max)": {
       "arena_text": null,
-      "arena_webdev": 1658.09,
+      "arena_webdev": 1658.55,
       "arena_agent": 0.0068,
-      "published": "2026-11-22"
-    },
-    "Gemini 3.1 Flash-Lite Preview": {
-      "arena_text": 1416.12,
-      "arena_webdev": 1255.93,
-      "arena_agent": null,
-      "published": "2026-11-22"
+      "published": "2026-11-23"
     },
     "Gemini 3.5 Flash-Lite": {
       "arena_text": 1434.97,
-      "arena_webdev": 1434.49,
+      "arena_webdev": 1434.45,
       "arena_agent": null,
       "published": "2026-11-22"
     },
     "Gemini 3.8 Flash (High)": {
       "arena_text": 1500.88,
-      "arena_webdev": 1584.02,
+      "arena_webdev": 1584.31,
       "arena_agent": 0.0154,
       "published": "2026-11-22"
     },
     "Gemini 4 Argon (High)": {
       "arena_text": 1527.67,
-      "arena_webdev": 1681.42,
+      "arena_webdev": 1682.06,
       "arena_agent": 0.1025,
       "published": "2026-11-22"
     },
     "Gemini 4 Carbon (High)": {
       "arena_text": 1538.87,
-      "arena_webdev": 1768.9,
+      "arena_webdev": 1768.98,
       "arena_agent": 0.1613,
       "published": "2026-11-22"
     },
     "Gemini 4 Hydrogen (High)": {
       "arena_text": 1502.15,
-      "arena_webdev": 1701.11,
+      "arena_webdev": null,
       "arena_agent": 0.1359,
       "published": "2026-11-22"
     },
+    "Gemini 4 Hydrogen (xHigh)": {
+      "arena_text": null,
+      "arena_webdev": 1701.42,
+      "arena_agent": null,
+      "published": "2026-11-23"
+    },
     "Gemini 4 Neon (High)": {
       "arena_text": 1522.89,
-      "arena_webdev": 1765.77,
+      "arena_webdev": null,
       "arena_agent": 0.1829,
       "published": "2026-11-22"
     },
+    "Gemini 4 Neon (xHigh)": {
+      "arena_text": null,
+      "arena_webdev": 1765.27,
+      "arena_agent": null,
+      "published": "2026-11-23"
+    },
     "GLM-5.3 (Max)": {
       "arena_text": 1474.57,
-      "arena_webdev": 1622.95,
+      "arena_webdev": 1623.02,
       "arena_agent": 0.0019,
       "published": "2026-11-22"
     },
     "GLM-5.3-Flash": {
       "arena_text": 1471.74,
-      "arena_webdev": 1610.78,
+      "arena_webdev": 1611.05,
       "arena_agent": -0.0378,
       "published": "2026-11-22"
     },
@@ -147,49 +153,49 @@
     },
     "GPT-6 Astra (Max)": {
       "arena_text": 1441.09,
-      "arena_webdev": 1764.34,
+      "arena_webdev": 1763.64,
       "arena_agent": 0.1464,
       "published": "2026-11-22"
     },
     "GPT-6 Luna (Max)": {
       "arena_text": 1390.58,
-      "arena_webdev": 1578.64,
+      "arena_webdev": 1578.7,
       "arena_agent": 0.0033,
       "published": "2026-11-22"
     },
     "GPT-6 Sol (Max)": {
       "arena_text": 1397.93,
-      "arena_webdev": 1674.82,
+      "arena_webdev": 1674.53,
       "arena_agent": 0.0646,
       "published": "2026-11-22"
     },
     "GPT-6.1 Sol (Max)": {
       "arena_text": 1445.73,
-      "arena_webdev": 1744.44,
+      "arena_webdev": 1744.73,
       "arena_agent": 0.1102,
       "published": "2026-11-22"
     },
     "GPT-6.1 Terra (Max)": {
       "arena_text": 1426.02,
-      "arena_webdev": 1686.41,
+      "arena_webdev": 1686.26,
       "arena_agent": 0.1045,
       "published": "2026-11-22"
     },
     "GPT-6.2 Astra (Max)": {
       "arena_text": 1413.33,
-      "arena_webdev": 1759.45,
+      "arena_webdev": 1760.67,
       "arena_agent": 0.1391,
       "published": "2026-11-22"
     },
     "GPT-6.2 Sol (Max)": {
       "arena_text": 1413.66,
-      "arena_webdev": 1755.07,
+      "arena_webdev": 1754.82,
       "arena_agent": 0.1128,
       "published": "2026-11-22"
     },
     "Grok 4.6 (High)": {
       "arena_text": 1430.1,
-      "arena_webdev": 1618.06,
+      "arena_webdev": 1618.07,
       "arena_agent": null,
       "published": "2026-11-22"
     },
@@ -201,31 +207,31 @@
     },
     "Grok 4.7 (xHigh)": {
       "arena_text": 1400.55,
-      "arena_webdev": 1639.49,
+      "arena_webdev": 1639.03,
       "arena_agent": 0.0128,
       "published": "2026-11-22"
     },
     "Kimi K3 (Max)": {
       "arena_text": 1474.78,
-      "arena_webdev": 1658.78,
+      "arena_webdev": 1658.44,
       "arena_agent": -0.0015,
       "published": "2026-11-22"
     },
     "Kimi K3.1 Pro (Max)": {
       "arena_text": 1458.93,
-      "arena_webdev": 1683.13,
+      "arena_webdev": 1682.89,
       "arena_agent": 0.0392,
       "published": "2026-11-22"
     },
     "MiMo-V2.6-Flash": {
       "arena_text": 1450.33,
-      "arena_webdev": 1636.99,
+      "arena_webdev": 1637.21,
       "arena_agent": -0.0191,
       "published": "2026-11-22"
     },
     "MiMo-V2.6-Pro": {
       "arena_text": 1492.87,
-      "arena_webdev": 1622.4,
+      "arena_webdev": 1622.47,
       "arena_agent": 0.0105,
       "published": "2026-11-22"
     },
@@ -237,25 +243,25 @@
     },
     "MiniMax-M3.1-Flash": {
       "arena_text": null,
-      "arena_webdev": 1581.59,
+      "arena_webdev": 1581.63,
       "arena_agent": -0.0397,
-      "published": "2026-11-22"
+      "published": "2026-11-23"
     },
     "Mistral Large 4": {
       "arena_text": 1413.67,
-      "arena_webdev": 1572.51,
+      "arena_webdev": 1572.39,
       "arena_agent": -0.0624,
       "published": "2026-11-22"
     },
     "Muse Spark 1.3 (Max)": {
       "arena_text": 1492.9,
-      "arena_webdev": 1652.33,
+      "arena_webdev": 1652.32,
       "arena_agent": 0.0128,
       "published": "2026-11-22"
     },
     "Qwen3.8-Max": {
       "arena_text": 1484.91,
-      "arena_webdev": 1670.56,
+      "arena_webdev": 1670.53,
       "arena_agent": -0.0099,
       "published": "2026-11-22"
     }
