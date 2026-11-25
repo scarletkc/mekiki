@@ -1,6 +1,6 @@
 {
   "source": "arena",
-  "fetched_at": "2026-11-24T08:15:13.133Z",
+  "fetched_at": "2026-11-25T06:52:29.145Z",
   "total": 427,
   "frontier": {
     "arena_text": 1538.87,
@@ -264,6 +264,12 @@
       "arena_webdev": 1670.53,
       "arena_agent": -0.0099,
       "published": "2026-11-22"
+    },
+    "Qwen4-Max (xHigh)": {
+      "arena_text": null,
+      "arena_webdev": 1752.14,
+      "arena_agent": 0.073,
+      "published": "2026-11-23"
     }
   }
 }

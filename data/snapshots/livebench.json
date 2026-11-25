@@ -1,6 +1,6 @@
 {
   "source": "livebench",
-  "fetched_at": "2026-11-24T08:15:13.136Z",
+  "fetched_at": "2026-11-25T06:52:29.148Z",
   "total": 41,
   "edition": "2026-11-06",
   "frontier": {
@@ -93,6 +93,9 @@
     },
     "qwen3.8-max": {
       "livebench": 73.4
+    },
+    "qwen4-max": {
+      "livebench": 83.57
     }
   }
 }

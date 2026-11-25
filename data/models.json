@@ -14,6 +14,18 @@
       }
     },
     {
+      "id": "alibaba/qwen4-max",
+      "name": "Qwen4 Max",
+      "vendor": "Alibaba",
+      "sources": {
+        "modelsdev": "alibaba/qwen4-max",
+        "aa": "qwen4-max",
+        "arena_webdev": "Qwen4-Max (xHigh)",
+        "arena_agent": "Qwen4-Max (xHigh)",
+        "livebench": "qwen4-max"
+      }
+    },
+    {
       "id": "anthropic/claude-fable-5-1",
       "name": "Claude Fable 5.1",
       "vendor": "Anthropic",

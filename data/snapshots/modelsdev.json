@@ -1,7 +1,7 @@
 {
   "source": "modelsdev",
-  "fetched_at": "2026-11-24T08:15:13.108Z",
-  "total": 10185,
+  "fetched_at": "2026-11-25T06:52:29.129Z",
+  "total": 10194,
   "frontier": {},
   "models": {
     "alibaba/qwen3.8-max": {
@@ -11,6 +11,26 @@
       "cache_read": 0.25,
       "context": 1000000,
       "release_date": "2026-08-03",
+      "open_weights": false,
+      "modalities": {
+        "input": [
+          "text",
+          "image",
+          "video",
+          "pdf"
+        ],
+        "output": [
+          "text"
+        ]
+      }
+    },
+    "alibaba/qwen4-max": {
+      "name": "Qwen4 Max",
+      "input": 1.5,
+      "output": 4.5,
+      "cache_read": 0.075,
+      "context": 1000000,
+      "release_date": "2026-11-16",
       "open_weights": false,
       "modalities": {
         "input": [
@@ -364,8 +384,8 @@
       "output": 2.1,
       "cache_read": 0.07,
       "context": 1048576,
-      "release_date": "2026-10-06",
-      "open_weights": false,
+      "release_date": "2026-10-05",
+      "open_weights": true,
       "modalities": {
         "input": [
           "text",
