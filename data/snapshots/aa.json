@@ -1,7 +1,7 @@
 {
   "source": "aa",
-  "fetched_at": "2026-11-25T06:52:29.132Z",
-  "total": 766,
+  "fetched_at": "2026-11-27T06:35:07.075Z",
+  "total": 767,
   "frontier": {
     "aa_intelligence": 64.8
   },
@@ -54,12 +54,12 @@
     "gemini-3-8-flash": {
       "name": "Gemini 3.8 Flash (High)",
       "aa_intelligence": 30.7,
-      "index_cost_usd": 5763.75
+      "index_cost_usd": 2389.73
     },
     "gemini-4-argon": {
       "name": "Gemini 4 Argon (High)",
       "aa_intelligence": 50.5,
-      "index_cost_usd": 7620.22
+      "index_cost_usd": 5686.6
     },
     "gemini-4-carbon": {
       "name": "Gemini 4 Carbon (High)",
